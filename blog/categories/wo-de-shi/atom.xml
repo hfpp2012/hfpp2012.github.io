@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[甘炜良的博客]]></title>
-  <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
+  <title><![CDATA[Category: 我的诗 | 甘炜良的博客]]></title>
+  <link href="http://yinsigan.github.io/blog/categories/wo-de-shi/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
   <updated>2013-07-05T12:57:54+08:00</updated>
   <id>http://yinsigan.github.io/</id>
