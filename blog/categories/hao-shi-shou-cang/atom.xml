@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: 好诗收藏 | 甘炜良的博客]]></title>
+  <link href="http://yinsigan.github.io/blog/categories/hao-shi-shou-cang/atom.xml" rel="self"/>
+  <link href="http://yinsigan.github.io/"/>
+  <updated>2013-07-05T13:11:48+08:00</updated>
+  <id>http://yinsigan.github.io/</id>
+  <author>
+    <name><![CDATA[甘炜良]]></name>
+    <email><![CDATA[ganweiliang886@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[[古体诗词]听雨]]></title>
+    <link href="http://yinsigan.github.io/blog/2013/07/05/gu-ti-shi-ci-ting-yu/"/>
+    <updated>2013-07-05T13:10:00+08:00</updated>
+    <id>http://yinsigan.github.io/blog/2013/07/05/gu-ti-shi-ci-ting-yu</id>
+    <content type="html"><![CDATA[<p>一寸相思一寸伤，似醒非醉草情章。</p>
+
+<p>倚楼听雨烛残泪，难解红尘最断肠。</p>
+]]></content>
+  </entry>
+  
+</feed>
