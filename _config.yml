@@ -3,9 +3,9 @@
 # ----------------------- #
 
 url: http://yinsigan.github.io
-title: My Octopress Blog
-subtitle: A blogging framework for hackers.
-author: Your Name
+title: 甘炜良的博客
+subtitle: 人生若如初见
+author: 甘炜良
 simple_search: http://google.com/search
 description:
 
@@ -19,7 +19,7 @@ date_format: "ordinal"
 subscribe_rss: /atom.xml
 subscribe_email:
 # RSS feeds can list your email address if you like
-email:
+email: ganweiliang886@gmail.com
 
 # ----------------------- #
 #    Jekyll & Plugins     #
