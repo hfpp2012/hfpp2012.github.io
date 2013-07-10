@@ -4,7 +4,7 @@
   <title><![CDATA[甘炜良的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-07-10T17:31:52+08:00</updated>
+  <updated>2013-07-10T17:51:52+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[甘炜良]]></name>
@@ -12,6 +12,25 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[我的学习网站收集]]></title>
+    <link href="http://yinsigan.github.io/blog/2013/07/10/wo-de-xue-xi-wang-zhan-shou-ji/"/>
+    <updated>2013-07-10T17:41:00+08:00</updated>
+    <id>http://yinsigan.github.io/blog/2013/07/10/wo-de-xue-xi-wang-zhan-shou-ji</id>
+    <content type="html"><![CDATA[<p><a href="http://www.tutorialspoint.com/">tutorialspoint</a></p>
+
+<p><a href="http://ihower.tw/rails3/">rails实战圣经</a></p>
+
+<p><a href="http://guides.rubyonrails.org/">rails guides</a></p>
+
+<h4>视频</h4>
+
+<p>   <a href="http://railscasts.com/">railscasts</a></p>
+
+<p>   <a href="http://railscasts-china.com/">railscasts-china</a></p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[瘦]]></title>
