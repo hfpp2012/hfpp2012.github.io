@@ -4,7 +4,7 @@
   <title><![CDATA[甘炜良的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-07-10T17:59:15+08:00</updated>
+  <updated>2013-07-10T18:24:35+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[甘炜良]]></name>
@@ -24,6 +24,8 @@
 <li><a href="http://www.tutorialspoint.com/">tutorialspoint</a></li>
 <li><a href="http://ihower.tw/rails3/">rails实战圣经</a></li>
 <li><a href="http://guides.rubyonrails.org/">rails guides</a></li>
+<li><a href="https://github.com/saberma/ruby-dev-bookmarks">ruby-dev-bookmarks</a></li>
+<li><a href="http://ruby-china.org/topics/5205">gem列表</a></li>
 </ul>
 
 
@@ -34,6 +36,21 @@
 <li><a href="http://railscasts-china.com/">railscasts-china</a></li>
 </ul>
 
+
+<h2>工具</h2>
+
+<ul>
+<li><a href="https://pomotodo.com/">番茄土豆</a></li>
+</ul>
+
+
+<h2>好的源码</h2>
+
+<h2>css框架</h2>
+
+<h2>javascript框架</h2>
+
+<h2>gems</h2>
 ]]></content>
   </entry>
   
