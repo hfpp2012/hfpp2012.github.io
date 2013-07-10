@@ -4,7 +4,7 @@
   <title><![CDATA[甘炜良的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-07-10T17:52:35+08:00</updated>
+  <updated>2013-07-10T17:59:15+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[甘炜良]]></name>
@@ -18,17 +18,22 @@
     <link href="http://yinsigan.github.io/blog/2013/07/10/wo-de-xue-xi-wang-zhan-shou-ji/"/>
     <updated>2013-07-10T17:41:00+08:00</updated>
     <id>http://yinsigan.github.io/blog/2013/07/10/wo-de-xue-xi-wang-zhan-shou-ji</id>
-    <content type="html"><![CDATA[<p><a href="http://www.tutorialspoint.com/">tutorialspoint</a></p>
+    <content type="html"><![CDATA[<h2>教程</h2>
 
-<p><a href="http://ihower.tw/rails3/">rails实战圣经</a></p>
+<ul>
+<li><a href="http://www.tutorialspoint.com/">tutorialspoint</a></li>
+<li><a href="http://ihower.tw/rails3/">rails实战圣经</a></li>
+<li><a href="http://guides.rubyonrails.org/">rails guides</a></li>
+</ul>
 
-<p><a href="http://guides.rubyonrails.org/">rails guides</a></p>
 
-<h4>视频</h4>
+<h2>视频</h2>
 
-<p>   <a href="http://railscasts.com/">railscasts</a></p>
+<ul>
+<li><a href="http://railscasts.com/">railscasts</a></li>
+<li><a href="http://railscasts-china.com/">railscasts-china</a></li>
+</ul>
 
-<p>   <a href="http://railscasts-china.com/">railscasts-china</a></p>
 ]]></content>
   </entry>
   
