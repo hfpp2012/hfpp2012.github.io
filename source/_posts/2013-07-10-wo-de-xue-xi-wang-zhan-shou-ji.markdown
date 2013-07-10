@@ -6,14 +6,11 @@ comments: true
 categories: 
 ---
 
-[tutorialspoint](http://www.tutorialspoint.com/)
+## 教程
++ [tutorialspoint](http://www.tutorialspoint.com/)
++ [rails实战圣经](http://ihower.tw/rails3/)
++ [rails guides](http://guides.rubyonrails.org/)
 
-[rails实战圣经](http://ihower.tw/rails3/)
-
-[rails guides](http://guides.rubyonrails.org/)
-
-#### 视频 ####
-
-   [railscasts](http://railscasts.com/)
-
-   [railscasts-china](http://railscasts-china.com/)
+## 视频
++ [railscasts](http://railscasts.com/)
++ [railscasts-china](http://railscasts-china.com/)
