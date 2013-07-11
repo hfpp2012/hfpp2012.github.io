@@ -68,7 +68,6 @@ categories:
 
 ## gems
 + [starts](https://github.com/stars)
-+ [bookmarks](chrome://bookmarks/#709)
 
 ## 编程学习
 + [codecademy](http://www.codecademy.com/)
