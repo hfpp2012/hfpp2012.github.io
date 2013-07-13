@@ -4,7 +4,7 @@
   <title><![CDATA[甘炜良的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-07-11T11:37:01+08:00</updated>
+  <updated>2013-07-13T11:23:13+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[甘炜良]]></name>
@@ -127,6 +127,13 @@
 
 <ul>
 <li><a href="http://www.worldhello.net/gotgithub/index.html">gotgithub</a></li>
+</ul>
+
+
+<h2>编辑工具</h2>
+
+<ul>
+<li><a href="http://docs.sublimetext.tw">sublimetext tw</a></li>
 </ul>
 
 ]]></content>
