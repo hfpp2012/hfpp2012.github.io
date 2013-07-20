@@ -4,7 +4,7 @@
   <title><![CDATA[甘炜良的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-07-13T11:23:13+08:00</updated>
+  <updated>2013-07-21T00:46:28+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[甘炜良]]></name>
@@ -27,6 +27,7 @@
 <li><a href="https://github.com/saberma/ruby-dev-bookmarks">ruby-dev-bookmarks</a></li>
 <li><a href="http://ruby-china.org/topics/5205">gem列表</a></li>
 <li><a href="http://railstutorial-china.org/">rails tutorial china</a></li>
+<li><a href="http://www.w3schools.com/jquery/default.asp">w3c jquery</a></li>
 </ul>
 
 
@@ -40,6 +41,13 @@
 </ul>
 
 
+<h2>书</h2>
+
+<ul>
+<li><a href="http://shichuan.github.io/javascript-patterns/">javascript-patterns</a></li>
+</ul>
+
+
 <h2>工具</h2>
 
 <ul>
@@ -48,12 +56,15 @@
 <li><a href="http://api.rubyonrails.org/">rails-api</a></li>
 <li><a href="https://www.ruby-toolbox.com/">gem-categories</a></li>
 <li><a href="https://pragmatic.ly">项目管理</a></li>
+<li><a href="http://apidock.com/">rails_api_dock</a></li>
 </ul>
 
 
 <h2>好的源码</h2>
 
 <ul>
+<li><a href="https://github.com/railstutorial/sample_app_2nd_ed">railstutorial</a></li>
+<li><a href="https://github.com/paulfioravanti/sample_app">sample_app</a></li>
 <li><a href="https://github.com/robbin/robbin_site">robbin_site</a></li>
 <li><a href="https://github.com/pragmaticly/teahour.fm">teahour</a></li>
 <li><a href="https://github.com/railsgirls-china/railsgirls">railsgirls</a></li>
