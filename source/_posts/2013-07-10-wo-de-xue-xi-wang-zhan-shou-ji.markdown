@@ -13,6 +13,7 @@ categories:
 + [ruby-dev-bookmarks](https://github.com/saberma/ruby-dev-bookmarks)
 + [gem列表](http://ruby-china.org/topics/5205)
 + [rails tutorial china](http://railstutorial-china.org/)
++ [w3c jquery](http://www.w3schools.com/jquery/default.asp)
 
 ## 视频
 + [railscasts](http://railscasts.com/)
@@ -20,14 +21,20 @@ categories:
 + [linuxcasts](http://www.linuxcast.net/)
 + [happycasts](http://happycasts.net/)
 
+## 书
++ [javascript-patterns](http://shichuan.github.io/javascript-patterns/)
+
 ## 工具
 + [番茄土豆](https://pomotodo.com/)
 + [ruby-doc](http://ruby-doc.org/core-1.9.3/)
 + [rails-api](http://api.rubyonrails.org/)
 + [gem-categories](https://www.ruby-toolbox.com/)
 + [项目管理](https://pragmatic.ly)
++ [rails_api_dock](http://apidock.com/)
 
 ## 好的源码
++ [railstutorial](https://github.com/railstutorial/sample_app_2nd_ed)
++ [sample_app](https://github.com/paulfioravanti/sample_app)
 + [robbin_site](https://github.com/robbin/robbin_site)
 + [teahour](https://github.com/pragmaticly/teahour.fm)
 + [railsgirls](https://github.com/railsgirls-china/railsgirls)
@@ -77,3 +84,6 @@ categories:
 
 ## 版本控制
 + [gotgithub](http://www.worldhello.net/gotgithub/index.html)
+
+## 编辑工具
++ [sublimetext tw](http://docs.sublimetext.tw)
