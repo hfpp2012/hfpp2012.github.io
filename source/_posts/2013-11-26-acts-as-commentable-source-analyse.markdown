@@ -6,8 +6,6 @@ comments: true
 categories: ruby on rails
 ---
 
-## acts as commentable source analyse
-
 + [acts_as_commentable](https://github.com/jackdempsey/acts_as_commentable)
 
 ### 安装
@@ -46,13 +44,13 @@ end
 
 这是使用rails generation功能实现的
 
+<!-- more -->
+
 还可以查看其他gem的实现方式
 
 [acts_as_messageable](https://github.com/LTe/acts-as-messageable/blob/master/lib/generators/acts-as-messageable/migration/migration_generator.rb)
 
 更详细的可参考[rails generation](http://guides.rubyonrails.org/generators.html)
-
-
 
 ### 如何使用
 

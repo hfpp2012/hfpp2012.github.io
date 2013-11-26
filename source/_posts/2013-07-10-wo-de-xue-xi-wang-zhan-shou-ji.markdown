@@ -26,6 +26,8 @@ categories:
 + [诱人的ruby](http://edu.51cto.com/lecturer/user_id-140924.html)
 + [linuxcasts](http://itercast.com/)
 
+<!-- more -->
+
 ## 书
 + [javascript-patterns](http://shichuan.github.io/javascript-patterns/)
 + [sinatra-explained](https://github.com/zhengjia/sinatra-explained)
