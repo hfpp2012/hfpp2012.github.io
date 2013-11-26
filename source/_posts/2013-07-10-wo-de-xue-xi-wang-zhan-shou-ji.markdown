@@ -15,6 +15,8 @@ categories:
 + [rails tutorial china](http://railstutorial-china.org/)
 + [w3c jquery](http://www.w3schools.com/jquery/default.asp)
 + [关于rails源码](http://www.simonecarletti.com/blog/2009/09/inside-ruby-on-rails-reading-source-code/)
++ [笨方法学ruby](http://lrthw.github.io/)
++ [ruby参考手册](http://www.kuqin.com/rubycndocument/man/index.html)
 
 ## 视频
 + [railscasts](http://railscasts.com/)
@@ -40,9 +42,12 @@ categories:
 + [remote](http://about.ac/remote/)
 + [25-free-computer-science-books](http://www.coderholic.com/25-free-computer-science-books/)
 + [ruby源码分析](http://edwinmeyer.com/Integrated_RHG.html)
++ [各种算法](http://cstheory.stackexchange.com/questions/19759/core-algorithms-deployed/19773#19773)
++ [coffeescript中文手册](http://island205.github.io/tlboc/)
 
 ## 工具
 + [番茄土豆](https://pomotodo.com/)
++ [timer-tab](http://www.timer-tab.com/)
 + [ruby-doc](http://ruby-doc.org/core-1.9.3/)
 + [rails-api](http://api.rubyonrails.org/)
 + [gem-categories](https://www.ruby-toolbox.com/)
@@ -55,6 +60,10 @@ categories:
 + [genghis](https://github.com/bobthecow/genghis#readme)
 + [redis-commander](https://github.com/joeferner/redis-commander)
 + [麦库记事](http://note.sdo.com/)
++ [阿里测](http://alibench.com/)
++ [newrelic](http://newrelic.com/)
++ [所有编程语言的api与文档](http://overapi.com/)
++ [jquery api](http://www.css88.com/jqapi-1.9/)
 
 ## 好的源码
 + [railstutorial](https://github.com/railstutorial/sample_app_2nd_ed)
@@ -108,9 +117,16 @@ categories:
 
 ## gems
 + [starts](https://github.com/stars)
++ [awesomecommandlineapps](http://www.awesomecommandlineapps.com/gems.html)
 
 ## 编程学习
 + [codecademy](http://www.codecademy.com/)
+
+## 靠谱的服务
++ [luosimao企业邮件营销系统](http://luosimao.com/)
++ [getskeleton实时消息](http://www.getvines.com/)
++ [digitalocean云主机](https://www.digitalocean.com)
++ [postmarkapp邮件](https://postmarkapp.com/)
 
 ## 色彩与css在线工具
 + [colorschemedesigner](http://colorschemedesigner.com/)
@@ -118,6 +134,9 @@ categories:
 + [css3maker](http://www.css3maker.com/index.html)
 + [web安全色](http://www.bootcss.com/p/websafecolors/)
 + [hslpicker](http://hslpicker.com/#ff7b00)
++ [colrd](http://colrd.com/palette/)
++ [adobe kuler](https://kuler.adobe.com/create/color-wheel/)
++ [weloveiconfonts](http://weloveiconfonts.com/)
 
 ## web素材
 + [爱库](http://ikeepu.com/)
@@ -137,6 +156,8 @@ categories:
 
 ## 版本控制
 + [gotgithub](http://www.worldhello.net/gotgithub/index.html)
++ [ihower git](http://ihower.tw/git/)
++ [git 简易指南](http://rogerdudler.github.io/git-guide/index.zh.html)
 
 ## 编辑工具
 + [sublimetext tw](http://docs.sublimetext.tw)
