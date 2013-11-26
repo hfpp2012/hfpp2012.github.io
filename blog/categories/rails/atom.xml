@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: rails | 小子的博客]]></title>
+  <link href="http://yinsigan.github.io/blog/categories/rails/atom.xml" rel="self"/>
+  <link href="http://yinsigan.github.io/"/>
+  <updated>2013-11-26T14:09:22+08:00</updated>
+  <id>http://yinsigan.github.io/</id>
+  <author>
+    <name><![CDATA[小子]]></name>
+    <email><![CDATA[ganweiliang886@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Acts As Commentable source analyse]]></title>
+    <link href="http://yinsigan.github.io/blog/2013/11/26/acts-as-commentable-source-analyse/"/>
+    <updated>2013-11-26T11:49:00+08:00</updated>
+    <id>http://yinsigan.github.io/blog/2013/11/26/acts-as-commentable-source-analyse</id>
+    <content type="html"><![CDATA[<h2>acts as commentable source analyse</h2>
+
+<ul>
+<li><a href="https://github.com/jackdempsey/acts_as_commentable">acts_as_commentable</a></li>
+</ul>
+
+
+<h3>安装</h3>
+
+<p><code>rails g comment</code></p>
+
+<h4>分析</h4>
+
+<p>这一步会生成一个rails migration文件和一个叫comment.rb的rails model文件</p>
+
+<p>原理很简单,会在数据库中生成一个叫comments的表
+它的字段包括title, comment, commentable_type, commentable_id, user_id等</p>
+
+<p>而生成这两个模版文件的源码如下:</p>
+
+<p>``` ruby lib/generators/comment/comment_generator.rb
+require &lsquo;rails/generators/migration&rsquo;</p>
+
+<p>class CommentGenerator &lt; Rails::Generators::Base
+  include Rails::Generators::Migration</p>
+
+<p>  def self.source_root</p>
+
+<pre><code>@_acts_as_commentable_source_root ||= File.expand_path("../templates", __FILE__)
+</code></pre>
+
+<p>  end</p>
+
+<p>  def self.next_migration_number(path)</p>
+
+<pre><code>Time.now.utc.strftime("%Y%m%d%H%M%S")
+</code></pre>
+
+<p>  end</p>
+
+<p>  def create_model_file</p>
+
+<pre><code>template "comment.rb", "app/models/comment.rb"
+migration_template "create_comments.rb", "db/migrate/create_comments.rb"
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>这是使用rails generation功能实现的</p>
+
+<p>还可以查看其他gem的实现方式</p>
+
+<p><a href="https://github.com/LTe/acts-as-messageable/blob/master/lib/generators/acts-as-messageable/migration/migration_generator.rb">acts_as_messageable</a></p>
+
+<p>更详细的可参考<a href="http://guides.rubyonrails.org/generators.html">rails generation</a></p>
+
+<h3>如何使用</h3>
+
+<p>``` ruby
+class Post &lt; ActiveRecord::Base
+  acts_as_commentable
+end</p>
+
+<p>commentable = Post.create
+commentable.comments.create(:title => &ldquo;First comment.&rdquo;, :comment => &ldquo;This is the first comment.&rdquo;)
+```</p>
+
+<h4>分析</h4>
+
+<p>如果不使用gem来写评论，一般我们会在model上写has_many comments这样的东西，而acts_as_commentable这个gem它也是要实现这个的，只是它进行包装</p>
+
+<p>关键在<code>acts_as_commentable</code>这一行</p>
+
+<p>``` ruby lib/commentable_method.rb
+require &lsquo;active_record&rsquo;</p>
+
+<h1>ActsAsCommentable</h1>
+
+<p>module Juixe
+  module Acts #:nodoc:</p>
+
+<pre><code>module Commentable #:nodoc:
+
+  def self.included(base)
+    base.extend ClassMethods  
+  end
+
+  module ClassMethods
+    def acts_as_commentable(options={})
+      has_many :comments, {:as =&gt; :commentable, :dependent =&gt; :destroy}.merge(options)
+      include Juixe::Acts::Commentable::InstanceMethods
+      extend Juixe::Acts::Commentable::SingletonMethods
+    end
+  end
+  ...
+</code></pre>
+
+<p>ActiveRecord::Base.send(:include, Juixe::Acts::Commentable)
+```</p>
+
+<p>有这一句<code>ActiveRecord::Base.send(:include, Juixe::Acts::Commentable)</code>只要任何继承ActiveRecord::Base的model都可以使用<code>acts_as_commentable</code> 它是一个classMethods</p>
+
+<p>现在我们来分析源码commentable_methods.rb</p>
+
+<p><code>ruby
+has_many :comments, {:as =&gt; :commentable, :dependent =&gt; :destroy}.merge(options)
+include Juixe::Acts::Commentable::InstanceMethods
+extend Juixe::Acts::Commentable::SingletonMethods
+</code></p>
+
+<p>第一行是一个activemodel relationship表示model使用多态的comment
+<code>Juixe::Acts::Commentable::SingletonMethods</code>是类的单例方法,下面的方法可以用Post.find_comments_by_user来调用,例如
+Book.find_comments_for(Book.last)</p>
+
+<p>``` ruby</p>
+
+<h1>This module contains class methods</h1>
+
+<p>module SingletonMethods
+  # Helper method to lookup for comments for a given object.
+  # This method is equivalent to obj.comments.
+  def find_comments_for(obj)</p>
+
+<pre><code>commentable = self.base_class.name
+Comment.find_comments_for_commentable(commentable, obj.id)
+</code></pre>
+
+<p>  end</p>
+
+<p>  # Helper class method to lookup comments for
+  # the mixin commentable type written by a given user.<br/>
+  # This method is NOT equivalent to Comment.find_comments_for_user
+  def find_comments_by_user(user)</p>
+
+<pre><code>commentable = self.base_class.name
+Comment.where(["user_id = ? and commentable_type = ?", user.id, commentable]).order("created_at DESC")
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>Juixe::Acts::Commentable::InstanceMethods是实例方法
+可以通过类似这样的方式来调用实例方法
+<code>Book.last.add_comment Comment.create(comment: "second comment")</code></p>
+
+<p>接下来我们来看看comment.rb这边</p>
+
+<p>它总要来个belongs_to吧</p>
+
+<p>``` ruby comment.rb
+class Comment &lt; ActiveRecord::Base</p>
+
+<p>  include ActsAsCommentable::Comment</p>
+
+<p>  belongs_to :commentable, :polymorphic => true</p>
+
+<p>  default_scope :order => &lsquo;created_at ASC&rsquo;</p>
+
+<p>  # NOTE: install the acts_as_votable plugin if you
+  # want user to vote on the quality of comments.
+  #acts_as_voteable</p>
+
+<p>  # NOTE: Comments belong to a user
+  belongs_to :user
+end
+```</p>
+
+<p><code>belongs_to :commentable, :polymorphic =&gt; true</code>这就是原理
+然而<code>include ActsAsCommentable::Comment</code>这个会做什么呢</p>
+
+<p>接上来往下看</p>
+
+<p>``` ruby lib/comment_method.rb
+module ActsAsCommentable
+  # including this module into your Comment model will give you finders and named scopes
+  # useful for working with Comments.
+  # The named scopes are:
+  #   in_order: Returns comments in the order they were created (created_at ASC).
+  #   recent: Returns comments by how recently they were created (created_at DESC).
+  #   limit(N): Return no more than N comments.
+  module Comment</p>
+
+<pre><code>def self.included(comment_model)
+  comment_model.extend Finders
+  comment_model.scope :in_order, comment_model.order('created_at ASC')
+  comment_model.scope :recent,   comment_model.order('created_at DESC')
+end
+
+module Finders
+  # Helper class method to lookup all comments assigned
+  # to all commentable types for a given user.
+  def find_comments_by_user(user)
+    where(["user_id = ?", user.id]).order("created_at DESC")
+  end
+
+  # Helper class method to look up all comments for 
+  # commentable class name and commentable id.
+  def find_comments_for_commentable(commentable_str, commentable_id)
+    where(["commentable_type = ? and commentable_id = ?", commentable_str, commentable_id]).order("created_at DESC")
+  end
+
+  # Helper class method to look up a commentable object
+  # given the commentable class name and id 
+  def find_commentable(commentable_str, commentable_id)
+    model = commentable_str.constantize
+    model.respond_to?(:find_comments_for) ? model.find(commentable_id) : nil
+  end
+end
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>可以用Comment.find_comments_by_user的方式来调用</p>
+
+<h3>总结</h3>
+
+<p>它的源码并不复杂，我们通过它并不是要写出跟它一样或类似的gem来，只是可以让我们明白一个道理,代码的重用与组织, 就像在Post.rb里写上acts_as_commentable就可以创建评论了,很方便,还有,通过学习这个gem我们可以学习它是如何设计数据库的</p>
+
+<p>类似的gem还有</p>
+
+<ul>
+<li><a href="https://github.com/tcocca/acts_as_follower">acts_as_follower</a></li>
+<li><a href="https://github.com/LTe/acts-as-messageable">acts-as-messageable</a></li>
+<li><a href="https://github.com/mbleigh/acts-as-taggable-on">acts-as-taggable-on</a></li>
+<li><a href="https://github.com/goncalossilva/acts_as_paranoid">acts_as_paranoid</a></li>
+<li><a href="https://github.com/stefankroes/ancestry">ancestry</a></li>
+<li><a href="https://github.com/collectiveidea/awesome_nested_set">awesome_nested_set</a></li>
+</ul>
+
+
+<p>关于acts_as_commentable更详细的用法可查看
+<a href="http://juixe.com/techknow/index.php/2006/06/18/acts-as-commentable-plugin/">acts-as-commentable-plugin</a></p>
+]]></content>
+  </entry>
+  
+</feed>

@@ -9,8 +9,7 @@
   <meta name="author" content="小子">
 
   
-  <meta name="description" content="相思怕被道多情， 醉酒狂歌怕误名。 千种情怀愁酝酿， 万般诗意共谁鸣？
-">
+  <meta name="description" content="acts as commentable source analyse acts_as_commentable 安装 rails g comment 分析 这一步会生成一个rails migration文件和一个叫comment.rb的rails model文件 原理很简单, &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -66,6 +65,373 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/11/26/acts-as-commentable-source-analyse/">Acts as Commentable Source Analyse</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-11-26T11:49:00+08:00" pubdate data-updated="true">Nov 26<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2>acts as commentable source analyse</h2>
+
+<ul>
+<li><a href="https://github.com/jackdempsey/acts_as_commentable">acts_as_commentable</a></li>
+</ul>
+
+
+<h3>安装</h3>
+
+<p><code>rails g comment</code></p>
+
+<h4>分析</h4>
+
+<p>这一步会生成一个rails migration文件和一个叫comment.rb的rails model文件</p>
+
+<p>原理很简单,会在数据库中生成一个叫comments的表
+它的字段包括title, comment, commentable_type, commentable_id, user_id等</p>
+
+<p>而生成这两个模版文件的源码如下:</p>
+
+<figure class='code'><figcaption><span>lib/generators/comment/comment_generator.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;rails/generators/migration&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">CommentGenerator</span> <span class="o">&lt;</span> <span class="ss">Rails</span><span class="p">:</span><span class="ss">:Generators</span><span class="o">::</span><span class="no">Base</span>
+</span><span class='line'>  <span class="kp">include</span> <span class="ss">Rails</span><span class="p">:</span><span class="ss">:Generators</span><span class="o">::</span><span class="no">Migration</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">source_root</span>
+</span><span class='line'>    <span class="vi">@_acts_as_commentable_source_root</span> <span class="o">||=</span> <span class="no">File</span><span class="o">.</span><span class="n">expand_path</span><span class="p">(</span><span class="s2">&quot;../templates&quot;</span><span class="p">,</span> <span class="bp">__FILE__</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">next_migration_number</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+</span><span class='line'>    <span class="no">Time</span><span class="o">.</span><span class="n">now</span><span class="o">.</span><span class="n">utc</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y%m%d%H%M%S&quot;</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">create_model_file</span>
+</span><span class='line'>    <span class="n">template</span> <span class="s2">&quot;comment.rb&quot;</span><span class="p">,</span> <span class="s2">&quot;app/models/comment.rb&quot;</span>
+</span><span class='line'>    <span class="n">migration_template</span> <span class="s2">&quot;create_comments.rb&quot;</span><span class="p">,</span> <span class="s2">&quot;db/migrate/create_comments.rb&quot;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这是使用rails generation功能实现的</p>
+
+<p>还可以查看其他gem的实现方式</p>
+
+<p><a href="https://github.com/LTe/acts-as-messageable/blob/master/lib/generators/acts-as-messageable/migration/migration_generator.rb">acts_as_messageable</a></p>
+
+<p>更详细的可参考<a href="http://guides.rubyonrails.org/generators.html">rails generation</a></p>
+
+<h3>如何使用</h3>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Post</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">acts_as_commentable</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">commentable</span> <span class="o">=</span> <span class="no">Post</span><span class="o">.</span><span class="n">create</span>
+</span><span class='line'><span class="n">commentable</span><span class="o">.</span><span class="n">comments</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="ss">:title</span> <span class="o">=&gt;</span> <span class="s2">&quot;First comment.&quot;</span><span class="p">,</span> <span class="ss">:comment</span> <span class="o">=&gt;</span> <span class="s2">&quot;This is the first comment.&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>分析</h4>
+
+<p>如果不使用gem来写评论，一般我们会在model上写has_many comments这样的东西，而acts_as_commentable这个gem它也是要实现这个的，只是它进行包装</p>
+
+<p>关键在<code>acts_as_commentable</code>这一行</p>
+
+<figure class='code'><figcaption><span>lib/commentable_method.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;active_record&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># ActsAsCommentable</span>
+</span><span class='line'><span class="k">module</span> <span class="nn">Juixe</span>
+</span><span class='line'>  <span class="k">module</span> <span class="nn">Acts</span> <span class="c1">#:nodoc:</span>
+</span><span class='line'>    <span class="k">module</span> <span class="nn">Commentable</span> <span class="c1">#:nodoc:</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">included</span><span class="p">(</span><span class="n">base</span><span class="p">)</span>
+</span><span class='line'>        <span class="n">base</span><span class="o">.</span><span class="n">extend</span> <span class="no">ClassMethods</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="k">module</span> <span class="nn">ClassMethods</span>
+</span><span class='line'>        <span class="k">def</span> <span class="nf">acts_as_commentable</span><span class="p">(</span><span class="n">options</span><span class="o">=</span><span class="p">{})</span>
+</span><span class='line'>          <span class="n">has_many</span> <span class="ss">:comments</span><span class="p">,</span> <span class="p">{</span><span class="ss">:as</span> <span class="o">=&gt;</span> <span class="ss">:commentable</span><span class="p">,</span> <span class="ss">:dependent</span> <span class="o">=&gt;</span> <span class="ss">:destroy</span><span class="p">}</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
+</span><span class='line'>          <span class="kp">include</span> <span class="ss">Juixe</span><span class="p">:</span><span class="ss">:Acts</span><span class="o">::</span><span class="ss">Commentable</span><span class="p">:</span><span class="ss">:InstanceMethods</span>
+</span><span class='line'>          <span class="kp">extend</span> <span class="ss">Juixe</span><span class="p">:</span><span class="ss">:Acts</span><span class="o">::</span><span class="ss">Commentable</span><span class="p">:</span><span class="ss">:SingletonMethods</span>
+</span><span class='line'>        <span class="k">end</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>      <span class="o">.</span><span class="n">.</span><span class="o">.</span>
+</span><span class='line'>
+</span><span class='line'><span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="ss">:include</span><span class="p">,</span> <span class="ss">Juixe</span><span class="p">:</span><span class="ss">:Acts</span><span class="o">::</span><span class="no">Commentable</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>有这一句<code>ActiveRecord::Base.send(:include, Juixe::Acts::Commentable)</code>只要任何继承ActiveRecord::Base的model都可以使用<code>acts_as_commentable</code> 它是一个classMethods</p>
+
+<p>现在我们来分析源码commentable_methods.rb</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">has_many</span> <span class="ss">:comments</span><span class="p">,</span> <span class="p">{</span><span class="ss">:as</span> <span class="o">=&gt;</span> <span class="ss">:commentable</span><span class="p">,</span> <span class="ss">:dependent</span> <span class="o">=&gt;</span> <span class="ss">:destroy</span><span class="p">}</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
+</span><span class='line'><span class="kp">include</span> <span class="ss">Juixe</span><span class="p">:</span><span class="ss">:Acts</span><span class="o">::</span><span class="ss">Commentable</span><span class="p">:</span><span class="ss">:InstanceMethods</span>
+</span><span class='line'><span class="kp">extend</span> <span class="ss">Juixe</span><span class="p">:</span><span class="ss">:Acts</span><span class="o">::</span><span class="ss">Commentable</span><span class="p">:</span><span class="ss">:SingletonMethods</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>第一行是一个activemodel relationship表示model使用多态的comment
+<code>Juixe::Acts::Commentable::SingletonMethods</code>是类的单例方法,下面的方法可以用Post.find_comments_by_user来调用,例如
+Book.find_comments_for(Book.last)</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># This module contains class methods</span>
+</span><span class='line'><span class="k">module</span> <span class="nn">SingletonMethods</span>
+</span><span class='line'>  <span class="c1"># Helper method to lookup for comments for a given object.</span>
+</span><span class='line'>  <span class="c1"># This method is equivalent to obj.comments.</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">find_comments_for</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">commentable</span> <span class="o">=</span> <span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">name</span>
+</span><span class='line'>    <span class="no">Comment</span><span class="o">.</span><span class="n">find_comments_for_commentable</span><span class="p">(</span><span class="n">commentable</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># Helper class method to lookup comments for</span>
+</span><span class='line'>  <span class="c1"># the mixin commentable type written by a given user.  </span>
+</span><span class='line'>  <span class="c1"># This method is NOT equivalent to Comment.find_comments_for_user</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">find_comments_by_user</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">commentable</span> <span class="o">=</span> <span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">name</span>
+</span><span class='line'>    <span class="no">Comment</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">[</span><span class="s2">&quot;user_id = ? and commentable_type = ?&quot;</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">commentable</span><span class="o">]</span><span class="p">)</span><span class="o">.</span><span class="n">order</span><span class="p">(</span><span class="s2">&quot;created_at DESC&quot;</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Juixe::Acts::Commentable::InstanceMethods是实例方法
+可以通过类似这样的方式来调用实例方法
+<code>Book.last.add_comment Comment.create(comment: "second comment")</code></p>
+
+<p>接下来我们来看看comment.rb这边</p>
+
+<p>它总要来个belongs_to吧</p>
+
+<figure class='code'><figcaption><span>comment.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Comment</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kp">include</span> <span class="ss">ActsAsCommentable</span><span class="p">:</span><span class="ss">:Comment</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">belongs_to</span> <span class="ss">:commentable</span><span class="p">,</span> <span class="ss">:polymorphic</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">default_scope</span> <span class="ss">:order</span> <span class="o">=&gt;</span> <span class="s1">&#39;created_at ASC&#39;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># NOTE: install the acts_as_votable plugin if you</span>
+</span><span class='line'>  <span class="c1"># want user to vote on the quality of comments.</span>
+</span><span class='line'>  <span class="c1">#acts_as_voteable</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># NOTE: Comments belong to a user</span>
+</span><span class='line'>  <span class="n">belongs_to</span> <span class="ss">:user</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>belongs_to :commentable, :polymorphic =&gt; true</code>这就是原理
+然而<code>include ActsAsCommentable::Comment</code>这个会做什么呢</p>
+
+<p>接上来往下看</p>
+
+<figure class='code'><figcaption><span>lib/comment_method.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">module</span> <span class="nn">ActsAsCommentable</span>
+</span><span class='line'>  <span class="c1"># including this module into your Comment model will give you finders and named scopes</span>
+</span><span class='line'>  <span class="c1"># useful for working with Comments.</span>
+</span><span class='line'>  <span class="c1"># The named scopes are:</span>
+</span><span class='line'>  <span class="c1">#   in_order: Returns comments in the order they were created (created_at ASC).</span>
+</span><span class='line'>  <span class="c1">#   recent: Returns comments by how recently they were created (created_at DESC).</span>
+</span><span class='line'>  <span class="c1">#   limit(N): Return no more than N comments.</span>
+</span><span class='line'>  <span class="k">module</span> <span class="nn">Comment</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">included</span><span class="p">(</span><span class="n">comment_model</span><span class="p">)</span>
+</span><span class='line'>      <span class="n">comment_model</span><span class="o">.</span><span class="n">extend</span> <span class="no">Finders</span>
+</span><span class='line'>      <span class="n">comment_model</span><span class="o">.</span><span class="n">scope</span> <span class="ss">:in_order</span><span class="p">,</span> <span class="n">comment_model</span><span class="o">.</span><span class="n">order</span><span class="p">(</span><span class="s1">&#39;created_at ASC&#39;</span><span class="p">)</span>
+</span><span class='line'>      <span class="n">comment_model</span><span class="o">.</span><span class="n">scope</span> <span class="ss">:recent</span><span class="p">,</span>   <span class="n">comment_model</span><span class="o">.</span><span class="n">order</span><span class="p">(</span><span class="s1">&#39;created_at DESC&#39;</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">module</span> <span class="nn">Finders</span>
+</span><span class='line'>      <span class="c1"># Helper class method to lookup all comments assigned</span>
+</span><span class='line'>      <span class="c1"># to all commentable types for a given user.</span>
+</span><span class='line'>      <span class="k">def</span> <span class="nf">find_comments_by_user</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+</span><span class='line'>        <span class="n">where</span><span class="p">(</span><span class="o">[</span><span class="s2">&quot;user_id = ?&quot;</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">id</span><span class="o">]</span><span class="p">)</span><span class="o">.</span><span class="n">order</span><span class="p">(</span><span class="s2">&quot;created_at DESC&quot;</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="c1"># Helper class method to look up all comments for </span>
+</span><span class='line'>      <span class="c1"># commentable class name and commentable id.</span>
+</span><span class='line'>      <span class="k">def</span> <span class="nf">find_comments_for_commentable</span><span class="p">(</span><span class="n">commentable_str</span><span class="p">,</span> <span class="n">commentable_id</span><span class="p">)</span>
+</span><span class='line'>        <span class="n">where</span><span class="p">(</span><span class="o">[</span><span class="s2">&quot;commentable_type = ? and commentable_id = ?&quot;</span><span class="p">,</span> <span class="n">commentable_str</span><span class="p">,</span> <span class="n">commentable_id</span><span class="o">]</span><span class="p">)</span><span class="o">.</span><span class="n">order</span><span class="p">(</span><span class="s2">&quot;created_at DESC&quot;</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="c1"># Helper class method to look up a commentable object</span>
+</span><span class='line'>      <span class="c1"># given the commentable class name and id </span>
+</span><span class='line'>      <span class="k">def</span> <span class="nf">find_commentable</span><span class="p">(</span><span class="n">commentable_str</span><span class="p">,</span> <span class="n">commentable_id</span><span class="p">)</span>
+</span><span class='line'>        <span class="n">model</span> <span class="o">=</span> <span class="n">commentable_str</span><span class="o">.</span><span class="n">constantize</span>
+</span><span class='line'>        <span class="n">model</span><span class="o">.</span><span class="n">respond_to?</span><span class="p">(</span><span class="ss">:find_comments_for</span><span class="p">)</span> <span class="p">?</span> <span class="n">model</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">commentable_id</span><span class="p">)</span> <span class="p">:</span> <span class="kp">nil</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>可以用Comment.find_comments_by_user的方式来调用</p>
+
+<h3>总结</h3>
+
+<p>它的源码并不复杂，我们通过它并不是要写出跟它一样或类似的gem来，只是可以让我们明白一个道理,代码的重用与组织, 就像在Post.rb里写上acts_as_commentable就可以创建评论了,很方便,还有,通过学习这个gem我们可以学习它是如何设计数据库的</p>
+
+<p>类似的gem还有</p>
+
+<ul>
+<li><a href="https://github.com/tcocca/acts_as_follower">acts_as_follower</a></li>
+<li><a href="https://github.com/LTe/acts-as-messageable">acts-as-messageable</a></li>
+<li><a href="https://github.com/mbleigh/acts-as-taggable-on">acts-as-taggable-on</a></li>
+<li><a href="https://github.com/goncalossilva/acts_as_paranoid">acts_as_paranoid</a></li>
+<li><a href="https://github.com/stefankroes/ancestry">ancestry</a></li>
+<li><a href="https://github.com/collectiveidea/awesome_nested_set">awesome_nested_set</a></li>
+</ul>
+
+
+<p>关于acts_as_commentable更详细的用法可查看
+<a href="http://juixe.com/techknow/index.php/2006/06/18/acts-as-commentable-plugin/">acts-as-commentable-plugin</a></p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -520,6 +886,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2013/11/26/acts-as-commentable-source-analyse/">Acts as Commentable Source Analyse</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2013/07/28/qing-huai/">情怀</a>
       </li>
     
@@ -533,10 +903,6 @@
     
       <li class="post">
         <a href="/blog/2013/07/05/gu-ti-shi-ci-ting-yu/">[古体诗词]听雨</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/07/05/ren-sheng-jiu-shi-chu-jian/">人生就是初见</a>
       </li>
     
   </ul>
