@@ -14,6 +14,7 @@ categories:
 + [gem列表](http://ruby-china.org/topics/5205)
 + [rails tutorial china](http://railstutorial-china.org/)
 + [w3c jquery](http://www.w3schools.com/jquery/default.asp)
++ [关于rails源码](http://www.simonecarletti.com/blog/2009/09/inside-ruby-on-rails-reading-source-code/)
 
 ## 视频
 + [railscasts](http://railscasts.com/)
@@ -38,6 +39,7 @@ categories:
 + [gitmagic](http://www-cs-students.stanford.edu/~blynn/gitmagic/index.html)
 + [remote](http://about.ac/remote/)
 + [25-free-computer-science-books](http://www.coderholic.com/25-free-computer-science-books/)
++ [ruby源码分析](http://edwinmeyer.com/Integrated_RHG.html)
 
 ## 工具
 + [番茄土豆](https://pomotodo.com/)
@@ -52,6 +54,7 @@ categories:
 + [robomongo](http://robomongo.org/)
 + [genghis](https://github.com/bobthecow/genghis#readme)
 + [redis-commander](https://github.com/joeferner/redis-commander)
++ [麦库记事](http://note.sdo.com/)
 
 ## 好的源码
 + [railstutorial](https://github.com/railstutorial/sample_app_2nd_ed)
@@ -109,6 +112,19 @@ categories:
 ## 编程学习
 + [codecademy](http://www.codecademy.com/)
 
+## 色彩与css在线工具
++ [colorschemedesigner](http://colorschemedesigner.com/)
++ [css3generator](http://css3generator.com/)
++ [css3maker](http://www.css3maker.com/index.html)
++ [web安全色](http://www.bootcss.com/p/websafecolors/)
++ [hslpicker](http://hslpicker.com/#ff7b00)
+
+## web素材
++ [爱库](http://ikeepu.com/)
++ [懒人图库](http://www.lanrentuku.com/)
++ [dribbble](http://dribbble.com/)
++ [365psd](http://365psd.com/)
+
 ## 博客
 + [xdite](https://pragmatic.ly)
 + [rei](http://blog.chloerei.com/)
@@ -117,9 +133,22 @@ categories:
 + [robbin](http://robbinfan.com/)
 + [李笑来](http://lixiaolai.com/)
 + [terry](http://terrytai.com/)
++ [张鑫旭](http://www.zhangxinxu.com/wordpress/)
 
 ## 版本控制
 + [gotgithub](http://www.worldhello.net/gotgithub/index.html)
 
 ## 编辑工具
 + [sublimetext tw](http://docs.sublimetext.tw)
++ [sublimetext 插件](https://sublime.wbond.net/browse/popular)
++ [vim插件](http://www.vimpusher.com/plugins)
+
+## 翻墙必备
++ [云梯](https://www.vpncloud.biz/)
+
+## 生活与爱好
++ [多看](http://www.duokan.com/)
++ [贝太厨房](http://www.beitaichufang.com/)
++ [百家讲坛](http://www.cntv.cn/lm/baijiajiangtan/)
++ [比特币](http://www.btc123.com/)
++ [资质通鉴](http://www.guoxue.com/shibu/zztj/zztjml.htm)
