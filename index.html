@@ -9,8 +9,8 @@
   <meta name="author" content="小子">
 
   
-  <meta name="description" content="acts_as_commentable 安装 rails g comment 分析 这一步会生成一个rails migration文件和一个叫comment.rb的rails model文件 原理很简单,会在数据库中生成一个叫comments的表
-它的字段包括title, comment, &hellip;">
+  <meta name="description" content="acts_as_commentable 安装 rails g comment 分析 源码目录下如下 这一步会生成一个rails migration文件和一个叫comment.rb的rails model文件 原理很简单,会在数据库中生成一个叫comments的表
+它的字段包括title, &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -105,6 +105,10 @@
 <p><code>rails g comment</code></p>
 
 <h4>分析</h4>
+
+<p>源码目录下如下</p>
+
+<p><img src="/images/acts_as_commentable_file_tree.png"></p>
 
 <p>这一步会生成一个rails migration文件和一个叫comment.rb的rails model文件</p>
 
