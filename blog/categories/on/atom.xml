@@ -4,7 +4,7 @@
   <title><![CDATA[Category: on | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/on/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-11-26T14:09:22+08:00</updated>
+  <updated>2013-11-26T14:24:50+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -18,9 +18,7 @@
     <link href="http://yinsigan.github.io/blog/2013/11/26/acts-as-commentable-source-analyse/"/>
     <updated>2013-11-26T11:49:00+08:00</updated>
     <id>http://yinsigan.github.io/blog/2013/11/26/acts-as-commentable-source-analyse</id>
-    <content type="html"><![CDATA[<h2>acts as commentable source analyse</h2>
-
-<ul>
+    <content type="html"><![CDATA[<ul>
 <li><a href="https://github.com/jackdempsey/acts_as_commentable">acts_as_commentable</a></li>
 </ul>
 
