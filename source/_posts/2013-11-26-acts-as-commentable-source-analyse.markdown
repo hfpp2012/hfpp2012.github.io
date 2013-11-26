@@ -14,6 +14,10 @@ categories: ruby on rails
 
 #### 分析
 
+源码目录下如下
+
+{% img /images/acts_as_commentable_file_tree.png %}
+
 这一步会生成一个rails migration文件和一个叫comment.rb的rails model文件
 
 原理很简单,会在数据库中生成一个叫comments的表
