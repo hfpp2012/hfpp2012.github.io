@@ -20,7 +20,7 @@ categories:
 + [railscasts-china](http://railscasts-china.com/)
 + [happycasts](http://happycasts.net/)
 + [网易云](http://study.163.com/cloud/myCloudClass.htm#/cloudClass/index)
-+ [51cto张汉东的ruby视频](http://edu.51cto.com/lecturer/user_id-140924.html)
++ [诱人的ruby](http://edu.51cto.com/lecturer/user_id-140924.html)
 + [linuxcasts](http://itercast.com/)
 
 ## 书
