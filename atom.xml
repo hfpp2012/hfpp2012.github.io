@@ -4,7 +4,7 @@
   <title><![CDATA[小子的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-11-26T14:55:54+08:00</updated>
+  <updated>2013-11-27T20:46:40+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -497,6 +497,31 @@ Book.find_comments_for(Book.last)</p>
 <li><a href="http://www.getskeleton.com/">getskeleton</a></li>
 <li><a href="http://www.colorzilla.com/gradient-editor/">gradient-editor</a></li>
 <li><a href="http://odyniec.net/projects/imgareaselect/">imgareaselect</a></li>
+<li><a href="http://semantic-ui.com/">semantic-ui</a></li>
+<li><a href="http://getuikit.com/">uikit</a></li>
+<li><a href="http://foundation.zurb.com/">foundation</a></li>
+<li><a href="http://designmodo.github.io/Flat-UI/">Flat-UI</a></li>
+<li><p><a href="http://purecss.io/">purecss</a></p>
+
+<h3>bootstrap</h3>
+
+<ul>
+<li><a href="http://getbootstrap.com/2.3.2/">bootstrap 2</a></li>
+<li><a href="http://getbootstrap.com/">bootstrap 3</a></li>
+<li><a href="http://www.bootcss.com/">bootstrap 中文版</a></li>
+<li><a href="http://bootsnipp.com/resources">bootstrap 资源大集合</a></li>
+<li><a href="http://bootsnipp.com/">bootstrap 代码片断</a></li>
+<li><a href="http://bootswatch.com/">bootstrap 免费模版</a></li>
+<li><a href="http://pikock.github.io/bootstrap-magic/">bootstrap 定制化magic</a></li>
+<li><a href="http://stylebootstrap.info/">bootstrap 定制化style</a></li>
+<li><a href="http://deltaepsilon.github.io/bootstrap-square-ui/">bootstrap square-ui</a></li>
+<li><a href="http://msurguy.github.io/ladda-bootstrap/">Ladda UI for Bootstrap 3</a></li>
+<li><a href="http://www.bootstrap-switch.org/">bootstrap-switch</a></li>
+<li><a href="http://silviomoreto.github.io/bootstrap-select/">bootstrap-select</a></li>
+<li><a href="http://www.lavishbootstrap.com/">lavishbootstrap</a></li>
+<li><a href="http://metroui.org.ua/">Metro UI CSS 2.0</a></li>
+</ul>
+</li>
 </ul>
 
 
