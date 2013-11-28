@@ -4,7 +4,7 @@
   <title><![CDATA[小子的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-11-27T20:46:40+08:00</updated>
+  <updated>2013-11-28T13:28:55+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -492,6 +492,7 @@ Book.find_comments_for(Book.last)</p>
 <h2>css框架</h2>
 
 <ul>
+<li><a href="http://usablica.github.io/front-end-frameworks/compare.html">前端框架集合</a></li>
 <li><a href="http://bourbon.io/">bourbon</a></li>
 <li><a href="http://lessframework.com/">lessframework</a></li>
 <li><a href="http://www.getskeleton.com/">getskeleton</a></li>
