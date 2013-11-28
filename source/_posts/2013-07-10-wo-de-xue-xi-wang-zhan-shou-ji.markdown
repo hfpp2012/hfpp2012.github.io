@@ -97,11 +97,34 @@ categories:
 + [开源的cms](http://www.opensourcerails.com/)
 
 ## css框架
++ [前端框架集合](http://usablica.github.io/front-end-frameworks/compare.html)
 + [bourbon](http://bourbon.io/)
 + [lessframework](http://lessframework.com/)
 + [getskeleton](http://www.getskeleton.com/)
 + [gradient-editor](http://www.colorzilla.com/gradient-editor/)
 + [imgareaselect](http://odyniec.net/projects/imgareaselect/)
++ [semantic-ui](http://semantic-ui.com/)
++ [uikit](http://getuikit.com/)
++ [foundation](http://foundation.zurb.com/)
++ [Flat-UI](http://designmodo.github.io/Flat-UI/)
++ [purecss](http://purecss.io/)
+
+  ### bootstrap
+  + [bootstrap 2](http://getbootstrap.com/2.3.2/)
+  + [bootstrap 3](http://getbootstrap.com/)
+  + [bootstrap 中文版](http://www.bootcss.com/)
+  + [bootstrap 资源大集合](http://bootsnipp.com/resources)
+  + [bootstrap 代码片断](http://bootsnipp.com/)
+  + [bootstrap 免费模版](http://bootswatch.com/)
+  + [bootstrap 定制化magic](http://pikock.github.io/bootstrap-magic/)
+  + [bootstrap 定制化style](http://stylebootstrap.info/)
+  + [bootstrap square-ui](http://deltaepsilon.github.io/bootstrap-square-ui/)
+  + [Ladda UI for Bootstrap 3](http://msurguy.github.io/ladda-bootstrap/)
+  + [bootstrap-switch](http://www.bootstrap-switch.org/)
+  + [bootstrap-select](http://silviomoreto.github.io/bootstrap-select/)
+  + [lavishbootstrap](http://www.lavishbootstrap.com/)
+  + [Metro UI CSS 2.0](http://metroui.org.ua/)
+
 
 ## javascript框架
 + [sugarjs](http://sugarjs.com/features)
