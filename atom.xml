@@ -4,7 +4,7 @@
   <title><![CDATA[小子的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-11-28T13:28:55+08:00</updated>
+  <updated>2013-11-29T11:40:32+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -590,6 +590,11 @@ Book.find_comments_for(Book.last)</p>
 <li><a href="http://www.lanrentuku.com/">懒人图库</a></li>
 <li><a href="http://dribbble.com/">dribbble</a></li>
 <li><a href="http://365psd.com/">365psd</a></li>
+<li><a href="http://subtlepatterns.com/">背景</a></li>
+<li><a href="https://www.iconfinder.com/">图标</a></li>
+<li><a href="http://www.iconfont.cn/">阿里巴巴图标库</a></li>
+<li><a href="http://cssfontstack.com/">字体</a></li>
+<li><a href="http://spritepad.wearekiss.com/">生成sprite</a></li>
 </ul>
 
 
