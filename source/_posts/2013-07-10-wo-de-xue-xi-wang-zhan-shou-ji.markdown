@@ -168,6 +168,11 @@ categories:
 + [懒人图库](http://www.lanrentuku.com/)
 + [dribbble](http://dribbble.com/)
 + [365psd](http://365psd.com/)
++ [背景](http://subtlepatterns.com/)
++ [图标](https://www.iconfinder.com/)
++ [阿里巴巴图标库](http://www.iconfont.cn/)
++ [字体](http://cssfontstack.com/)
++ [生成sprite](http://spritepad.wearekiss.com/)
 
 ## 博客
 + [xdite](https://pragmatic.ly)
