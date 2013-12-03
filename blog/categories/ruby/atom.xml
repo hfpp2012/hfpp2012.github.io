@@ -4,7 +4,7 @@
   <title><![CDATA[Category: ruby | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-03T23:05:41+08:00</updated>
+  <updated>2013-12-03T23:06:37+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -34,11 +34,11 @@
 
 <p>目录树结构</p>
 
-<p>{% img /images/acts_as_follower_file_tree.png %}</p>
+<p><img src="/images/acts_as_follower_file_tree.png"></p>
 
 <p>结构库表结构</p>
 
-<p>{% img /images/acts_as_follower_table_tree.png %}</p>
+<p><img src="/images/acts_as_follower_table_tree.png"></p>
 
 <p>主要有五个字段,分别是<strong>blocked</strong>, <strong>followable_id</strong>, <strong>followable_type</strong>, <strong>follower_id</strong>, <strong>follower_type</strong>, 主要是分为两个多态(<strong>follower</strong>, <strong>followerable</strong>), 例如一个用户订阅了一本书, <strong>followerable</strong>可以存<strong>Book</strong>和它的<strong>id</strong>, 而<strong>follower</strong>这个多态存<strong>User</strong>和它的<strong>id</strong></p>
 
@@ -230,7 +230,7 @@ end</p>
 <p>```</p>
 
 <ul>
-<li>lib/acts_as_follower/follower.rb: 这是一个关于**follower(叫做跟随者), 跟followable.rb的作用差不多，只是是反过来的</li>
+<li>lib/acts_as_follower/follower.rb: 这是一个关于<strong>follower</strong>(叫做跟随者), 跟<strong>followable.rb</strong>的作用差不多，只是是反过来的</li>
 </ul>
 
 
@@ -488,7 +488,7 @@ class Follow &lt; ActiveRecord::Base</p>
 
 <p>源码目录下如下</p>
 
-<p>{% img /images/acts_as_commentable_file_tree.png %}</p>
+<p><img src="/images/acts_as_commentable_file_tree.png"></p>
 
 <p>这一步会生成一个rails migration文件和一个叫comment.rb的rails model文件</p>
 
