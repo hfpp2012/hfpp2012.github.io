@@ -4,7 +4,7 @@
   <title><![CDATA[Category: ruby | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-03T23:06:37+08:00</updated>
+  <updated>2013-12-03T23:09:39+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -47,6 +47,9 @@
 <h3>接下来就来分晰啦</h3>
 
 <h4>源码目录结构功能介绍</h4>
+
+<!-- more -->
+
 
 <ul>
 <li>lib/acts_as_follower.rb: 主文件,主要定义了ActsAsFollower这个model(每个gem都会做差不多的事),还包括一些autoload语句，做的事主要是require你的所用到的rb文件啦</li>
