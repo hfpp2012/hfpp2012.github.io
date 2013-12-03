@@ -4,7 +4,7 @@
   <title><![CDATA[Category: ruby | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-03T18:25:42+08:00</updated>
+  <updated>2013-12-03T23:05:41+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -34,11 +34,11 @@
 
 <p>目录树结构</p>
 
-<p><img src="/images/acts_as_follower_file_tree.png"></p>
+<p>{% img /images/acts_as_follower_file_tree.png %}</p>
 
 <p>结构库表结构</p>
 
-<p><img src="/images/acts_as_follower_table_tree.png"></p>
+<p>{% img /images/acts_as_follower_table_tree.png %}</p>
 
 <p>主要有五个字段,分别是<strong>blocked</strong>, <strong>followable_id</strong>, <strong>followable_type</strong>, <strong>follower_id</strong>, <strong>follower_type</strong>, 主要是分为两个多态(<strong>follower</strong>, <strong>followerable</strong>), 例如一个用户订阅了一本书, <strong>followerable</strong>可以存<strong>Book</strong>和它的<strong>id</strong>, 而<strong>follower</strong>这个多态存<strong>User</strong>和它的<strong>id</strong></p>
 
@@ -117,7 +117,7 @@ module ClassMethods
   end
 end
 
-# 下面的都是实例方法可用于被follow的实例来调用
+# 下面的都是实例方法可用于被follow的实例来调用,下面的self都是被follow对象的实例
 module InstanceMethods
 
   # Returns the number of followers a record has.
@@ -127,6 +127,8 @@ module InstanceMethods
   end
 
   # Returns the followers by a given type
+  下面主要是一个查询语句,constantize的定义见http://api.rubyonrails.org/classes/ActiveSupport/Inflector.html
+  而parent_class_name的定义在lib/acts_as_followable/follower_lib.rb,很简单,主要是返回class名字
   def followers_by_type(follower_type, options={})
     follows = follower_type.constantize.
       joins(:follows).
@@ -143,6 +145,7 @@ module InstanceMethods
     follows
   end
 
+  # 返回所有follower的数量
   def followers_by_type_count(follower_type)
     self.followings.unblocked.for_follower_type(follower_type).count
   end
@@ -170,6 +173,8 @@ module InstanceMethods
     self.followings.includes(:follower)
   end
 
+  # apply_options_to_scope是定义在lib/acts_as_followable/follower_lib.rb的一个方法,只要是过滤参数,把参数提取加到where scope中
+  # 返回所有followers
   def followers(options={})
     followers_scope = followers_scoped.unblocked
     followers_scope = apply_options_to_scope(followers_scope, options)
@@ -184,28 +189,34 @@ module InstanceMethods
 
   # Returns true if the current instance is followed by the passed record
   # Returns false if the current instance is blocked by the passed record or no follow is found
+  # 查看是否被follow
   def followed_by?(follower)
     self.followings.unblocked.for_follower(follower).first.present?
   end
 
+  # 如果查到记录就变成true，没有就创建那条记录
   def block(follower)
     get_follow_for(follower) ? block_existing_follow(follower) : block_future_follow(follower)
   end
 
+  # 把following的记录删除
   def unblock(follower)
     get_follow_for(follower).try(:delete)
   end
 
+  # 返回是否被follower, for_follower是个where scope
   def get_follow_for(follower)
     self.followings.for_follower(follower).first
   end
 
   private
 
+  # 创建following记录
   def block_future_follow(follower)
     Follow.create(:followable =&gt; self, :follower =&gt; follower, :blocked =&gt; true)
   end
 
+  # block!会把blocked属性变成true
   def block_existing_follow(follower)
     get_follow_for(follower).block!
   end
@@ -216,8 +227,12 @@ end
 <p>  end
 end</p>
 
-<p>```
-+ lib/acts_as_follower/follower.rb</p>
+<p>```</p>
+
+<ul>
+<li>lib/acts_as_follower/follower.rb: 这是一个关于**follower(叫做跟随者), 跟followable.rb的作用差不多，只是是反过来的</li>
+</ul>
+
 
 <p>``` ruby lib/acts_as_follower/follower.rb
 module ActsAsFollower #:nodoc:
@@ -228,6 +243,7 @@ module ActsAsFollower #:nodoc:
 end
 
 module ClassMethods
+  # 在model里就可以用acts_as_follower
   def acts_as_follower
     has_many :follows, :as =&gt; :follower, :dependent =&gt; :destroy
     include ActsAsFollower::Follower::InstanceMethods
@@ -238,17 +254,20 @@ end
 module InstanceMethods
 
   # Returns true if this instance is following the object passed as an argument.
+  # 是否following某个followable
   def following?(followable)
     0 &lt; Follow.unblocked.for_follower(self).for_followable(followable).count
   end
 
   # Returns the number of objects this instance is following.
+  # 在数据表中查看这个follower总共跟随了多少followable
   def follow_count
     Follow.unblocked.for_follower(self).count
   end
 
   # Creates a new follow record for this instance to follow the passed object.
   # Does not allow duplicate records to be created.
+  # follow某followable
   def follow(followable)
     if self != followable
       self.follows.find_or_create_by(followable_id: followable.id, followable_type: parent_class_name(followable))
@@ -257,6 +276,7 @@ module InstanceMethods
 
   # Deletes the follow record if it exists.
   def stop_following(followable)
+    # get_follow是用followable来找到那条follow记录然后把它删除掉
     if follow = get_follow(followable)
       follow.destroy
     end
@@ -330,8 +350,8 @@ end
 <p>  end
 end</p>
 
-<p>```
-+ lib/acts_as_follower/follow_scopes.rb</p>
+<p><code>``
++ lib/acts_as_follower/follow_scopes.rb: 这里封装的都是一些查询语句,在**follow.rb**文件里有一句</code>extend ActsAsFollower::FollowScopes`可以在实例上使用这些方法</p>
 
 <p>``` ruby lib/acts_as_follower/follow_scopes.rb
 module ActsAsFollower #:nodoc:
@@ -376,7 +396,7 @@ end
 ```</p>
 
 <ul>
-<li>lib/acts_as_follower/follower_lib.rb:</li>
+<li>lib/acts_as_follower/follower_lib.rb: 这里封装了两个方法,上文有讲过,<strong>follow.rb</strong>文件里有一句<code>extend ActsAsFollower::FollowerLib</code></li>
 </ul>
 
 
@@ -420,7 +440,7 @@ end</p>
 <p>```</p>
 
 <ul>
-<li>lib/acts_as_follower/generators/templates/follow.rb</li>
+<li>lib/acts_as_follower/generators/templates/follow.rb: 这个文件是用来生成模版的,生成的是一个model文件,放在app/models下,它是一个中间表,是所有<strong>follower</strong>和<strong>followable</strong>的链接点</li>
 </ul>
 
 
@@ -446,7 +466,7 @@ class Follow &lt; ActiveRecord::Base</p>
 
 <h3>总结</h3>
 
-<p>学会组织代码的能力和一些rails的内部的东西</p>
+<p>学会组织代码的能力和一些rails的内部的东西,学习这个gem查询一些数据的方法,还有双重多态的写法</p>
 ]]></content>
   </entry>
   
@@ -468,7 +488,7 @@ class Follow &lt; ActiveRecord::Base</p>
 
 <p>源码目录下如下</p>
 
-<p><img src="/images/acts_as_commentable_file_tree.png"></p>
+<p>{% img /images/acts_as_commentable_file_tree.png %}</p>
 
 <p>这一步会生成一个rails migration文件和一个叫comment.rb的rails model文件</p>
 

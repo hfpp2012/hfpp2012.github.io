@@ -311,6 +311,17 @@
 <span class='line-number'>116</span>
 <span class='line-number'>117</span>
 <span class='line-number'>118</span>
+<span class='line-number'>119</span>
+<span class='line-number'>120</span>
+<span class='line-number'>121</span>
+<span class='line-number'>122</span>
+<span class='line-number'>123</span>
+<span class='line-number'>124</span>
+<span class='line-number'>125</span>
+<span class='line-number'>126</span>
+<span class='line-number'>127</span>
+<span class='line-number'>128</span>
+<span class='line-number'>129</span>
 </pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">module</span> <span class="nn">ActsAsFollower</span> <span class="c1">#:nodoc:</span>
 </span><span class='line'>
 </span><span class='line'>  <span class="c1"># 由上面可知ActiveRecord会include下面的Followable</span>
@@ -332,7 +343,7 @@
 </span><span class='line'>      <span class="k">end</span>
 </span><span class='line'>    <span class="k">end</span>
 </span><span class='line'>
-</span><span class='line'>    <span class="c1"># 下面的都是实例方法可用于被follow的实例来调用</span>
+</span><span class='line'>    <span class="c1"># 下面的都是实例方法可用于被follow的实例来调用,下面的self都是被follow对象的实例</span>
 </span><span class='line'>    <span class="k">module</span> <span class="nn">InstanceMethods</span>
 </span><span class='line'>
 </span><span class='line'>      <span class="c1"># Returns the number of followers a record has.</span>
@@ -342,6 +353,8 @@
 </span><span class='line'>      <span class="k">end</span>
 </span><span class='line'>
 </span><span class='line'>      <span class="c1"># Returns the followers by a given type</span>
+</span><span class='line'>      <span class="err">下面主要是一个查询语句</span><span class="p">,</span><span class="n">constantize</span><span class="err">的定义见</span><span class="ss">http</span><span class="p">:</span><span class="sr">//</span><span class="n">api</span><span class="o">.</span><span class="n">rubyonrails</span><span class="o">.</span><span class="n">org</span><span class="o">/</span><span class="n">classes</span><span class="o">/</span><span class="no">ActiveSupport</span><span class="o">/</span><span class="no">Inflector</span><span class="o">.</span><span class="n">html</span>
+</span><span class='line'>      <span class="err">而</span><span class="n">parent_class_name</span><span class="err">的定义在</span><span class="n">lib</span><span class="o">/</span><span class="n">acts_as_followable</span><span class="o">/</span><span class="n">follower_lib</span><span class="o">.</span><span class="n">rb</span><span class="p">,</span><span class="err">很简单</span><span class="p">,</span><span class="err">主要是返回</span><span class="n">class</span><span class="err">名字</span>
 </span><span class='line'>      <span class="k">def</span> <span class="nf">followers_by_type</span><span class="p">(</span><span class="n">follower_type</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">{})</span>
 </span><span class='line'>        <span class="n">follows</span> <span class="o">=</span> <span class="n">follower_type</span><span class="o">.</span><span class="n">constantize</span><span class="o">.</span>
 </span><span class='line'>          <span class="n">joins</span><span class="p">(</span><span class="ss">:follows</span><span class="p">)</span><span class="o">.</span>
@@ -358,6 +371,7 @@
 </span><span class='line'>        <span class="n">follows</span>
 </span><span class='line'>      <span class="k">end</span>
 </span><span class='line'>
+</span><span class='line'>      <span class="c1"># 返回所有follower的数量</span>
 </span><span class='line'>      <span class="k">def</span> <span class="nf">followers_by_type_count</span><span class="p">(</span><span class="n">follower_type</span><span class="p">)</span>
 </span><span class='line'>        <span class="nb">self</span><span class="o">.</span><span class="n">followings</span><span class="o">.</span><span class="n">unblocked</span><span class="o">.</span><span class="n">for_follower_type</span><span class="p">(</span><span class="n">follower_type</span><span class="p">)</span><span class="o">.</span><span class="n">count</span>
 </span><span class='line'>      <span class="k">end</span>
@@ -385,6 +399,8 @@
 </span><span class='line'>        <span class="nb">self</span><span class="o">.</span><span class="n">followings</span><span class="o">.</span><span class="n">includes</span><span class="p">(</span><span class="ss">:follower</span><span class="p">)</span>
 </span><span class='line'>      <span class="k">end</span>
 </span><span class='line'>
+</span><span class='line'>      <span class="c1"># apply_options_to_scope是定义在lib/acts_as_followable/follower_lib.rb的一个方法,只要是过滤参数,把参数提取加到where scope中</span>
+</span><span class='line'>      <span class="c1"># 返回所有followers</span>
 </span><span class='line'>      <span class="k">def</span> <span class="nf">followers</span><span class="p">(</span><span class="n">options</span><span class="o">=</span><span class="p">{})</span>
 </span><span class='line'>        <span class="n">followers_scope</span> <span class="o">=</span> <span class="n">followers_scoped</span><span class="o">.</span><span class="n">unblocked</span>
 </span><span class='line'>        <span class="n">followers_scope</span> <span class="o">=</span> <span class="n">apply_options_to_scope</span><span class="p">(</span><span class="n">followers_scope</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
@@ -399,28 +415,34 @@
 </span><span class='line'>
 </span><span class='line'>      <span class="c1"># Returns true if the current instance is followed by the passed record</span>
 </span><span class='line'>      <span class="c1"># Returns false if the current instance is blocked by the passed record or no follow is found</span>
+</span><span class='line'>      <span class="c1"># 查看是否被follow</span>
 </span><span class='line'>      <span class="k">def</span> <span class="nf">followed_by?</span><span class="p">(</span><span class="n">follower</span><span class="p">)</span>
 </span><span class='line'>        <span class="nb">self</span><span class="o">.</span><span class="n">followings</span><span class="o">.</span><span class="n">unblocked</span><span class="o">.</span><span class="n">for_follower</span><span class="p">(</span><span class="n">follower</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="o">.</span><span class="n">present?</span>
 </span><span class='line'>      <span class="k">end</span>
 </span><span class='line'>
+</span><span class='line'>      <span class="c1"># 如果查到记录就变成true，没有就创建那条记录</span>
 </span><span class='line'>      <span class="k">def</span> <span class="nf">block</span><span class="p">(</span><span class="n">follower</span><span class="p">)</span>
 </span><span class='line'>        <span class="n">get_follow_for</span><span class="p">(</span><span class="n">follower</span><span class="p">)</span> <span class="p">?</span> <span class="n">block_existing_follow</span><span class="p">(</span><span class="n">follower</span><span class="p">)</span> <span class="p">:</span> <span class="n">block_future_follow</span><span class="p">(</span><span class="n">follower</span><span class="p">)</span>
 </span><span class='line'>      <span class="k">end</span>
 </span><span class='line'>
+</span><span class='line'>      <span class="c1"># 把following的记录删除</span>
 </span><span class='line'>      <span class="k">def</span> <span class="nf">unblock</span><span class="p">(</span><span class="n">follower</span><span class="p">)</span>
 </span><span class='line'>        <span class="n">get_follow_for</span><span class="p">(</span><span class="n">follower</span><span class="p">)</span><span class="o">.</span><span class="n">try</span><span class="p">(</span><span class="ss">:delete</span><span class="p">)</span>
 </span><span class='line'>      <span class="k">end</span>
 </span><span class='line'>
+</span><span class='line'>      <span class="c1"># 返回是否被follower, for_follower是个where scope</span>
 </span><span class='line'>      <span class="k">def</span> <span class="nf">get_follow_for</span><span class="p">(</span><span class="n">follower</span><span class="p">)</span>
 </span><span class='line'>        <span class="nb">self</span><span class="o">.</span><span class="n">followings</span><span class="o">.</span><span class="n">for_follower</span><span class="p">(</span><span class="n">follower</span><span class="p">)</span><span class="o">.</span><span class="n">first</span>
 </span><span class='line'>      <span class="k">end</span>
 </span><span class='line'>
 </span><span class='line'>      <span class="kp">private</span>
 </span><span class='line'>
+</span><span class='line'>      <span class="c1"># 创建following记录</span>
 </span><span class='line'>      <span class="k">def</span> <span class="nf">block_future_follow</span><span class="p">(</span><span class="n">follower</span><span class="p">)</span>
 </span><span class='line'>        <span class="no">Follow</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="ss">:followable</span> <span class="o">=&gt;</span> <span class="nb">self</span><span class="p">,</span> <span class="ss">:follower</span> <span class="o">=&gt;</span> <span class="n">follower</span><span class="p">,</span> <span class="ss">:blocked</span> <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">)</span>
 </span><span class='line'>      <span class="k">end</span>
 </span><span class='line'>
+</span><span class='line'>      <span class="c1"># block!会把blocked属性变成true</span>
 </span><span class='line'>      <span class="k">def</span> <span class="nf">block_existing_follow</span><span class="p">(</span><span class="n">follower</span><span class="p">)</span>
 </span><span class='line'>        <span class="n">get_follow_for</span><span class="p">(</span><span class="n">follower</span><span class="p">)</span><span class="o">.</span><span class="n">block!</span>
 </span><span class='line'>      <span class="k">end</span>
@@ -433,7 +455,7 @@
 
 
 <ul>
-<li>lib/acts_as_follower/follower.rb</li>
+<li>lib/acts_as_follower/follower.rb: 这是一个关于follower(叫做跟随者), 跟followable.rb的作用差不多，只是是反过来的</li>
 </ul>
 
 
@@ -545,6 +567,11 @@
 <span class='line-number'>106</span>
 <span class='line-number'>107</span>
 <span class='line-number'>108</span>
+<span class='line-number'>109</span>
+<span class='line-number'>110</span>
+<span class='line-number'>111</span>
+<span class='line-number'>112</span>
+<span class='line-number'>113</span>
 </pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">module</span> <span class="nn">ActsAsFollower</span> <span class="c1">#:nodoc:</span>
 </span><span class='line'>  <span class="k">module</span> <span class="nn">Follower</span>
 </span><span class='line'>
@@ -553,6 +580,7 @@
 </span><span class='line'>    <span class="k">end</span>
 </span><span class='line'>
 </span><span class='line'>    <span class="k">module</span> <span class="nn">ClassMethods</span>
+</span><span class='line'>      <span class="c1"># 在model里就可以用acts_as_follower</span>
 </span><span class='line'>      <span class="k">def</span> <span class="nf">acts_as_follower</span>
 </span><span class='line'>        <span class="n">has_many</span> <span class="ss">:follows</span><span class="p">,</span> <span class="ss">:as</span> <span class="o">=&gt;</span> <span class="ss">:follower</span><span class="p">,</span> <span class="ss">:dependent</span> <span class="o">=&gt;</span> <span class="ss">:destroy</span>
 </span><span class='line'>        <span class="kp">include</span> <span class="ss">ActsAsFollower</span><span class="p">:</span><span class="ss">:Follower</span><span class="o">::</span><span class="no">InstanceMethods</span>
@@ -563,17 +591,20 @@
 </span><span class='line'>    <span class="k">module</span> <span class="nn">InstanceMethods</span>
 </span><span class='line'>
 </span><span class='line'>      <span class="c1"># Returns true if this instance is following the object passed as an argument.</span>
+</span><span class='line'>      <span class="c1"># 是否following某个followable</span>
 </span><span class='line'>      <span class="k">def</span> <span class="nf">following?</span><span class="p">(</span><span class="n">followable</span><span class="p">)</span>
 </span><span class='line'>        <span class="mi">0</span> <span class="o">&lt;</span> <span class="no">Follow</span><span class="o">.</span><span class="n">unblocked</span><span class="o">.</span><span class="n">for_follower</span><span class="p">(</span><span class="nb">self</span><span class="p">)</span><span class="o">.</span><span class="n">for_followable</span><span class="p">(</span><span class="n">followable</span><span class="p">)</span><span class="o">.</span><span class="n">count</span>
 </span><span class='line'>      <span class="k">end</span>
 </span><span class='line'>
 </span><span class='line'>      <span class="c1"># Returns the number of objects this instance is following.</span>
+</span><span class='line'>      <span class="c1"># 在数据表中查看这个follower总共跟随了多少followable</span>
 </span><span class='line'>      <span class="k">def</span> <span class="nf">follow_count</span>
 </span><span class='line'>        <span class="no">Follow</span><span class="o">.</span><span class="n">unblocked</span><span class="o">.</span><span class="n">for_follower</span><span class="p">(</span><span class="nb">self</span><span class="p">)</span><span class="o">.</span><span class="n">count</span>
 </span><span class='line'>      <span class="k">end</span>
 </span><span class='line'>
 </span><span class='line'>      <span class="c1"># Creates a new follow record for this instance to follow the passed object.</span>
 </span><span class='line'>      <span class="c1"># Does not allow duplicate records to be created.</span>
+</span><span class='line'>      <span class="c1"># follow某followable</span>
 </span><span class='line'>      <span class="k">def</span> <span class="nf">follow</span><span class="p">(</span><span class="n">followable</span><span class="p">)</span>
 </span><span class='line'>        <span class="k">if</span> <span class="nb">self</span> <span class="o">!=</span> <span class="n">followable</span>
 </span><span class='line'>          <span class="nb">self</span><span class="o">.</span><span class="n">follows</span><span class="o">.</span><span class="n">find_or_create_by</span><span class="p">(</span><span class="n">followable_id</span><span class="p">:</span> <span class="n">followable</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">followable_type</span><span class="p">:</span> <span class="n">parent_class_name</span><span class="p">(</span><span class="n">followable</span><span class="p">))</span>
@@ -582,6 +613,7 @@
 </span><span class='line'>
 </span><span class='line'>      <span class="c1"># Deletes the follow record if it exists.</span>
 </span><span class='line'>      <span class="k">def</span> <span class="nf">stop_following</span><span class="p">(</span><span class="n">followable</span><span class="p">)</span>
+</span><span class='line'>        <span class="c1"># get_follow是用followable来找到那条follow记录然后把它删除掉</span>
 </span><span class='line'>        <span class="k">if</span> <span class="n">follow</span> <span class="o">=</span> <span class="n">get_follow</span><span class="p">(</span><span class="n">followable</span><span class="p">)</span>
 </span><span class='line'>          <span class="n">follow</span><span class="o">.</span><span class="n">destroy</span>
 </span><span class='line'>        <span class="k">end</span>
@@ -657,7 +689,7 @@
 
 
 <ul>
-<li>lib/acts_as_follower/follow_scopes.rb</li>
+<li>lib/acts_as_follower/follow_scopes.rb: 这里封装的都是一些查询语句,在<strong>follow.rb</strong>文件里有一句<code>extend ActsAsFollower::FollowScopes</code>可以在实例上使用这些方法</li>
 </ul>
 
 
@@ -741,7 +773,7 @@
 
 
 <ul>
-<li>lib/acts_as_follower/follower_lib.rb:</li>
+<li>lib/acts_as_follower/follower_lib.rb: 这里封装了两个方法,上文有讲过,<strong>follow.rb</strong>文件里有一句<code>extend ActsAsFollower::FollowerLib</code></li>
 </ul>
 
 
@@ -815,7 +847,7 @@
 
 
 <ul>
-<li>lib/acts_as_follower/generators/templates/follow.rb</li>
+<li>lib/acts_as_follower/generators/templates/follow.rb: 这个文件是用来生成模版的,生成的是一个model文件,放在app/models下,它是一个中间表,是所有<strong>follower</strong>和<strong>followable</strong>的链接点</li>
 </ul>
 
 
@@ -852,7 +884,7 @@
 
 <h3>总结</h3>
 
-<p>学会组织代码的能力和一些rails的内部的东西</p>
+<p>学会组织代码的能力和一些rails的内部的东西,学习这个gem查询一些数据的方法,还有双重多态的写法</p>
 </div>
 
 
