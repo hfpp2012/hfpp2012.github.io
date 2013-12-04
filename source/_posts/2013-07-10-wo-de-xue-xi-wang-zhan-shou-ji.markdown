@@ -17,6 +17,7 @@ categories:
 + [关于rails源码](http://www.simonecarletti.com/blog/2009/09/inside-ruby-on-rails-reading-source-code/)
 + [笨方法学ruby](http://lrthw.github.io/)
 + [ruby参考手册](http://www.kuqin.com/rubycndocument/man/index.html)
++ [吕成鹏的ruby笔记](http://www.chengpeng.me/)
 
 ## 视频
 + [railscasts](http://railscasts.com/)
