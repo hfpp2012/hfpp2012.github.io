@@ -4,7 +4,7 @@
   <title><![CDATA[小子的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-03T23:09:39+08:00</updated>
+  <updated>2013-12-04T11:13:39+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -1195,6 +1195,7 @@ Book.find_comments_for(Book.last)</p>
 <li><a href="http://www.simonecarletti.com/blog/2009/09/inside-ruby-on-rails-reading-source-code/">关于rails源码</a></li>
 <li><a href="http://lrthw.github.io/">笨方法学ruby</a></li>
 <li><a href="http://www.kuqin.com/rubycndocument/man/index.html">ruby参考手册</a></li>
+<li><a href="http://www.chengpeng.me/">吕成鹏的ruby笔记</a></li>
 </ul>
 
 
