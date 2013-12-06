@@ -4,7 +4,7 @@
   <title><![CDATA[小子的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-06T21:58:06+08:00</updated>
+  <updated>2013-12-06T22:56:22+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -1261,6 +1261,7 @@ Book.find_comments_for(Book.last)</p>
 <li><a href="http://www.commandlinefu.com/commands/browse">commandlinefu</a></li>
 <li><a href="http://commandlinefu.cn/">中文版commandlinefu</a></li>
 <li><a href="http://explainshell.com/">explainshell</a></li>
+<li><a href="http://jsbeautifier.org/">jsbeautifier</a></li>
 </ul>
 
 
