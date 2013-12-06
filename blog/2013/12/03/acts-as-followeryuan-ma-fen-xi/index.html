@@ -357,7 +357,7 @@
 </span><span class='line'>
 </span><span class='line'>      <span class="c1"># Returns the followers by a given type</span>
 </span><span class='line'>      <span class="c1"># 下面主要是一个查询语句,constantize的定义见http://api.rubyonrails.org/classes/ActiveSupport/Inflector.html</span>
-</span><span class='line'>      <span class="err">而</span><span class="n">parent_class_name</span><span class="err">的定义在</span><span class="n">lib</span><span class="o">/</span><span class="n">acts_as_followable</span><span class="o">/</span><span class="n">follower_lib</span><span class="o">.</span><span class="n">rb</span><span class="p">,</span><span class="err">很简单</span><span class="p">,</span><span class="err">主要是返回</span><span class="n">class</span><span class="err">名字</span>
+</span><span class='line'>      <span class="c1"># 而parent_class_name的定义在lib/acts_as_followable/follower_lib.rb,很简单,主要是返回class名字</span>
 </span><span class='line'>      <span class="k">def</span> <span class="nf">followers_by_type</span><span class="p">(</span><span class="n">follower_type</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">{})</span>
 </span><span class='line'>        <span class="n">follows</span> <span class="o">=</span> <span class="n">follower_type</span><span class="o">.</span><span class="n">constantize</span><span class="o">.</span>
 </span><span class='line'>          <span class="n">joins</span><span class="p">(</span><span class="ss">:follows</span><span class="p">)</span><span class="o">.</span>

@@ -4,7 +4,7 @@
   <title><![CDATA[Category: ruby | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-06T13:35:42+08:00</updated>
+  <updated>2013-12-06T13:36:44+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -131,7 +131,7 @@ module InstanceMethods
 
   # Returns the followers by a given type
   # 下面主要是一个查询语句,constantize的定义见http://api.rubyonrails.org/classes/ActiveSupport/Inflector.html
-  而parent_class_name的定义在lib/acts_as_followable/follower_lib.rb,很简单,主要是返回class名字
+  # 而parent_class_name的定义在lib/acts_as_followable/follower_lib.rb,很简单,主要是返回class名字
   def followers_by_type(follower_type, options={})
     follows = follower_type.constantize.
       joins(:follows).
