@@ -104,8 +104,8 @@ module ActsAsFollower #:nodoc:
       end
 
       # Returns the followers by a given type
-      下面主要是一个查询语句,constantize的定义见http://api.rubyonrails.org/classes/ActiveSupport/Inflector.html
-      而parent_class_name的定义在lib/acts_as_followable/follower_lib.rb,很简单,主要是返回class名字
+      # 下面主要是一个查询语句,constantize的定义见http://api.rubyonrails.org/classes/ActiveSupport/Inflector.html
+      # 而parent_class_name的定义在lib/acts_as_followable/follower_lib.rb,很简单,主要是返回class名字
       def followers_by_type(follower_type, options={})
         follows = follower_type.constantize.
           joins(:follows).

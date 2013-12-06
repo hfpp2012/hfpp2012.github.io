@@ -67,6 +67,9 @@ categories:
 + [newrelic](http://newrelic.com/)
 + [所有编程语言的api与文档](http://overapi.com/)
 + [jquery api](http://www.css88.com/jqapi-1.9/)
++ [commandlinefu](http://www.commandlinefu.com/commands/browse)
++ [中文版commandlinefu](http://commandlinefu.cn/)
++ [explainshell](http://explainshell.com/)
 
 ## 好的源码
 + [railstutorial](https://github.com/railstutorial/sample_app_2nd_ed)
