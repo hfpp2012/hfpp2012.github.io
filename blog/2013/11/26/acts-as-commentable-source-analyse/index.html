@@ -9,8 +9,7 @@
   <meta name="author" content="小子">
 
   
-  <meta name="description" content="acts_as_commentable 安装 rails g comment 分析 源码目录下如下 这一步会生成一个rails migration文件和一个叫comment.rb的rails model文件 原理很简单,会在数据库中生成一个叫comments的表
-它的字段包括title, &hellip;">
+  <meta name="description" content="acts_as_commentable 这个gem是做什么的?原理是什么? 这个gem是用来实现评论,它跟一般的评论没什么区别,只是这个gem把一些代码进行了封装,这是我们可以学习的地方. 它使用也很简单,只要在model里写上acts_as_commentable,就可以使用评论了, &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -97,9 +96,29 @@
 </ul>
 
 
-<h3>安装</h3>
+<h3>这个gem是做什么的?原理是什么?</h3>
 
-<p><code>rails g comment</code></p>
+<p>这个gem是用来实现评论,它跟一般的评论没什么区别,只是这个gem把一些代码进行了封装,这是我们可以学习的地方.</p>
+
+<p>它使用也很简单,只要在model里写上<code>acts_as_commentable</code>,就可以使用评论了,其实<code>acts_as_commentable</code>在实现上就等于
+<code>has_many :comments, :as =&gt; :commentable</code>, comment这个model是一个简单的多态,它在数据表中的存储是这样的。</p>
+
+<p><img src="/images/acts_as_comment_table.png"></p>
+
+<p>其实最主要的就是两个字段commentable_id, commentable_type,一个简单的多态</p>
+
+<p>由于<code>has_many :comments</code>那就可以进行很多操作，例如创建一条评论</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">Post</span><span class="o">.</span><span class="n">first</span><span class="o">.</span><span class="n">comments</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="ss">:title</span> <span class="o">=&gt;</span> <span class="s2">&quot;First comment.&quot;</span><span class="p">,</span> <span class="ss">:comment</span> <span class="o">=&gt;</span> <span class="s2">&quot;This is the first comment.&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>经过这样的操作之后,在数据库中就会产生如下如果</p>
+
+<p><img src="/images/acts_as_comment_table_result.png"></p>
+
+<p>而这个存储方式是由rails自动处理的,更多的rails关系模型可查看<a href="http://guides.rubyonrails.org/association_basics.html">rails guides</a></p>
 
 <h4>分析</h4>
 
