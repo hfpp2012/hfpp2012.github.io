@@ -4,7 +4,7 @@
   <title><![CDATA[小子的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-05T22:56:20+08:00</updated>
+  <updated>2013-12-06T13:35:42+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -1258,6 +1258,9 @@ Book.find_comments_for(Book.last)</p>
 <li><a href="http://newrelic.com/">newrelic</a></li>
 <li><a href="http://overapi.com/">所有编程语言的api与文档</a></li>
 <li><a href="http://www.css88.com/jqapi-1.9/">jquery api</a></li>
+<li><a href="http://www.commandlinefu.com/commands/browse">commandlinefu</a></li>
+<li><a href="http://commandlinefu.cn/">中文版commandlinefu</a></li>
+<li><a href="http://explainshell.com/">explainshell</a></li>
 </ul>
 
 
