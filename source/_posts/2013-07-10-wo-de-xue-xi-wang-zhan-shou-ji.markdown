@@ -99,6 +99,7 @@ categories:
 + [ribbit](https://github.com/tomgrim1/ribbit)一个简单的twitter clone app
 + [diaspora](https://github.com/diaspora/diaspora)一个社区网络
 + [开源的cms](http://www.opensourcerails.com/)
++ [imax.im](https://github.com/huacnlee/imax.im)
 
 ## css框架
 + [前端框架集合](http://usablica.github.io/front-end-frameworks/compare.html)
