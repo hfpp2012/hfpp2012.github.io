@@ -4,7 +4,7 @@
   <title><![CDATA[小子的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-07T11:16:40+08:00</updated>
+  <updated>2013-12-07T12:56:38+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -23,10 +23,28 @@
 </ul>
 
 
-<h3>这个gem是做什么的?</h3>
+<h3>这个gem是做什么的?原理是什么?</h3>
 
 <p>这个gem主要是用来实现类似twitter那种关注，新浪那种收听的功能
 主要是两个model的关联,例如一个用户订阅了一本书,我们可以这样实现<code>User.first.follow(Book.first)</code></p>
+
+<p>它在实现是就是利用两个多态，一个叫followable(被follow者), 一个叫followable(跟随者),把每个对象的类名字符串和id存进数据库实现关联,其他代码就实现了关于两者的查询代码, 下面是两者的关系</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">has_many</span> <span class="ss">:followings</span><span class="p">,</span> <span class="ss">:as</span> <span class="o">=&gt;</span> <span class="ss">:followable</span><span class="p">,</span> <span class="ss">:dependent</span> <span class="o">=&gt;</span> <span class="ss">:destroy</span><span class="p">,</span> <span class="ss">:class_name</span> <span class="o">=&gt;</span> <span class="s1">&#39;Follow&#39;</span>
+</span><span class='line'><span class="n">has_many</span> <span class="ss">:follows</span><span class="p">,</span> <span class="ss">:as</span> <span class="o">=&gt;</span> <span class="ss">:follower</span><span class="p">,</span> <span class="ss">:dependent</span> <span class="o">=&gt;</span> <span class="ss">:destroy</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>follow.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">belongs_to</span> <span class="ss">:followable</span><span class="p">,</span> <span class="ss">:polymorphic</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'><span class="n">belongs_to</span> <span class="ss">:follower</span><span class="p">,</span>   <span class="ss">:polymorphic</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+</span></code></pre></td></tr></table></div></figure>
+
 
 <hr />
 
@@ -251,7 +269,14 @@
 <span class='line-number'>127</span>
 <span class='line-number'>128</span>
 <span class='line-number'>129</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">module</span> <span class="nn">ActsAsFollower</span> <span class="c1">#:nodoc:</span>
+<span class='line-number'>130</span>
+<span class='line-number'>131</span>
+<span class='line-number'>132</span>
+<span class='line-number'>133</span>
+<span class='line-number'>134</span>
+<span class='line-number'>135</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># 被follow</span>
+</span><span class='line'><span class="k">module</span> <span class="nn">ActsAsFollower</span> <span class="c1">#:nodoc:</span>
 </span><span class='line'>
 </span><span class='line'>  <span class="c1"># 由上面可知ActiveRecord会include下面的Followable</span>
 </span><span class='line'>  <span class="k">module</span> <span class="nn">Followable</span>
@@ -285,6 +310,7 @@
 </span><span class='line'>      <span class="c1"># 下面主要是一个查询语句,constantize的定义见http://api.rubyonrails.org/classes/ActiveSupport/Inflector.html</span>
 </span><span class='line'>      <span class="c1"># 而parent_class_name的定义在lib/acts_as_followable/follower_lib.rb,很简单,主要是返回class名字</span>
 </span><span class='line'>      <span class="k">def</span> <span class="nf">followers_by_type</span><span class="p">(</span><span class="n">follower_type</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">{})</span>
+</span><span class='line'>        <span class="c1"># parent_class_name是把一个实例转成类的字符串,例如&#39;Topic&#39;, &#39;Article&#39;等</span>
 </span><span class='line'>        <span class="n">follows</span> <span class="o">=</span> <span class="n">follower_type</span><span class="o">.</span><span class="n">constantize</span><span class="o">.</span>
 </span><span class='line'>          <span class="n">joins</span><span class="p">(</span><span class="ss">:follows</span><span class="p">)</span><span class="o">.</span>
 </span><span class='line'>          <span class="n">where</span><span class="p">(</span><span class="s1">&#39;follows.blocked&#39;</span>         <span class="o">=&gt;</span> <span class="kp">false</span><span class="p">,</span>
@@ -309,6 +335,7 @@
 </span><span class='line'>      <span class="c1"># e.g. user_followers == followers_by_type(&#39;User&#39;)</span>
 </span><span class='line'>      <span class="c1"># Allows magic names on followers_by_type_count</span>
 </span><span class='line'>      <span class="c1"># e.g. count_user_followers == followers_by_type_count(&#39;User&#39;)</span>
+</span><span class='line'>      <span class="c1"># 实现更加灵活的查询</span>
 </span><span class='line'>      <span class="k">def</span> <span class="nf">method_missing</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
 </span><span class='line'>        <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">to_s</span><span class="o">[</span><span class="sr">/count_(.+)_followers/</span><span class="o">]</span>
 </span><span class='line'>          <span class="n">followers_by_type_count</span><span class="p">(</span><span class="vg">$1</span><span class="o">.</span><span class="n">singularize</span><span class="o">.</span><span class="n">classify</span><span class="p">)</span>
@@ -319,12 +346,14 @@
 </span><span class='line'>        <span class="k">end</span>
 </span><span class='line'>      <span class="k">end</span>
 </span><span class='line'>
+</span><span class='line'>      <span class="c1"># 返回follow的数量</span>
 </span><span class='line'>      <span class="k">def</span> <span class="nf">blocked_followers_count</span>
 </span><span class='line'>        <span class="nb">self</span><span class="o">.</span><span class="n">followings</span><span class="o">.</span><span class="n">blocked</span><span class="o">.</span><span class="n">count</span>
 </span><span class='line'>      <span class="k">end</span>
 </span><span class='line'>
 </span><span class='line'>      <span class="c1"># Returns the followings records scoped</span>
 </span><span class='line'>      <span class="k">def</span> <span class="nf">followers_scoped</span>
+</span><span class='line'>        <span class="c1"># 因为follow belongs_to follower</span>
 </span><span class='line'>        <span class="nb">self</span><span class="o">.</span><span class="n">followings</span><span class="o">.</span><span class="n">includes</span><span class="p">(</span><span class="ss">:follower</span><span class="p">)</span>
 </span><span class='line'>      <span class="k">end</span>
 </span><span class='line'>
@@ -333,6 +362,7 @@
 </span><span class='line'>      <span class="k">def</span> <span class="nf">followers</span><span class="p">(</span><span class="n">options</span><span class="o">=</span><span class="p">{})</span>
 </span><span class='line'>        <span class="n">followers_scope</span> <span class="o">=</span> <span class="n">followers_scoped</span><span class="o">.</span><span class="n">unblocked</span>
 </span><span class='line'>        <span class="n">followers_scope</span> <span class="o">=</span> <span class="n">apply_options_to_scope</span><span class="p">(</span><span class="n">followers_scope</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+</span><span class='line'>        <span class="c1"># 取出所有follower</span>
 </span><span class='line'>        <span class="n">followers_scope</span><span class="o">.</span><span class="n">to_a</span><span class="o">.</span><span class="n">collect</span><span class="p">{</span><span class="o">|</span><span class="n">f</span><span class="o">|</span> <span class="n">f</span><span class="o">.</span><span class="n">follower</span><span class="p">}</span>
 </span><span class='line'>      <span class="k">end</span>
 </span><span class='line'>
@@ -501,9 +531,13 @@
 <span class='line-number'>111</span>
 <span class='line-number'>112</span>
 <span class='line-number'>113</span>
+<span class='line-number'>114</span>
+<span class='line-number'>115</span>
+<span class='line-number'>116</span>
 </pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">module</span> <span class="nn">ActsAsFollower</span> <span class="c1">#:nodoc:</span>
 </span><span class='line'>  <span class="k">module</span> <span class="nn">Follower</span>
 </span><span class='line'>
+</span><span class='line'>    <span class="c1"># active_record会include</span>
 </span><span class='line'>    <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">included</span><span class="p">(</span><span class="n">base</span><span class="p">)</span>
 </span><span class='line'>      <span class="n">base</span><span class="o">.</span><span class="n">extend</span> <span class="no">ClassMethods</span>
 </span><span class='line'>    <span class="k">end</span>
@@ -512,7 +546,9 @@
 </span><span class='line'>      <span class="c1"># 在model里就可以用acts_as_follower</span>
 </span><span class='line'>      <span class="k">def</span> <span class="nf">acts_as_follower</span>
 </span><span class='line'>        <span class="n">has_many</span> <span class="ss">:follows</span><span class="p">,</span> <span class="ss">:as</span> <span class="o">=&gt;</span> <span class="ss">:follower</span><span class="p">,</span> <span class="ss">:dependent</span> <span class="o">=&gt;</span> <span class="ss">:destroy</span>
+</span><span class='line'>        <span class="c1"># 具体类加载实例方法</span>
 </span><span class='line'>        <span class="kp">include</span> <span class="ss">ActsAsFollower</span><span class="p">:</span><span class="ss">:Follower</span><span class="o">::</span><span class="no">InstanceMethods</span>
+</span><span class='line'>        <span class="c1"># 具体类加载FollowerLib库方法</span>
 </span><span class='line'>        <span class="kp">include</span> <span class="ss">ActsAsFollower</span><span class="p">:</span><span class="ss">:FollowerLib</span>
 </span><span class='line'>      <span class="k">end</span>
 </span><span class='line'>    <span class="k">end</span>

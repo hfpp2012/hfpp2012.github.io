@@ -9,8 +9,8 @@
   <meta name="author" content="小子">
 
   
-  <meta name="description" content="acts_as_follower 这个gem是做什么的? 这个gem主要是用来实现类似twitter那种关注，新浪那种收听的功能
-主要是两个model的关联,例如一个用户订阅了一本书,我们可以这样实现User.first.follow(Book.first) 来看一下它的数据结构 目录树结构 &hellip;">
+  <meta name="description" content="acts_as_follower 这个gem是做什么的?原理是什么? 这个gem主要是用来实现类似twitter那种关注，新浪那种收听的功能
+主要是两个model的关联,例如一个用户订阅了一本书,我们可以这样实现User.first.follow(Book.first) &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -100,10 +100,28 @@
 </ul>
 
 
-<h3>这个gem是做什么的?</h3>
+<h3>这个gem是做什么的?原理是什么?</h3>
 
 <p>这个gem主要是用来实现类似twitter那种关注，新浪那种收听的功能
 主要是两个model的关联,例如一个用户订阅了一本书,我们可以这样实现<code>User.first.follow(Book.first)</code></p>
+
+<p>它在实现是就是利用两个多态，一个叫followable(被follow者), 一个叫followable(跟随者),把每个对象的类名字符串和id存进数据库实现关联,其他代码就实现了关于两者的查询代码, 下面是两者的关系</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">has_many</span> <span class="ss">:followings</span><span class="p">,</span> <span class="ss">:as</span> <span class="o">=&gt;</span> <span class="ss">:followable</span><span class="p">,</span> <span class="ss">:dependent</span> <span class="o">=&gt;</span> <span class="ss">:destroy</span><span class="p">,</span> <span class="ss">:class_name</span> <span class="o">=&gt;</span> <span class="s1">&#39;Follow&#39;</span>
+</span><span class='line'><span class="n">has_many</span> <span class="ss">:follows</span><span class="p">,</span> <span class="ss">:as</span> <span class="o">=&gt;</span> <span class="ss">:follower</span><span class="p">,</span> <span class="ss">:dependent</span> <span class="o">=&gt;</span> <span class="ss">:destroy</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>follow.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">belongs_to</span> <span class="ss">:followable</span><span class="p">,</span> <span class="ss">:polymorphic</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'><span class="n">belongs_to</span> <span class="ss">:follower</span><span class="p">,</span>   <span class="ss">:polymorphic</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+</span></code></pre></td></tr></table></div></figure>
+
 
 <hr />
 
