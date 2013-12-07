@@ -70,6 +70,7 @@ categories:
 + [commandlinefu](http://www.commandlinefu.com/commands/browse)
 + [中文版commandlinefu](http://commandlinefu.cn/)
 + [explainshell](http://explainshell.com/)
++ [jsbeautifier](http://jsbeautifier.org/)
 
 ## 好的源码
 + [railstutorial](https://github.com/railstutorial/sample_app_2nd_ed)
