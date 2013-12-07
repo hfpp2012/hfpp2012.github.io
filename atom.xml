@@ -4,7 +4,7 @@
   <title><![CDATA[小子的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-07T01:46:25+08:00</updated>
+  <updated>2013-12-07T10:55:14+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -958,6 +958,11 @@
 <span class='line-number'>19</span>
 <span class='line-number'>20</span>
 <span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
 </pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;active_record&#39;</span>
 </span><span class='line'>
 </span><span class='line'><span class="c1"># ActsAsCommentable</span>
@@ -966,13 +971,18 @@
 </span><span class='line'>    <span class="k">module</span> <span class="nn">Commentable</span> <span class="c1">#:nodoc:</span>
 </span><span class='line'>
 </span><span class='line'>      <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">included</span><span class="p">(</span><span class="n">base</span><span class="p">)</span>
+</span><span class='line'>        <span class="c1"># active_record类会extend ClassMethods模块</span>
 </span><span class='line'>        <span class="n">base</span><span class="o">.</span><span class="n">extend</span> <span class="no">ClassMethods</span>
 </span><span class='line'>      <span class="k">end</span>
 </span><span class='line'>
 </span><span class='line'>      <span class="k">module</span> <span class="nn">ClassMethods</span>
+</span><span class='line'>        <span class="c1"># 由active_record继承的model都有acts_as_commentable这个方法</span>
 </span><span class='line'>        <span class="k">def</span> <span class="nf">acts_as_commentable</span><span class="p">(</span><span class="n">options</span><span class="o">=</span><span class="p">{})</span>
+</span><span class='line'>          <span class="c1"># 多态</span>
 </span><span class='line'>          <span class="n">has_many</span> <span class="ss">:comments</span><span class="p">,</span> <span class="p">{</span><span class="ss">:as</span> <span class="o">=&gt;</span> <span class="ss">:commentable</span><span class="p">,</span> <span class="ss">:dependent</span> <span class="o">=&gt;</span> <span class="ss">:destroy</span><span class="p">}</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
+</span><span class='line'>          <span class="c1"># 具体model实例方法</span>
 </span><span class='line'>          <span class="kp">include</span> <span class="ss">Juixe</span><span class="p">:</span><span class="ss">:Acts</span><span class="o">::</span><span class="ss">Commentable</span><span class="p">:</span><span class="ss">:InstanceMethods</span>
+</span><span class='line'>          <span class="c1"># 具体model类的单例方法</span>
 </span><span class='line'>          <span class="kp">extend</span> <span class="ss">Juixe</span><span class="p">:</span><span class="ss">:Acts</span><span class="o">::</span><span class="ss">Commentable</span><span class="p">:</span><span class="ss">:SingletonMethods</span>
 </span><span class='line'>        <span class="k">end</span>
 </span><span class='line'>      <span class="k">end</span>
@@ -1016,18 +1026,26 @@ Book.find_comments_for(Book.last)</p>
 <span class='line-number'>15</span>
 <span class='line-number'>16</span>
 <span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
 </pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># This module contains class methods</span>
 </span><span class='line'><span class="k">module</span> <span class="nn">SingletonMethods</span>
 </span><span class='line'>  <span class="c1"># Helper method to lookup for comments for a given object.</span>
 </span><span class='line'>  <span class="c1"># This method is equivalent to obj.comments.</span>
+</span><span class='line'>  <span class="c1"># 找一个对象的所有comments</span>
 </span><span class='line'>  <span class="k">def</span> <span class="nf">find_comments_for</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+</span><span class='line'>    <span class="c1"># 返回类似Topic, Article这样的字符串</span>
 </span><span class='line'>    <span class="n">commentable</span> <span class="o">=</span> <span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">name</span>
+</span><span class='line'>    <span class="c1"># find_comments_for_commentable是Comment.rb通过include ActsAsCommentable::Comment引入进来的,它是一个类方法</span>
 </span><span class='line'>    <span class="no">Comment</span><span class="o">.</span><span class="n">find_comments_for_commentable</span><span class="p">(</span><span class="n">commentable</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
 </span><span class='line'>  <span class="k">end</span>
 </span><span class='line'>
 </span><span class='line'>  <span class="c1"># Helper class method to lookup comments for</span>
 </span><span class='line'>  <span class="c1"># the mixin commentable type written by a given user.  </span>
 </span><span class='line'>  <span class="c1"># This method is NOT equivalent to Comment.find_comments_for_user</span>
+</span><span class='line'>  <span class="c1"># 通过创建者来找comments</span>
 </span><span class='line'>  <span class="k">def</span> <span class="nf">find_comments_by_user</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
 </span><span class='line'>    <span class="n">commentable</span> <span class="o">=</span> <span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">name</span>
 </span><span class='line'>    <span class="no">Comment</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">[</span><span class="s2">&quot;user_id = ? and commentable_type = ?&quot;</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">commentable</span><span class="o">]</span><span class="p">)</span><span class="o">.</span><span class="n">order</span><span class="p">(</span><span class="s2">&quot;created_at DESC&quot;</span><span class="p">)</span>
@@ -1059,8 +1077,10 @@ Book.find_comments_for(Book.last)</p>
 <span class='line-number'>13</span>
 <span class='line-number'>14</span>
 <span class='line-number'>15</span>
+<span class='line-number'>16</span>
 </pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Comment</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
 </span><span class='line'>
+</span><span class='line'>  <span class="c1"># 引入一些Comment可以使用的方法</span>
 </span><span class='line'>  <span class="kp">include</span> <span class="ss">ActsAsCommentable</span><span class="p">:</span><span class="ss">:Comment</span>
 </span><span class='line'>
 </span><span class='line'>  <span class="n">belongs_to</span> <span class="ss">:commentable</span><span class="p">,</span> <span class="ss">:polymorphic</span> <span class="o">=&gt;</span> <span class="kp">true</span>
@@ -1119,6 +1139,13 @@ Book.find_comments_for(Book.last)</p>
 <span class='line-number'>35</span>
 <span class='line-number'>36</span>
 <span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
 </pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">module</span> <span class="nn">ActsAsCommentable</span>
 </span><span class='line'>  <span class="c1"># including this module into your Comment model will give you finders and named scopes</span>
 </span><span class='line'>  <span class="c1"># useful for working with Comments.</span>
@@ -1129,27 +1156,34 @@ Book.find_comments_for(Book.last)</p>
 </span><span class='line'>  <span class="k">module</span> <span class="nn">Comment</span>
 </span><span class='line'>
 </span><span class='line'>    <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">included</span><span class="p">(</span><span class="n">comment_model</span><span class="p">)</span>
+</span><span class='line'>      <span class="c1"># 引入的是类方法</span>
 </span><span class='line'>      <span class="n">comment_model</span><span class="o">.</span><span class="n">extend</span> <span class="no">Finders</span>
+</span><span class='line'>      <span class="c1"># 引入一些scope</span>
 </span><span class='line'>      <span class="n">comment_model</span><span class="o">.</span><span class="n">scope</span> <span class="ss">:in_order</span><span class="p">,</span> <span class="n">comment_model</span><span class="o">.</span><span class="n">order</span><span class="p">(</span><span class="s1">&#39;created_at ASC&#39;</span><span class="p">)</span>
 </span><span class='line'>      <span class="n">comment_model</span><span class="o">.</span><span class="n">scope</span> <span class="ss">:recent</span><span class="p">,</span>   <span class="n">comment_model</span><span class="o">.</span><span class="n">order</span><span class="p">(</span><span class="s1">&#39;created_at DESC&#39;</span><span class="p">)</span>
 </span><span class='line'>    <span class="k">end</span>
 </span><span class='line'>
+</span><span class='line'>    <span class="c1"># 下面都是Comment model能使用的类方法</span>
 </span><span class='line'>    <span class="k">module</span> <span class="nn">Finders</span>
 </span><span class='line'>      <span class="c1"># Helper class method to lookup all comments assigned</span>
 </span><span class='line'>      <span class="c1"># to all commentable types for a given user.</span>
+</span><span class='line'>      <span class="c1"># 通过user来找所有comments</span>
 </span><span class='line'>      <span class="k">def</span> <span class="nf">find_comments_by_user</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
 </span><span class='line'>        <span class="n">where</span><span class="p">(</span><span class="o">[</span><span class="s2">&quot;user_id = ?&quot;</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">id</span><span class="o">]</span><span class="p">)</span><span class="o">.</span><span class="n">order</span><span class="p">(</span><span class="s2">&quot;created_at DESC&quot;</span><span class="p">)</span>
 </span><span class='line'>      <span class="k">end</span>
 </span><span class='line'>
 </span><span class='line'>      <span class="c1"># Helper class method to look up all comments for </span>
 </span><span class='line'>      <span class="c1"># commentable class name and commentable id.</span>
+</span><span class='line'>      <span class="c1"># 一个简单的where语句</span>
 </span><span class='line'>      <span class="k">def</span> <span class="nf">find_comments_for_commentable</span><span class="p">(</span><span class="n">commentable_str</span><span class="p">,</span> <span class="n">commentable_id</span><span class="p">)</span>
 </span><span class='line'>        <span class="n">where</span><span class="p">(</span><span class="o">[</span><span class="s2">&quot;commentable_type = ? and commentable_id = ?&quot;</span><span class="p">,</span> <span class="n">commentable_str</span><span class="p">,</span> <span class="n">commentable_id</span><span class="o">]</span><span class="p">)</span><span class="o">.</span><span class="n">order</span><span class="p">(</span><span class="s2">&quot;created_at DESC&quot;</span><span class="p">)</span>
 </span><span class='line'>      <span class="k">end</span>
 </span><span class='line'>
 </span><span class='line'>      <span class="c1"># Helper class method to look up a commentable object</span>
 </span><span class='line'>      <span class="c1"># given the commentable class name and id </span>
+</span><span class='line'>      <span class="c1"># 找到使用评论的对象</span>
 </span><span class='line'>      <span class="k">def</span> <span class="nf">find_commentable</span><span class="p">(</span><span class="n">commentable_str</span><span class="p">,</span> <span class="n">commentable_id</span><span class="p">)</span>
+</span><span class='line'>        <span class="c1"># 返回类自身</span>
 </span><span class='line'>        <span class="n">model</span> <span class="o">=</span> <span class="n">commentable_str</span><span class="o">.</span><span class="n">constantize</span>
 </span><span class='line'>        <span class="n">model</span><span class="o">.</span><span class="n">respond_to?</span><span class="p">(</span><span class="ss">:find_comments_for</span><span class="p">)</span> <span class="p">?</span> <span class="n">model</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">commentable_id</span><span class="p">)</span> <span class="p">:</span> <span class="kp">nil</span>
 </span><span class='line'>      <span class="k">end</span>

@@ -4,7 +4,7 @@
   <title><![CDATA[Category: on | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/on/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-07T01:46:25+08:00</updated>
+  <updated>2013-12-07T10:55:14+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -588,13 +588,18 @@ require &lsquo;active_record&rsquo;</p>
 <pre><code>module Commentable #:nodoc:
 
   def self.included(base)
+    # active_record类会extend ClassMethods模块
     base.extend ClassMethods  
   end
 
   module ClassMethods
+    # 由active_record继承的model都有acts_as_commentable这个方法
     def acts_as_commentable(options={})
+      # 多态
       has_many :comments, {:as =&gt; :commentable, :dependent =&gt; :destroy}.merge(options)
+      # 具体model实例方法
       include Juixe::Acts::Commentable::InstanceMethods
+      # 具体model类的单例方法
       extend Juixe::Acts::Commentable::SingletonMethods
     end
   end
@@ -625,9 +630,12 @@ Book.find_comments_for(Book.last)</p>
 <p>module SingletonMethods
   # Helper method to lookup for comments for a given object.
   # This method is equivalent to obj.comments.
+  # 找一个对象的所有comments
   def find_comments_for(obj)</p>
 
-<pre><code>commentable = self.base_class.name
+<pre><code># 返回类似Topic, Article这样的字符串
+commentable = self.base_class.name
+# find_comments_for_commentable是Comment.rb通过include ActsAsCommentable::Comment引入进来的,它是一个类方法
 Comment.find_comments_for_commentable(commentable, obj.id)
 </code></pre>
 
@@ -636,6 +644,7 @@ Comment.find_comments_for_commentable(commentable, obj.id)
 <p>  # Helper class method to lookup comments for
   # the mixin commentable type written by a given user.<br/>
   # This method is NOT equivalent to Comment.find_comments_for_user
+  # 通过创建者来找comments
   def find_comments_by_user(user)</p>
 
 <pre><code>commentable = self.base_class.name
@@ -657,7 +666,8 @@ end
 <p>``` ruby comment.rb
 class Comment &lt; ActiveRecord::Base</p>
 
-<p>  include ActsAsCommentable::Comment</p>
+<p>  # 引入一些Comment可以使用的方法
+  include ActsAsCommentable::Comment</p>
 
 <p>  belongs_to :commentable, :polymorphic => true</p>
 
@@ -688,27 +698,34 @@ module ActsAsCommentable
   module Comment</p>
 
 <pre><code>def self.included(comment_model)
+  # 引入的是类方法
   comment_model.extend Finders
+  # 引入一些scope
   comment_model.scope :in_order, comment_model.order('created_at ASC')
   comment_model.scope :recent,   comment_model.order('created_at DESC')
 end
 
+# 下面都是Comment model能使用的类方法
 module Finders
   # Helper class method to lookup all comments assigned
   # to all commentable types for a given user.
+  # 通过user来找所有comments
   def find_comments_by_user(user)
     where(["user_id = ?", user.id]).order("created_at DESC")
   end
 
   # Helper class method to look up all comments for 
   # commentable class name and commentable id.
+  # 一个简单的where语句
   def find_comments_for_commentable(commentable_str, commentable_id)
     where(["commentable_type = ? and commentable_id = ?", commentable_str, commentable_id]).order("created_at DESC")
   end
 
   # Helper class method to look up a commentable object
   # given the commentable class name and id 
+  # 找到使用评论的对象
   def find_commentable(commentable_str, commentable_id)
+    # 返回类自身
     model = commentable_str.constantize
     model.respond_to?(:find_comments_for) ? model.find(commentable_id) : nil
   end
