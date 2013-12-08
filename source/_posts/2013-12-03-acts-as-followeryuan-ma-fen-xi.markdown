@@ -8,10 +8,22 @@ categories: ruby on rails
 
 + [acts_as_follower](https://github.com/tcocca/acts_as_follower)
 
-### 这个gem是做什么的?
+### 这个gem是做什么的?原理是什么?
 
 这个gem主要是用来实现类似twitter那种关注，新浪那种收听的功能
 主要是两个model的关联,例如一个用户订阅了一本书,我们可以这样实现`User.first.follow(Book.first)`
+
+它在实现是就是利用两个多态，一个叫followable(被follow者), 一个叫followable(跟随者),把每个对象的类名字符串和id存进数据库实现关联,其他代码就实现了关于两者的查询代码, 下面是两者的关系
+
+``` ruby
+has_many :followings, :as => :followable, :dependent => :destroy, :class_name => 'Follow'
+has_many :follows, :as => :follower, :dependent => :destroy
+```
+
+``` ruby follow.rb
+belongs_to :followable, :polymorphic => true
+belongs_to :follower,   :polymorphic => true
+```
 
 -----------------------------------------
 
@@ -73,6 +85,7 @@ end
 + lib/acts_as_follower/followable.rb: 这个文件主要服务于被follow的对象,它定义了好多用于被**follow**的实例方法,包括**followers_by_type**, **followers_count**,它是这样来调用的,例如`Book.first.followers_count`, `Book.first.followers_by_type('User')`
 
 ``` ruby lib/acts_as_follower/followable.rb
+# 被follow
 module ActsAsFollower #:nodoc:
 
   # 由上面可知ActiveRecord会include下面的Followable
@@ -107,6 +120,7 @@ module ActsAsFollower #:nodoc:
       # 下面主要是一个查询语句,constantize的定义见http://api.rubyonrails.org/classes/ActiveSupport/Inflector.html
       # 而parent_class_name的定义在lib/acts_as_followable/follower_lib.rb,很简单,主要是返回class名字
       def followers_by_type(follower_type, options={})
+        # parent_class_name是把一个实例转成类的字符串,例如'Topic', 'Article'等
         follows = follower_type.constantize.
           joins(:follows).
           where('follows.blocked'         => false,
@@ -131,6 +145,7 @@ module ActsAsFollower #:nodoc:
       # e.g. user_followers == followers_by_type('User')
       # Allows magic names on followers_by_type_count
       # e.g. count_user_followers == followers_by_type_count('User')
+      # 实现更加灵活的查询
       def method_missing(m, *args)
         if m.to_s[/count_(.+)_followers/]
           followers_by_type_count($1.singularize.classify)
@@ -141,12 +156,14 @@ module ActsAsFollower #:nodoc:
         end
       end
 
+      # 返回follow的数量
       def blocked_followers_count
         self.followings.blocked.count
       end
 
       # Returns the followings records scoped
       def followers_scoped
+        # 因为follow belongs_to follower
         self.followings.includes(:follower)
       end
 
@@ -155,6 +172,7 @@ module ActsAsFollower #:nodoc:
       def followers(options={})
         followers_scope = followers_scoped.unblocked
         followers_scope = apply_options_to_scope(followers_scope, options)
+        # 取出所有follower
         followers_scope.to_a.collect{|f| f.follower}
       end
 
@@ -211,6 +229,7 @@ end
 module ActsAsFollower #:nodoc:
   module Follower
 
+    # active_record会include
     def self.included(base)
       base.extend ClassMethods
     end
@@ -219,7 +238,9 @@ module ActsAsFollower #:nodoc:
       # 在model里就可以用acts_as_follower
       def acts_as_follower
         has_many :follows, :as => :follower, :dependent => :destroy
+        # 具体类加载实例方法
         include ActsAsFollower::Follower::InstanceMethods
+        # 具体类加载FollowerLib库方法
         include ActsAsFollower::FollowerLib
       end
     end

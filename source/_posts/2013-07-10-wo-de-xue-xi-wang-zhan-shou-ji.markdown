@@ -18,6 +18,7 @@ categories:
 + [笨方法学ruby](http://lrthw.github.io/)
 + [ruby参考手册](http://www.kuqin.com/rubycndocument/man/index.html)
 + [吕成鹏的ruby笔记](http://www.chengpeng.me/)
++ [rails guides 中文版](http://guides.ruby-china.org/)
 
 ## 视频
 + [railscasts](http://railscasts.com/)
