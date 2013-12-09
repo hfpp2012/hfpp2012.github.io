@@ -4,7 +4,7 @@
   <title><![CDATA[小子的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-09T22:59:21+08:00</updated>
+  <updated>2013-12-09T23:02:33+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -387,7 +387,7 @@
 </span><span class='line'>    <span class="c1"># 是通过这个方法来明确rails model association的(has_many belongs_to),而且这个方法会导入InstanceMethods model</span>
 </span><span class='line'>    <span class="k">def</span> <span class="nf">acts_as_tree</span><span class="p">(</span><span class="n">options</span> <span class="o">=</span> <span class="p">{})</span>
 </span><span class='line'>
-</span><span class='line'>      <span class="c1"># 默认的配置选项</span>
+</span><span class='line'>      <span class="c1"># 默认的配置选项, dependent当你删除节点时，连同子节点全部删除</span>
 </span><span class='line'>      <span class="n">configuration</span> <span class="o">=</span> <span class="p">{</span>
 </span><span class='line'>        <span class="n">foreign_key</span><span class="p">:</span>   <span class="s2">&quot;parent_id&quot;</span><span class="p">,</span>
 </span><span class='line'>        <span class="ss">order</span><span class="p">:</span>         <span class="kp">nil</span><span class="p">,</span>
