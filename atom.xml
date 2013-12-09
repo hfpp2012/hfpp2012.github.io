@@ -4,7 +4,7 @@
   <title><![CDATA[小子的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-09T22:05:58+08:00</updated>
+  <updated>2013-12-09T22:37:39+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -1828,21 +1828,6 @@ Book.find_comments_for(Book.last)</p>
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[情怀]]></title>
-    <link href="http://yinsigan.github.io/blog/2013/07/28/qing-huai/"/>
-    <updated>2013-07-28T00:58:00+08:00</updated>
-    <id>http://yinsigan.github.io/blog/2013/07/28/qing-huai</id>
-    <content type="html"><![CDATA[<p>相思怕被道多情，</p>
-
-<p>醉酒狂歌怕误名。</p>
-
-<p>千种情怀愁酝酿，</p>
-
-<p>万般诗意共谁鸣？</p>
-]]></content>
-  </entry>
-  
-  <entry>
     <title type="html"><![CDATA[我的学习网站收集]]></title>
     <link href="http://yinsigan.github.io/blog/2013/07/10/wo-de-xue-xi-wang-zhan-shou-ji/"/>
     <updated>2013-07-10T17:41:00+08:00</updated>
@@ -2123,32 +2108,6 @@ Book.find_comments_for(Book.last)</p>
 <li><a href="http://www.guoxue.com/shibu/zztj/zztjml.htm">资质通鉴</a></li>
 </ul>
 
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[瘦]]></title>
-    <link href="http://yinsigan.github.io/blog/2013/07/10/shou/"/>
-    <updated>2013-07-10T17:30:00+08:00</updated>
-    <id>http://yinsigan.github.io/blog/2013/07/10/shou</id>
-    <content type="html"><![CDATA[<p>初到深圳瘦如猴</p>
-
-<p>小小紧衣穿不了</p>
-
-<p>酒往身洒肉何去</p>
-
-<p>为伊身得人憔悴</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[[古体诗词]听雨]]></title>
-    <link href="http://yinsigan.github.io/blog/2013/07/05/gu-ti-shi-ci-ting-yu/"/>
-    <updated>2013-07-05T13:10:00+08:00</updated>
-    <id>http://yinsigan.github.io/blog/2013/07/05/gu-ti-shi-ci-ting-yu</id>
-    <content type="html"><![CDATA[<p>一寸相思一寸伤，似醒非醉草情章。</p>
-
-<p>倚楼听雨烛残泪，难解红尘最断肠。</p>
 ]]></content>
   </entry>
   
