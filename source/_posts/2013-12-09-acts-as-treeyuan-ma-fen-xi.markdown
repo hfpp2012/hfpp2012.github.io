@@ -107,7 +107,7 @@ module ActsAsTree
     # 是通过这个方法来明确rails model association的(has_many belongs_to),而且这个方法会导入InstanceMethods model
     def acts_as_tree(options = {})
 
-      # 默认的配置选项
+      # 默认的配置选项, dependent当你删除节点时，连同子节点全部删除
       configuration = {
         foreign_key:   "parent_id",
         order:         nil,
