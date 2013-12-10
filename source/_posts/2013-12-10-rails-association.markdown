@@ -32,6 +32,8 @@ categories: ruby on rails
 
 {% img /images/rails_association/has_many_and_belongs_to.png %}
 
+<!-- more -->
+
 ``` ruby
 class Comment < ActiveRecord::Base
   belongs_to :artilce
