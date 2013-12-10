@@ -5,7 +5,7 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>小子的博客</title>
+  <title>rails association - 小子的博客</title>
   <meta name="author" content="小子">
 
   
@@ -21,7 +21,7 @@ rails polymorphic-association 模型关联 通过关键字(belongs_to, has_many�
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://yinsigan.github.io">
+  <link rel="canonical" href="http://yinsigan.github.io/blog/2013/12/10/rails-association">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="小子的博客" type="application/atom+xml">
@@ -66,15 +66,12 @@ rails polymorphic-association 模型关联 通过关键字(belongs_to, has_many�
 </nav>
   <div id="main">
     <div id="content">
-      <div class="blog-index">
+      <div>
+<article class="hentry" role="article">
   
-  
-  
-    <article>
-      
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2013/12/10/rails-association/">Rails Association</a></h1>
+      <h1 class="entry-title">Rails Association</h1>
     
     
       <p class="meta">
@@ -97,7 +94,7 @@ rails polymorphic-association 模型关联 通过关键字(belongs_to, has_many�
   </header>
 
 
-  <div class="entry-content"><ul>
+<div class="entry-content"><ul>
 <li><a href="http://guides.rubyonrails.org/association_basics.html">rails guides association</a></li>
 <li><a href="http://guides.rubyonrails.org/association_basics.html">rails api association</a></li>
 <li><a href="http://ihower.tw/rails3/activerecord-relationships.html">rails 实战圣经-资料表关联</a></li>
@@ -365,97 +362,16 @@ rails polymorphic-association 模型关联 通过关键字(belongs_to, has_many�
 
 <h3>单表继承</h3>
 </div>
-  
-  
 
 
-    </article>
-  
-  
-    <article>
+  <footer>
+    <p class="meta">
       
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/12/09/acts-as-treeyuan-ma-fen-xi/">Acts_as_tree源码分析</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
   
 
+<span class="byline author vcard">Posted by <span class="fn">小子</span></span>
 
-<time datetime="2013-12-09T14:30:00+08:00" pubdate data-updated="true">Dec 9<span>th</span>, 2013</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><ul>
-<li><a href="https://github.com/amerine/acts_as_tree">acts_as_tree</a></li>
-</ul>
-
-
-<h3>这个gem是干什么的?原理是什么?</h3>
-
-<p>这个gem是用来实现树型结构的,例如一个分类(category),下面还有子分类,这个时候就可以用它了,还有,你回复了一个贴子,别人再来回复你，这个时候也可以用它。一个菜单之下还有子菜单，子菜单之下又可以有子菜单,子菜单之下有菜单项，它可以实现一种树型结构的菜单。它的原理也很简单,在模型中是实现了一个自关联,假如在一个comment(评论)model中,定义一个children(孩子),再定义一个parent(父), :class_name都是&#8217;Comment&#8217;。那他们怎么实现关联的,也就是说孩子要知道父亲是谁,父亲要知道它有哪些孩子,它在数据存储中是通过一个字段来关联的,在这个gem中这个字段叫<strong>parent_id</strong>假如我们创建一个根(root), <code>root = Comment.create</code>, 这个时候<strong>root</strong>*的parent_id是null,它是一个根,<code>children = root.children.create</code>,这个<strong>children</strong>是<strong>root</strong>的一个孩子,那<strong>children</strong>的<strong>parent_id</strong>就是<strong>root</strong>的<strong>id</strong></p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>  菜单
-</span><span class='line'>   |_ 系统设置
-</span><span class='line'>   |    |_ 模版设置
-</span><span class='line'>   |    |_ 表格设置
-</span><span class='line'>   |_ 人员管理
-</span><span class='line'>        |_ 教职工管理
-</span><span class='line'>        |_ 学员管理</span></code></pre></td></tr></table></div></figure>
-
-
-<p>children和parent的关系是这样实现的</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">belongs_to</span> <span class="ss">:parent</span><span class="o">.</span><span class="n">.</span><span class="o">.</span>
-</span><span class='line'><span class="n">has_many</span>   <span class="ss">:children</span><span class="o">.</span><span class="n">.</span><span class="o">.</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>数据表是这样存储的</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2013/12/09/acts-as-treeyuan-ma-fen-xi/">未待完续 &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
       
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/12/03/acts-as-followeryuan-ma-fen-xi/">Acts_as_follower源码分析</a></h1>
-    
-    
-      <p class="meta">
-        
 
 
 
@@ -467,317 +383,44 @@ rails polymorphic-association 模型关联 通过关键字(belongs_to, has_many�
   
 
 
-<time datetime="2013-12-03T16:41:00+08:00" pubdate data-updated="true">Dec 3<span>rd</span>, 2013</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><ul>
-<li><a href="https://github.com/tcocca/acts_as_follower">acts_as_follower</a></li>
-</ul>
-
-
-<h3>这个gem是做什么的?原理是什么?</h3>
-
-<p>这个gem主要是用来实现类似twitter那种关注，新浪那种收听的功能
-主要是两个model的关联,例如一个用户订阅了一本书,我们可以这样实现<code>User.first.follow(Book.first)</code></p>
-
-<p>它在实现是就是利用两个多态，一个叫followable(被follow者), 一个叫followable(跟随者),把每个对象的类名字符串和id存进数据库实现关联,其他代码就实现了关于两者的查询代码, 下面是两者的关系</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">has_many</span> <span class="ss">:followings</span><span class="p">,</span> <span class="ss">:as</span> <span class="o">=&gt;</span> <span class="ss">:followable</span><span class="p">,</span> <span class="ss">:dependent</span> <span class="o">=&gt;</span> <span class="ss">:destroy</span><span class="p">,</span> <span class="ss">:class_name</span> <span class="o">=&gt;</span> <span class="s1">&#39;Follow&#39;</span>
-</span><span class='line'><span class="n">has_many</span> <span class="ss">:follows</span><span class="p">,</span> <span class="ss">:as</span> <span class="o">=&gt;</span> <span class="ss">:follower</span><span class="p">,</span> <span class="ss">:dependent</span> <span class="o">=&gt;</span> <span class="ss">:destroy</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-
-
-<figure class='code'><figcaption><span>follow.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">belongs_to</span> <span class="ss">:followable</span><span class="p">,</span> <span class="ss">:polymorphic</span> <span class="o">=&gt;</span> <span class="kp">true</span>
-</span><span class='line'><span class="n">belongs_to</span> <span class="ss">:follower</span><span class="p">,</span>   <span class="ss">:polymorphic</span> <span class="o">=&gt;</span> <span class="kp">true</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<hr />
-
-<h3>来看一下它的数据结构</h3>
-
-<p>目录树结构</p>
-
-<p><img src="/images/acts_as_follower_file_tree.png"></p>
-
-<p>结构库表结构</p>
-
-<p><img src="/images/acts_as_follower_table_tree.png"></p>
-
-<p>主要有五个字段,分别是<strong>blocked</strong>, <strong>followable_id</strong>, <strong>followable_type</strong>, <strong>follower_id</strong>, <strong>follower_type</strong>, 主要是分为两个多态(<strong>follower</strong>, <strong>followerable</strong>), 例如一个用户订阅了一本书, <strong>followerable</strong>可以存<strong>Book</strong>和它的<strong>id</strong>, 而<strong>follower</strong>这个多态存<strong>User</strong>和它的<strong>id</strong></p>
-
-<hr />
-
-<h3>接下来就来分晰啦</h3>
-
-<h4>源码目录结构功能介绍</h4>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2013/12/03/acts-as-followeryuan-ma-fen-xi/">未待完续 &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
+<time datetime="2013-12-10T13:13:00+08:00" pubdate data-updated="true">Dec 10<span>th</span>, 2013</time>
       
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/11/26/acts-as-commentable-source-analyse/">Acts as Commentable Source Analyse</a></h1>
-    
-    
-      <p class="meta">
-        
 
-
-
-
-
-
-
-
+<span class="categories">
   
+    <a class='category' href='/blog/categories/on/'>on</a>, <a class='category' href='/blog/categories/rails/'>rails</a>, <a class='category' href='/blog/categories/ruby/'>ruby</a>
+  
+</span>
 
 
-<time datetime="2013-11-26T11:49:00+08:00" pubdate data-updated="true">Nov 26<span>th</span>, 2013</time>
-        
-      </p>
+    </p>
     
-  </header>
-
-
-  <div class="entry-content"><ul>
-<li><a href="https://github.com/jackdempsey/acts_as_commentable">acts_as_commentable</a></li>
-</ul>
-
-
-<h3>这个gem是做什么的?原理是什么?</h3>
-
-<p>这个gem是用来实现评论,它跟一般的评论没什么区别,只是这个gem把一些代码进行了封装,这是我们可以学习的地方.</p>
-
-<p>它使用也很简单,只要在model里写上<code>acts_as_commentable</code>,就可以使用评论了,其实<code>acts_as_commentable</code>在实现上就等于
-<code>has_many :comments, :as =&gt; :commentable</code>, comment这个model是一个简单的多态,它在数据表中的存储是这样的。</p>
-
-<p><img src="/images/acts_as_comment_table.png"></p>
-
-<p>其实最主要的就是两个字段commentable_id, commentable_type,一个简单的多态</p>
-
-<p>由于<code>has_many :comments</code>那就可以进行很多操作，例如创建一条评论</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">Post</span><span class="o">.</span><span class="n">first</span><span class="o">.</span><span class="n">comments</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="ss">:title</span> <span class="o">=&gt;</span> <span class="s2">&quot;First comment.&quot;</span><span class="p">,</span> <span class="ss">:comment</span> <span class="o">=&gt;</span> <span class="s2">&quot;This is the first comment.&quot;</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>经过这样的操作之后,在数据库中就会产生如下如果</p>
-
-<p><img src="/images/acts_as_comment_table_result.png"></p>
-
-<p>而这个存储方式是由rails自动处理的,更多的rails关系模型可查看<a href="http://guides.rubyonrails.org/association_basics.html">rails guides</a></p>
-
-<h4>分析</h4>
-
-<p>源码目录下如下</p>
-
-<p><img src="/images/acts_as_commentable_file_tree.png"></p>
-
-<p>这一步会生成一个rails migration文件和一个叫comment.rb的rails model文件</p>
-
-<p>原理很简单,会在数据库中生成一个叫comments的表
-它的字段包括title, comment, commentable_type, commentable_id, user_id等</p>
-
-<p>而生成这两个模版文件的源码如下:</p>
-
-<figure class='code'><figcaption><span>lib/generators/comment/comment_generator.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;rails/generators/migration&#39;</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">class</span> <span class="nc">CommentGenerator</span> <span class="o">&lt;</span> <span class="ss">Rails</span><span class="p">:</span><span class="ss">:Generators</span><span class="o">::</span><span class="no">Base</span>
-</span><span class='line'>  <span class="kp">include</span> <span class="ss">Rails</span><span class="p">:</span><span class="ss">:Generators</span><span class="o">::</span><span class="no">Migration</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">source_root</span>
-</span><span class='line'>    <span class="vi">@_acts_as_commentable_source_root</span> <span class="o">||=</span> <span class="no">File</span><span class="o">.</span><span class="n">expand_path</span><span class="p">(</span><span class="s2">&quot;../templates&quot;</span><span class="p">,</span> <span class="bp">__FILE__</span><span class="p">)</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">next_migration_number</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-</span><span class='line'>    <span class="no">Time</span><span class="o">.</span><span class="n">now</span><span class="o">.</span><span class="n">utc</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y%m%d%H%M%S&quot;</span><span class="p">)</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="k">def</span> <span class="nf">create_model_file</span>
-</span><span class='line'>    <span class="n">template</span> <span class="s2">&quot;comment.rb&quot;</span><span class="p">,</span> <span class="s2">&quot;app/models/comment.rb&quot;</span>
-</span><span class='line'>    <span class="n">migration_template</span> <span class="s2">&quot;create_comments.rb&quot;</span><span class="p">,</span> <span class="s2">&quot;db/migrate/create_comments.rb&quot;</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>这是使用rails generation功能实现的</p>
-
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://yinsigan.github.io/blog/2013/12/10/rails-association/" data-via="" data-counturl="http://yinsigan.github.io/blog/2013/12/10/rails-association/" >Tweet</a>
+  
+  
+  
 </div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2013/11/26/acts-as-commentable-source-analyse/">未待完续 &rarr;</a>
-    </footer>
-  
 
-
-    </article>
-  
-  
-    <article>
+    
+    <p class="meta">
       
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/07/10/wo-de-xue-xi-wang-zhan-shou-ji/">我的学习网站收集</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-07-10T17:41:00+08:00" pubdate data-updated="true">Jul 10<span>th</span>, 2013</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h2>教程</h2>
-
-<ul>
-<li><a href="http://www.tutorialspoint.com/">tutorialspoint</a></li>
-<li><a href="http://ihower.tw/rails3/">rails实战圣经</a></li>
-<li><a href="http://guides.rubyonrails.org/">rails guides</a></li>
-<li><a href="https://github.com/saberma/ruby-dev-bookmarks">ruby-dev-bookmarks</a></li>
-<li><a href="http://ruby-china.org/topics/5205">gem列表</a></li>
-<li><a href="http://railstutorial-china.org/">rails tutorial china</a></li>
-<li><a href="http://www.w3schools.com/jquery/default.asp">w3c jquery</a></li>
-<li><a href="http://www.simonecarletti.com/blog/2009/09/inside-ruby-on-rails-reading-source-code/">关于rails源码</a></li>
-<li><a href="http://lrthw.github.io/">笨方法学ruby</a></li>
-<li><a href="http://www.kuqin.com/rubycndocument/man/index.html">ruby参考手册</a></li>
-<li><a href="http://www.chengpeng.me/">吕成鹏的ruby笔记</a></li>
-<li><a href="http://guides.ruby-china.org/">rails guides 中文版</a></li>
-</ul>
-
-
-<h2>视频</h2>
-
-<ul>
-<li><a href="http://railscasts.com/">railscasts</a></li>
-<li><a href="http://railscasts-china.com/">railscasts-china</a></li>
-<li><a href="http://happycasts.net/">happycasts</a></li>
-<li><a href="http://study.163.com/cloud/myCloudClass.htm#/cloudClass/index">网易云</a></li>
-<li><a href="http://edu.51cto.com/lecturer/user_id-140924.html">诱人的ruby</a></li>
-<li><a href="http://itercast.com/">linuxcasts</a></li>
-</ul>
-
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2013/07/10/wo-de-xue-xi-wang-zhan-shou-ji/">未待完续 &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
+        <a class="basic-alignment left" href="/blog/2013/12/09/acts-as-treeyuan-ma-fen-xi/" title="Previous Post: acts_as_tree源码分析">&laquo; acts_as_tree源码分析</a>
       
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/07/05/ren-sheng-jiu-shi-chu-jian/">人生就是初见</a></h1>
-    
-    
-      <p class="meta">
-        
+      
+    </p>
+  </footer>
+</article>
 
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-07-05T12:52:00+08:00" pubdate data-updated="true">Jul 5<span>th</span>, 2013</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>梳妆打扮净容颜，勿勿忙忙把班上。</p>
-
-<p>悄然一见是佳女，玲珑剔透傲身姿。</p>
-
-<p>肌肤赛雪小蛮腰，亭亭玉立勾神心。</p>
-
-<p>偷眼正看似西施，千言万语难起齿。</p>
-
-<p>但愿时间永停住，佳女相伴过一生。</p>
-
-<p>只恨佳女瞬离去，相思相望身影现。</p>
-
-<p>永记娇颜在心中，下次相见续前缘。</p>
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
 </div>
-  
-  
+  </section>
 
-
-    </article>
-  
-  <div class="pagination">
-    
-    <a href="/blog/archives">Blog Archives</a>
-    
-  </div>
 </div>
+
 <aside class="sidebar">
   
     <section>
@@ -814,6 +457,7 @@ rails polymorphic-association 模型关联 通过关键字(belongs_to, has_many�
   
 </aside>
 
+
     </div>
   </div>
   <footer role="contentinfo"><p>
@@ -828,7 +472,10 @@ rails polymorphic-association 模型关联 通过关键字(belongs_to, has_many�
       var disqus_shortname = 'xiaozi';
       
         
-        var disqus_script = 'count.js';
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://yinsigan.github.io/blog/2013/12/10/rails-association/';
+        var disqus_url = 'http://yinsigan.github.io/blog/2013/12/10/rails-association/';
+        var disqus_script = 'embed.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
