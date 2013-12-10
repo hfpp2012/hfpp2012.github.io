@@ -95,9 +95,11 @@ class Profile < ActiveRecord::Base
 end
 ```
 
+一对一的关系也是要通过foreign_key来关联的
+
 #### has_one :through
 
-{% img /images/rails_association/has_one_belongs_to.png %}
+{% img /images/rails_association/has_one_through.png %}
 
 ``` ruby
 class User < ActiveRecord::Base
@@ -190,4 +192,25 @@ end
 
 ### 单表继承
 
+有些模型的相似度达到百分之九十,甚至有些只有一个字段的值不同,没必要复制一遍model，再改不同的字段
 
+这个时候可以用一个字段但存的值是不同的,这种方式可以的,只是因为类型不同,数据和逻辑不同,控制器即使写两套，还是要做各种判断,代码会变得很乱,很麻烦
+
+这个时候一个好的解决方案就是用单表继承
+
+{% img /images/rails_association/polymorphic.png %}
+
+``` ruby
+class GrowthRecord < ActiveRecord::Base
+end
+
+class HomeGrowthRecord < GrowthRecord
+end
+
+class GardenGrowthRecord < GrowthRecord
+end
+```
+
+GrowthRecord必须存一个字段叫type:string的,这个是自动处理的
+
+如果不让GrowthRecord被实例化,可以加self.abstract_class = true,这样GrowthRecord就被锁住了
