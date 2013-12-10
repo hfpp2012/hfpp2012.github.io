@@ -214,3 +214,8 @@ end
 GrowthRecord必须存一个字段叫type:string的,这个是自动处理的
 
 如果不让GrowthRecord被实例化,可以加self.abstract_class = true,这样GrowthRecord就被锁住了
+
+
+## 总结
+
+学习这些可以让我们对rails association更理解,理解如何设计数据库,处理复杂的逻辑关系
