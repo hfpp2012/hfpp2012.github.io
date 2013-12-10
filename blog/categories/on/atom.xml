@@ -4,7 +4,7 @@
   <title><![CDATA[Category: on | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/on/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-10T16:52:13+08:00</updated>
+  <updated>2013-12-10T17:09:22+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -49,6 +49,9 @@
 <h4>has_many</h4>
 
 <p><img src="/images/rails_association/has_many_and_belongs_to.png"></p>
+
+<!-- more -->
+
 
 <p>``` ruby
 class Comment &lt; ActiveRecord::Base
