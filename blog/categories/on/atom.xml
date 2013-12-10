@@ -4,7 +4,7 @@
   <title><![CDATA[Category: on | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/on/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-10T15:51:48+08:00</updated>
+  <updated>2013-12-10T15:57:32+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -176,6 +176,8 @@ end
 </code></p>
 
 <p>这种方式对中间表的命名是有规定的,连中间表的model也不用写,<strong>has_many_and_belongs_to</strong>是rails提供的,缺点是不能灵活控制,优点是方便</p>
+
+<p>在migration创建表不创建id(没必要)</p>
 
 <h3>Polymorphic Associations(多态)</h3>
 

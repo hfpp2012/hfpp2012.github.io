@@ -320,6 +320,8 @@ rails polymorphic-association 模型关联 通过关键字(belongs_to, has_many�
 
 <p>这种方式对中间表的命名是有规定的,连中间表的model也不用写,<strong>has_many_and_belongs_to</strong>是rails提供的,缺点是不能灵活控制,优点是方便</p>
 
+<p>在migration创建表不创建id(没必要)</p>
+
 <h3>Polymorphic Associations(多态)</h3>
 
 <p>上述都是两个表进行关联,有的不需要中间表,有的不需要,如果要实现三个表以上的关联呢,这个时候就要用到多态了,例如我们不止在文章里可以加评论,在新闻里也可以评论,在贴子里都可以</p>
