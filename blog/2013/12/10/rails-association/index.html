@@ -220,9 +220,11 @@ rails polymorphic-association 模型关联 通过关键字(belongs_to, has_many�
 </span></code></pre></td></tr></table></div></figure>
 
 
+<p>一对一的关系也是要通过foreign_key来关联的</p>
+
 <h4>has_one :through</h4>
 
-<p><img src="/images/rails_association/has_one_belongs_to.png"></p>
+<p><img src="/images/rails_association/has_one_through.png"></p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -361,6 +363,37 @@ rails polymorphic-association 模型关联 通过关键字(belongs_to, has_many�
 <p>多态的方法很灵活,它也需要一个中间表,但是他不止能关联一个表,而关联无数个表,在中间表中一个字段是存关联表的类型,一个存id,它通过这两个字段来实现关联所有表的</p>
 
 <h3>单表继承</h3>
+
+<p>有些模型的相似度达到百分之九十,甚至有些只有一个字段的值不同,没必要复制一遍model，再改不同的字段</p>
+
+<p>这个时候可以用一个字段但存的值是不同的,这种方式可以的,只是因为类型不同,数据和逻辑不同,控制器即使写两套，还是要做各种判断,代码会变得很乱,很麻烦</p>
+
+<p>这个时候一个好的解决方案就是用单表继承</p>
+
+<p><img src="/images/rails_association/polymorphic.png"></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">GrowthRecord</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">HomeGrowthRecord</span> <span class="o">&lt;</span> <span class="no">GrowthRecord</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">GardenGrowthRecord</span> <span class="o">&lt;</span> <span class="no">GrowthRecord</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>GrowthRecord必须存一个字段叫type:string的,这个是自动处理的</p>
+
+<p>如果不让GrowthRecord被实例化,可以加self.abstract_class = true,这样GrowthRecord就被锁住了</p>
 </div>
 
 
