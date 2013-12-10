@@ -4,7 +4,7 @@
   <title><![CDATA[Category: ruby | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-10T16:24:42+08:00</updated>
+  <updated>2013-12-10T16:52:13+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -231,6 +231,10 @@ end
 <p>GrowthRecord必须存一个字段叫type:string的,这个是自动处理的</p>
 
 <p>如果不让GrowthRecord被实例化,可以加self.abstract_class = true,这样GrowthRecord就被锁住了</p>
+
+<h2>总结</h2>
+
+<p>学习这些可以让我们对rails association更理解,理解如何设计数据库,处理复杂的逻辑关系</p>
 ]]></content>
   </entry>
   
