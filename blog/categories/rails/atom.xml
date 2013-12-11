@@ -4,7 +4,7 @@
   <title><![CDATA[Category: rails | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/rails/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-11T11:13:04+08:00</updated>
+  <updated>2013-12-11T11:26:37+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -124,6 +124,50 @@ s.students.delete(s.students.last) #删除最后一条,只是把值设为NULL
 <p>```</p>
 
 <p>要保留数据的时候又要去掉关联关系用这种方式最好了</p>
+
+<ul>
+<li>collection_singular_ids=ids(更改关联关系)</li>
+</ul>
+
+
+<p>``` ruby
+s = Squad.first</p>
+
+<p>s.student_ids
+=> [42, 43]</p>
+
+<p>s.students_ids = [40, 43]</p>
+
+<h1>会查一遍数据表students,没有的id你可别乱来哦</h1>
+
+<p>Student Load (0.8ms)  SELECT <code>students</code>.* FROM <code>students</code> WHERE <code>students</code>.<code>id</code> IN (40, 43)</p>
+
+<h1>不要42了就把关联关系去掉(设为NULL)</h1>
+
+<p>SQL (0.6ms)  UPDATE <code>students</code> SET <code>squad_id</code> = NULL WHERE <code>students</code>.<code>squad_id</code> = 1 AND <code>students</code>.<code>active</code> = 1 AND <code>students</code>.<code>id</code> IN (42)</p>
+
+<h1>把40加进去</h1>
+
+<p>UPDATE <code>students</code> SET <code>squad_id</code> = 1, <code>updated_at</code> = &lsquo;2013-12-11 03:19:40&rsquo; WHERE <code>students</code>.<code>id</code> = 40</p>
+
+<p>```</p>
+
+<p>从表单的复选框传来的数据用这种方式解决最好了</p>
+
+<p>最佳实践就是这么做滴</p>
+
+<p>``` ruby 多角色管理
+&lt;% for role in Role.all %></p>
+
+<div>
+  <%= check_box_tag "user[role_ids][]", role.id, @user.roles.include?(role) %>
+  <%=h role.name %>
+</div>
+
+
+<p>&lt;% end %>
+&lt;%= hidden_field_tag &ldquo;user[role_ids][]&rdquo;, &ldquo;&rdquo; %>
+```</p>
 ]]></content>
   </entry>
   

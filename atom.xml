@@ -4,7 +4,7 @@
   <title><![CDATA[小子的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-11T11:13:04+08:00</updated>
+  <updated>2013-12-11T11:26:37+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -164,6 +164,65 @@
 
 
 <p>要保留数据的时候又要去掉关联关系用这种方式最好了</p>
+
+<ul>
+<li>collection_singular_ids=ids(更改关联关系)</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="no">Squad</span><span class="o">.</span><span class="n">first</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">student_ids</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="o">[</span><span class="mi">42</span><span class="p">,</span> <span class="mi">43</span><span class="o">]</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">students_ids</span> <span class="o">=</span> <span class="o">[</span><span class="mi">40</span><span class="p">,</span> <span class="mi">43</span><span class="o">]</span>
+</span><span class='line'><span class="c1">#会查一遍数据表students,没有的id你可别乱来哦</span>
+</span><span class='line'><span class="no">Student</span> <span class="no">Load</span> <span class="p">(</span><span class="mi">0</span><span class="o">.</span><span class="mi">8</span><span class="n">ms</span><span class="p">)</span>  <span class="no">SELECT</span> <span class="sb">`students`</span><span class="o">.</span><span class="n">*</span> <span class="no">FROM</span> <span class="sb">`students`</span> <span class="no">WHERE</span> <span class="sb">`students`</span><span class="o">.</span><span class="n">`</span><span class="nb">id</span><span class="sb">` IN (40, 43)</span>
+</span><span class='line'>
+</span><span class='line'><span class="sb"># 不要42了就把关联关系去掉(设为NULL)</span>
+</span><span class='line'><span class="sb">SQL (0.6ms)  UPDATE `</span><span class="n">students</span><span class="sb">` SET `</span><span class="n">squad_id</span><span class="sb">` = NULL WHERE `</span><span class="n">students</span><span class="sb">`.`</span><span class="n">squad_id</span><span class="sb">` = 1 AND `</span><span class="n">students</span><span class="sb">`.`</span><span class="n">active</span><span class="sb">` = 1 AND `</span><span class="n">students</span><span class="sb">`.`</span><span class="nb">id</span><span class="sb">` IN (42)</span>
+</span><span class='line'>
+</span><span class='line'><span class="sb"># 把40加进去</span>
+</span><span class='line'><span class="sb">UPDATE `</span><span class="n">students</span><span class="sb">` SET `</span><span class="n">squad_id</span><span class="sb">` = 1, `</span><span class="n">updated_at</span><span class="sb">` = &#39;2013-12-11 03:19:40&#39; WHERE `</span><span class="n">students</span><span class="sb">`.`</span><span class="nb">id</span><span class="sb">` = 40</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>从表单的复选框传来的数据用这种方式解决最好了</p>
+
+<p>最佳实践就是这么做滴</p>
+
+<figure class='code'><figcaption><span>多角色管理</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="o">&lt;</span><span class="sx">% for </span><span class="n">role</span> <span class="k">in</span> <span class="no">Role</span><span class="o">.</span><span class="n">all</span> <span class="sx">%&gt;</span>
+</span><span class='line'><span class="sx">&lt;div&gt;</span>
+</span><span class='line'>  <span class="o">&lt;</span><span class="sx">%= check_box_tag &quot;user[role_ids][]&quot;, role.id, @user.roles.include?(role) %&gt;</span>
+</span><span class='line'><span class="sx">  &lt;%=</span><span class="n">h</span> <span class="n">role</span><span class="o">.</span><span class="n">name</span> <span class="sx">%&gt;</span>
+</span><span class='line'><span class="sx">&lt;/div&gt;</span>
+</span><span class='line'><span class="o">&lt;</span><span class="sx">% end %&gt;</span>
+</span><span class='line'><span class="sx">&lt;%= hidden_field_tag &quot;user[role_ids][]&quot;, &quot;&quot; %&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
 ]]></content>
   </entry>
   
