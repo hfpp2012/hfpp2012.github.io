@@ -4,7 +4,7 @@
   <title><![CDATA[小子的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-11T10:20:17+08:00</updated>
+  <updated>2013-12-11T11:13:04+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -21,6 +21,149 @@
     <content type="html"><![CDATA[<h2>rails关联模型参数的使用</h2>
 
 <p>上一篇<a href="http://yinsigan.github.io/blog/2013/12/10/rails-association/">rails association</a>说明了rails的各种模型的原理和设计,这篇我们来说说rails association具体参数的使用,通过一些案例或代码来分析它们的使用场景</p>
+
+<p><img src="http://yinsigan.github.io/images/rails_association_reference/has_many_through.png"></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">School</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">has_many</span> <span class="ss">:squads</span>
+</span><span class='line'>  <span class="n">has_many</span> <span class="ss">:students</span><span class="p">,</span> <span class="ss">:through</span> <span class="o">=&gt;</span> <span class="ss">:squads</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Squad</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">belongs_to</span> <span class="ss">:school</span>
+</span><span class='line'>  <span class="n">has_many</span> <span class="ss">:students</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Student</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">belongs_to</span> <span class="ss">:squad</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Association</h3>
+
+<ul>
+<li>association(force_reload = false)强制reload查数据库</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="no">Squad</span><span class="o">.</span><span class="n">first</span>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">students</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="o">[</span><span class="c1">#&lt;Student id: 40, name: &quot;学员1&quot;, squad_id: 1, created_at: &quot;2013-12-11 02:43:53&quot;, updated_at: &quot;2013-12-11 02:43:53&quot;, active: true&gt;,</span>
+</span><span class='line'> <span class="c1">#&lt;Student id: 41, name: &quot;学员2&quot;, squad_id: 1, created_at: &quot;2013-12-11 02:43:56&quot;, updated_at: &quot;2013-12-11 02:43:56&quot;, active: true&gt;]</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">students</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">delete</span> <span class="c1">#把最后一个学员删除,那班级s只剩下一个学员</span>
+</span><span class='line'><span class="c1"># 可是还是两个学员</span>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">students</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="o">[</span><span class="c1">#&lt;Student id: 40, name: &quot;学员1&quot;, squad_id: 1, created_at: &quot;2013-12-11 02:43:53&quot;, updated_at: &quot;2013-12-11 02:43:53&quot;, active: true&gt;,</span>
+</span><span class='line'> <span class="c1">#&lt;Student id: 41, name: &quot;学员2&quot;, squad_id: 1, created_at: &quot;2013-12-11 02:43:56&quot;, updated_at: &quot;2013-12-11 02:43:56&quot;, active: true&gt;]</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 如果传入一个参数true</span>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">students</span><span class="p">(</span><span class="kp">true</span><span class="p">)</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="o">[</span><span class="c1">#&lt;Student id: 40, name: &quot;学员1&quot;, squad_id: 1, created_at: &quot;2013-12-11 02:43:53&quot;, updated_at: &quot;2013-12-11 02:43:53&quot;, active: true&gt;]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>其实传入true就是去数据库查询,不直接从变量(<strong>s.students</strong>)取值</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">Student</span> <span class="no">Load</span> <span class="p">(</span><span class="mi">0</span><span class="o">.</span><span class="mi">8</span><span class="n">ms</span><span class="p">)</span>  <span class="no">SELECT</span> <span class="sb">`students`</span><span class="o">.</span><span class="n">*</span> <span class="no">FROM</span> <span class="sb">`students`</span> <span class="no">WHERE</span> <span class="sb">`students`</span><span class="o">.</span><span class="n">`squad_id</span><span class="sb">` = 1 AND `</span><span class="n">students</span><span class="sb">`.`</span><span class="n">active</span><span class="sb">` = 1</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>association=(associate)</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># good</span>
+</span><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="no">Student</span><span class="o">.</span><span class="n">first</span>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">squad</span> <span class="o">=</span> <span class="no">Squad</span><span class="o">.</span><span class="n">last</span>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">save</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># bad</span>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">squad_id</span> <span class="o">=</span> <span class="s1">&#39;9&#39;</span><span class="o">.</span><span class="n">to_i</span>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">save</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这种方式有两个好处,第一个,你不在白名单(attr_accessible)写上:squad_id,第二个你能保证squad_id就是正确存在的吗</p>
+
+<p>最佳实践也是推鉴这种方式的</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">current_user</span><span class="o">.</span><span class="n">posts</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">params</span><span class="o">[</span><span class="ss">:post</span><span class="o">]</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>collection&lt;&lt;(object, …)创建记录</li>
+</ul>
+
+
+<p>这是我们创建记录的主要手段之一</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="no">Squad</span><span class="o">.</span><span class="n">first</span>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">students</span> <span class="o">&lt;&lt;</span> <span class="no">Student</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="ss">:name</span> <span class="o">=&gt;</span> <span class="s2">&quot;学员&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>collection.delete(object, …)删除关联关系(不删除记录)</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="no">Squad</span><span class="o">.</span><span class="n">first</span>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">students</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">students</span><span class="o">.</span><span class="n">last</span><span class="p">)</span> <span class="c1">#删除最后一条,只是把值设为NULL</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="no">SQL</span> <span class="p">(</span><span class="mi">0</span><span class="o">.</span><span class="mi">6</span><span class="n">ms</span><span class="p">)</span>  <span class="no">UPDATE</span> <span class="sb">`students`</span> <span class="no">SET</span> <span class="sb">`squad_id`</span> <span class="o">=</span> <span class="no">NULL</span> <span class="no">WHERE</span> <span class="sb">`students`</span><span class="o">.</span><span class="n">`squad_id</span><span class="sb">` = 1 AND `</span><span class="n">students</span><span class="sb">`.`</span><span class="n">active</span><span class="sb">` = 1 AND `</span><span class="n">students</span><span class="sb">`.`</span><span class="nb">id</span><span class="sb">` IN (43)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>要保留数据的时候又要去掉关联关系用这种方式最好了</p>
 ]]></content>
   </entry>
   

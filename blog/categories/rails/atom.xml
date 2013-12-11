@@ -4,7 +4,7 @@
   <title><![CDATA[Category: rails | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/rails/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-11T10:20:17+08:00</updated>
+  <updated>2013-12-11T11:13:04+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -21,6 +21,109 @@
     <content type="html"><![CDATA[<h2>rails关联模型参数的使用</h2>
 
 <p>上一篇<a href="http://yinsigan.github.io/blog/2013/12/10/rails-association/">rails association</a>说明了rails的各种模型的原理和设计,这篇我们来说说rails association具体参数的使用,通过一些案例或代码来分析它们的使用场景</p>
+
+<p><img src="/images/rails_association_reference/has_many_through.png"></p>
+
+<p>``` ruby
+class School &lt; ActiveRecord::Base
+  has_many :squads
+  has_many :students, :through => :squads
+end</p>
+
+<p>class Squad &lt; ActiveRecord::Base
+  belongs_to :school
+  has_many :students
+end</p>
+
+<p>class Student &lt; ActiveRecord::Base
+  belongs_to :squad
+end
+```</p>
+
+<h3>Association</h3>
+
+<ul>
+<li>association(force_reload = false)强制reload查数据库</li>
+</ul>
+
+
+<p>``` ruby
+s = Squad.first
+s.students
+=> [#<Student id: 40, name: "学员1", squad_id: 1, created_at: "2013-12-11 02:43:53", updated_at: "2013-12-11 02:43:53", active: true>,
+ #<Student id: 41, name: "学员2", squad_id: 1, created_at: "2013-12-11 02:43:56", updated_at: "2013-12-11 02:43:56", active: true>]</p>
+
+<p>s.students.last.delete #把最后一个学员删除,那班级s只剩下一个学员</p>
+
+<h1>可是还是两个学员</h1>
+
+<p>s.students
+=> [#<Student id: 40, name: "学员1", squad_id: 1, created_at: "2013-12-11 02:43:53", updated_at: "2013-12-11 02:43:53", active: true>,
+ #<Student id: 41, name: "学员2", squad_id: 1, created_at: "2013-12-11 02:43:56", updated_at: "2013-12-11 02:43:56", active: true>]</p>
+
+<h1>如果传入一个参数true</h1>
+
+<p>s.students(true)
+=> [#<Student id: 40, name: "学员1", squad_id: 1, created_at: "2013-12-11 02:43:53", updated_at: "2013-12-11 02:43:53", active: true>]
+```</p>
+
+<p>其实传入true就是去数据库查询,不直接从变量(<strong>s.students</strong>)取值
+<code>
+Student Load (0.8ms)  SELECT `students`.* FROM `students` WHERE `students`.`squad_id` = 1 AND `students`.`active` = 1
+</code></p>
+
+<ul>
+<li>association=(associate)</li>
+</ul>
+
+
+<p>``` ruby</p>
+
+<h1>good</h1>
+
+<p>s = Student.first
+s.squad = Squad.last
+s.save</p>
+
+<h1>bad</h1>
+
+<p>s.squad_id = &lsquo;9&rsquo;.to_i
+s.save
+```</p>
+
+<p>这种方式有两个好处,第一个,你不在白名单(attr_accessible)写上:squad_id,第二个你能保证squad_id就是正确存在的吗</p>
+
+<p>最佳实践也是推鉴这种方式的</p>
+
+<p><code>ruby
+current_user.posts.build(params[:post])
+</code></p>
+
+<ul>
+<li>collection&lt;&lt;(object, …)创建记录</li>
+</ul>
+
+
+<p>这是我们创建记录的主要手段之一</p>
+
+<p><code>ruby
+s = Squad.first
+s.students &lt;&lt; Student.create(:name =&gt; "学员")
+</code></p>
+
+<ul>
+<li>collection.delete(object, …)删除关联关系(不删除记录)</li>
+</ul>
+
+
+<p><code>`` ruby
+s = Squad.first
+s.students.delete(s.students.last) #删除最后一条,只是把值设为NULL
+=&gt; SQL (0.6ms)  UPDATE</code>students<code>SET</code>squad_id<code>= NULL WHERE</code>students<code>.</code>squad_id<code>= 1 AND</code>students<code>.</code>active<code>= 1 AND</code>students<code>.</code>id` IN (43)</p>
+
+<p>```</p>
+
+<p>要保留数据的时候又要去掉关联关系用这种方式最好了</p>
 ]]></content>
   </entry>
   
