@@ -200,7 +200,7 @@ end
 
 这个时候一个好的解决方案就是用单表继承
 
-{% img /images/rails_association/polymorphic.png %}
+{% img /images/rails_association/single_table_inheritance.png %}
 
 ``` ruby
 class GrowthRecord < ActiveRecord::Base
