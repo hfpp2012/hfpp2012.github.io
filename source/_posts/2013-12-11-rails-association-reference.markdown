@@ -278,12 +278,61 @@ end
 
 依赖性
 
+``` ruby
+class Squad < ActiveRecord::Base
+  has_many :students, :dependent => :destroy
+end
 
+class Student < ActiveRecord::Base
+  belongs_to :squad
+end
+```
+
+如果传入`:dependent => :nullify`不删除数据,只删除关联数据
 
 
 + foreign_key
+
+外键
+
+``` ruby
+class Topic < ActiveRecord::Base
+  belongs_to :creater, :class_name => 'User', :foreign_key => "creater_id"
+end
+```
+
+当你的model name跟foreign_key不一致时就可以手动指定关联的foreign_key
+这样写当`topic.creater.try(:name)`就可以简单取得创建者的name了
+
 + include
-+ readonly
+
+包含查询
+
+``` ruby
+class Squad < ActiveRecord::Base
+  has_many :students
+end
+
+class Student < ActiveRecord::Base
+  belongs_to :squad, :include => :school
+end
+
+class School < ActiveRecord::Base
+  has_many :squads
+end
+
+s = Student.first
+s.squad
+# 查了schools这个表,把数据一并取了出来
+Squad Load (0.3ms)  SELECT `squads`.* FROM `squads` WHERE `squads`.`id` = 14 LIMIT 1
+School Load (0.3ms)  SELECT `schools`.* FROM `schools` WHERE `schools`.`id` IN (1)
+
+# 前面已经查了schools的数据了,现在不会查sql的
+s.squad.school
+```
+
+当你要查`Student.first.squad.school'就方便多了
+
 + touch
 + validate
 + source
