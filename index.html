@@ -154,7 +154,7 @@ class School &hellip;">
 </span></code></pre></td></tr></table></div></figure>
 
 
-<h3>Association</h3>
+<h3>Association(关联关系的使用)</h3>
 
 <ul>
 <li>association(force_reload = false)强制reload查数据库</li>
@@ -264,7 +264,31 @@ class School &hellip;">
 </span></code></pre></td></tr></table></div></figure>
 
 
+<p>delete_all不用传参数就可以删除所有关联关系了</p>
+
 <p>要保留数据的时候又要去掉关联关系用这种方式最好了</p>
+
+<ul>
+<li>collection.delete(object, …)删除记录</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="no">Squad</span><span class="o">.</span><span class="n">first</span>
+</span><span class='line'><span class="n">st</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">first</span>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">students</span><span class="o">.</span><span class="n">destroy</span><span class="p">(</span><span class="n">st</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 是真正的删除记录</span>
+</span><span class='line'><span class="no">DELETE</span> <span class="no">FROM</span> <span class="sb">`students`</span> <span class="no">WHERE</span> <span class="sb">`students`</span><span class="o">.</span><span class="n">`</span><span class="nb">id</span><span class="sb">` = 46</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>destroy_all不用传参数就可以删除所有关联的记录了</p>
 
 <ul>
 <li>collection_singular_ids=ids(更改关联关系)</li>
@@ -372,6 +396,185 @@ class School &hellip;">
 </span></code></pre></td></tr></table></div></figure>
 
 
+<ul>
+<li>collection.exists?判断记录是否存在</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="no">Squad</span><span class="o">.</span><span class="n">first</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">students</span><span class="o">.</span><span class="n">exists?</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">students</span><span class="o">.</span><span class="n">exists?</span><span class="p">(</span><span class="no">Student</span><span class="o">.</span><span class="n">first</span><span class="p">)</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">students</span><span class="o">.</span><span class="n">exists?</span><span class="p">(</span><span class="ss">:id</span> <span class="o">=&gt;</span> <span class="mi">42</span><span class="p">)</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="kp">true</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>用<strong>exists?</strong>来判断比<strong>include?</strong>更灵活,<strong>include?</strong>只支持类似这样<code>inlcude?(Student.first)</code>的判断</p>
+
+<h3>Association Parameter Reference(参数的使用)</h3>
+
+<p>有些参数在上一篇<a href="http://yinsigan.github.io/blog/2013/12/10/rails-association/">rails association</a>已经提及过，例如polymorphic, :through等,这里再阐述几个比较常用或用处比较大的</p>
+
+<ul>
+<li>class_name</li>
+</ul>
+
+
+<p>查找实际的类名(model)</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># 默认情况下是:students的,如果要换个名字,就要指定实际的class_name</span>
+</span><span class='line'><span class="n">has_many</span> <span class="ss">:newest_students</span><span class="p">,</span> <span class="ss">:class_name</span> <span class="o">=&gt;</span> <span class="s1">&#39;Student&#39;</span><span class="p">,</span> <span class="ss">:order</span> <span class="o">=&gt;</span> <span class="s1">&#39;created_at DESC&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="no">SELECT</span> <span class="sb">`students`</span><span class="o">.</span><span class="n">*</span> <span class="no">FROM</span> <span class="sb">`students`</span> <span class="no">WHERE</span> <span class="sb">`students`</span><span class="o">.</span><span class="n">`squad_id</span><span class="sb">` = 1 ORDER BY created_at DESC</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>conditions</li>
+</ul>
+
+
+<p>指定查询条件</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">has_many</span> <span class="ss">:students</span><span class="p">,</span> <span class="ss">:conditions</span> <span class="o">=&gt;</span> <span class="s2">&quot;active = 1&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>在rails 4已经用where代替conditions了</p>
+
+<p>conditions有个要注意的地方</p>
+
+<p><code>:conditions =&gt; "active = 1"</code>和<code>{active: true}</code>(Hash)是不一样的
+当你用s.students.create或s.students.build创建student的时候,active的值会不一样
+用<code>{active: true}</code>形式创建时不管你的active的默认值是否是true，创建的student的active都是true
+而<code>:conditions =&gt; "active = 1"</code>就是看active的默认值</p>
+
+<p>:conditions也可以接proc:<code>:conditions =&gt; proc { ["orders.created_at &gt; ?", 10.hours.ago] }</code></p>
+
+<p>实际项目的代码如下:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">School</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">has_many</span> <span class="ss">:students</span><span class="p">,</span> <span class="ss">:include</span> <span class="o">=&gt;</span> <span class="ss">:user</span><span class="p">,</span> <span class="ss">:order</span> <span class="o">=&gt;</span> <span class="s2">&quot;users.name DESC&quot;</span><span class="p">,</span> <span class="ss">:conditions</span> <span class="o">=&gt;</span> <span class="s2">&quot;users.tp = 0&quot;</span>
+</span><span class='line'>  <span class="n">has_many</span> <span class="ss">:staff_users</span><span class="p">,</span> <span class="ss">:class_name</span> <span class="o">=&gt;</span> <span class="s2">&quot;User&quot;</span><span class="p">,</span> <span class="ss">:order</span> <span class="o">=&gt;</span> <span class="ss">:name</span><span class="p">,</span> <span class="ss">:conditions</span> <span class="o">=&gt;</span> <span class="s2">&quot;tp = 1&quot;</span>
+</span><span class='line'>  <span class="n">has_many</span> <span class="ss">:staffs</span><span class="p">,</span> <span class="ss">:through</span> <span class="o">=&gt;</span> <span class="ss">:users</span><span class="p">,</span> <span class="ss">:order</span> <span class="o">=&gt;</span> <span class="s2">&quot;users.name DESC&quot;</span><span class="p">,</span> <span class="ss">:conditions</span> <span class="o">=&gt;</span> <span class="s2">&quot;users.tp = 1&quot;</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>counter_cache</li>
+</ul>
+
+
+<p>在数据库中记录孩子的数量</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>rails g migration add_students_count_to_squads students_count:integer
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">AddStudentsCountToSquads</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Migration</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">change</span>
+</span><span class='line'>    <span class="n">add_column</span> <span class="ss">:squads</span><span class="p">,</span> <span class="ss">:students_count</span><span class="p">,</span> <span class="ss">:string</span>
+</span><span class='line'>    <span class="no">Squad</span><span class="o">.</span><span class="n">reset_column_information</span>
+</span><span class='line'>    <span class="no">Squad</span><span class="o">.</span><span class="n">find_each</span> <span class="k">do</span> <span class="o">|</span><span class="nb">p</span><span class="o">|</span>
+</span><span class='line'>      <span class="no">Squad</span><span class="o">.</span><span class="n">update_counters</span> <span class="nb">p</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="ss">:students_count</span> <span class="o">=&gt;</span> <span class="nb">p</span><span class="o">.</span><span class="n">students</span><span class="o">.</span><span class="n">length</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Squad</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">has_many</span> <span class="ss">:students</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Student</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">belongs_to</span> <span class="ss">:squad</span><span class="p">,</span> <span class="ss">:counter_cache</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>默认的字段名是跟关联(has_many)的model是一致的,在上述的例子中就是<strong>students_count</strong>,如果想改变这个name也可以,给:counter_cache指定值就可以了,例如<code>:counter_cache =&gt; :children_count</code></p>
+
+<p>当删除关联关系时(squad_id设为NULL)时,students_count不会更新</p>
+
+<ul>
+<li>dependent</li>
+</ul>
+
+
+<p>依赖性</p>
+
+<ul>
+<li>foreign_key</li>
+<li>include</li>
+<li>readonly</li>
+<li>touch</li>
+<li>validate</li>
+<li>source</li>
+<li>group</li>
+<li>extend</li>
+<li>:order</li>
+<li>:uniq</li>
+</ul>
+
+
+<p>除了这些参数还有:readonly, :select, :limit, :offset等</p>
+
+<h3>Association Callbacks</h3>
+
+<ul>
+<li>before_add</li>
+<li>after_add</li>
+<li>before_remove</li>
+<li>after_remove</li>
+</ul>
 
 </div>
   
