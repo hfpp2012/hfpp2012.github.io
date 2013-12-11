@@ -4,7 +4,7 @@
   <title><![CDATA[小子的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-11T11:26:37+08:00</updated>
+  <updated>2013-12-11T14:27:02+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -219,6 +219,55 @@
 </span><span class='line'><span class="sx">&lt;/div&gt;</span>
 </span><span class='line'><span class="o">&lt;</span><span class="sx">% end %&gt;</span>
 </span><span class='line'><span class="sx">&lt;%= hidden_field_tag &quot;user[role_ids][]&quot;, &quot;&quot; %&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>collection.clear会把所有关联关系清除或者删掉</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="no">Squad</span><span class="o">.</span><span class="n">first</span>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">students</span><span class="o">.</span><span class="n">clear</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 只是把关联关系清除而已</span>
+</span><span class='line'><span class="no">UPDATE</span> <span class="sb">`students`</span> <span class="no">SET</span> <span class="sb">`squad_id`</span> <span class="o">=</span> <span class="no">NULL</span> <span class="no">WHERE</span> <span class="sb">`students`</span><span class="o">.</span><span class="n">`squad_id</span><span class="sb">` = 1 AND `</span><span class="n">students</span><span class="sb">`.`</span><span class="n">active</span><span class="sb">` = 1 AND `</span><span class="n">students</span><span class="sb">`.`</span><span class="nb">id</span><span class="sb">` IN (42, 42)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>如果不止想关联关系清除呢,那个就是要在has_many时加入:dependent => :destroy就可以了</p>
+
+<p>其实看下clear的源码就知道原理</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># File activerecord/lib/active_record/associations/association_collection.rb, line 244</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">clear</span>
+</span><span class='line'>  <span class="k">return</span> <span class="nb">self</span> <span class="k">if</span> <span class="n">length</span><span class="o">.</span><span class="n">zero?</span> <span class="c1"># forces load_target if it hasn&#39;t happened already</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">if</span> <span class="vi">@reflection</span><span class="o">.</span><span class="n">options</span><span class="o">[</span><span class="ss">:dependent</span><span class="o">]</span> <span class="o">&amp;&amp;</span> <span class="vi">@reflection</span><span class="o">.</span><span class="n">options</span><span class="o">[</span><span class="ss">:dependent</span><span class="o">]</span> <span class="o">==</span> <span class="ss">:destroy</span>
+</span><span class='line'>    <span class="n">destroy_all</span>
+</span><span class='line'>  <span class="k">else</span>
+</span><span class='line'>    <span class="n">delete_all</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nb">self</span>
+</span><span class='line'><span class="k">end</span>
 </span></code></pre></td></tr></table></div></figure>
 
 

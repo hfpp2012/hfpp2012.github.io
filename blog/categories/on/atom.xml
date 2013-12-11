@@ -4,7 +4,7 @@
   <title><![CDATA[Category: on | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/on/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-11T11:26:37+08:00</updated>
+  <updated>2013-12-11T14:27:02+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -167,6 +167,48 @@ s = Squad.first</p>
 
 <p>&lt;% end %>
 &lt;%= hidden_field_tag &ldquo;user[role_ids][]&rdquo;, &ldquo;&rdquo; %>
+```</p>
+
+<ul>
+<li>collection.clear会把所有关联关系清除或者删掉</li>
+</ul>
+
+
+<p>``` ruby
+s = Squad.first
+s.students.clear</p>
+
+<h1>只是把关联关系清除而已</h1>
+
+<p>UPDATE <code>students</code> SET <code>squad_id</code> = NULL WHERE <code>students</code>.<code>squad_id</code> = 1 AND <code>students</code>.<code>active</code> = 1 AND <code>students</code>.<code>id</code> IN (42, 42)</p>
+
+<p>```</p>
+
+<p>如果不止想关联关系清除呢,那个就是要在has_many时加入:dependent => :destroy就可以了</p>
+
+<p>其实看下clear的源码就知道原理</p>
+
+<p>``` ruby</p>
+
+<h1>File activerecord/lib/active_record/associations/association_collection.rb, line 244</h1>
+
+<p>def clear
+  return self if length.zero? # forces load_target if it hasn&rsquo;t happened already</p>
+
+<p>  if @reflection.options[:dependent] &amp;&amp; @reflection.options[:dependent] == :destroy</p>
+
+<pre><code>destroy_all
+</code></pre>
+
+<p>  else</p>
+
+<pre><code>delete_all
+</code></pre>
+
+<p>  end</p>
+
+<p>  self
+end
 ```</p>
 ]]></content>
   </entry>
