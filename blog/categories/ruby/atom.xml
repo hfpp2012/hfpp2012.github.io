@@ -4,7 +4,7 @@
   <title><![CDATA[Category: ruby | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-10T20:33:20+08:00</updated>
+  <updated>2013-12-11T10:20:17+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -12,6 +12,17 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Rails Association Reference]]></title>
+    <link href="http://yinsigan.github.io/blog/2013/12/11/rails-association-reference/"/>
+    <updated>2013-12-11T10:09:00+08:00</updated>
+    <id>http://yinsigan.github.io/blog/2013/12/11/rails-association-reference</id>
+    <content type="html"><![CDATA[<h2>rails关联模型参数的使用</h2>
+
+<p>上一篇<a href="http://yinsigan.github.io/blog/2013/12/10/rails-association/">rails association</a>说明了rails的各种模型的原理和设计,这篇我们来说说rails association具体参数的使用,通过一些案例或代码来分析它们的使用场景</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[rails association]]></title>
@@ -218,7 +229,7 @@ end
 
 <p>这个时候一个好的解决方案就是用单表继承</p>
 
-<p><img src="/images/rails_association/polymorphic.png"></p>
+<p><img src="/images/rails_association/single_table_inheritance.png"></p>
 
 <p>``` ruby
 class GrowthRecord &lt; ActiveRecord::Base

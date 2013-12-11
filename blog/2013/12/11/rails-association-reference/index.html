@@ -5,11 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>人生就是初见 - 小子的博客</title>
+  <title>Rails Association Reference - 小子的博客</title>
   <meta name="author" content="小子">
 
   
-  <meta name="description" content="梳妆打扮净容颜，勿勿忙忙把班上。 悄然一见是佳女，玲珑剔透傲身姿。 肌肤赛雪小蛮腰，亭亭玉立勾神心。 偷眼正看似西施，千言万语难起齿。 但愿时间永停住，佳女相伴过一生。 只恨佳女瞬离去，相思相望身影现。 永记娇颜在心中，下次相见续前缘。
+  <meta name="description" content="rails关联模型参数的使用 上一篇rails association说明了rails的各种模型的原理和设计,这篇我们来说说rails association具体参数的使用,通过一些案例或代码来分析它们的使用场景
 ">
   
 
@@ -19,7 +19,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://yinsigan.github.io/blog/2013/07/05/ren-sheng-jiu-shi-chu-jian">
+  <link rel="canonical" href="http://yinsigan.github.io/blog/2013/12/11/rails-association-reference">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="小子的博客" type="application/atom+xml">
@@ -81,7 +81,7 @@
   
   <header>
     
-      <h1 class="entry-title">人生就是初见</h1>
+      <h1 class="entry-title">Rails Association Reference</h1>
     
     
       <p class="meta">
@@ -97,26 +97,16 @@
   
 
 
-<time datetime="2013-07-05T12:52:00+08:00" pubdate data-updated="true">Jul 5<span>th</span>, 2013</time>
+<time datetime="2013-12-11T10:09:00+08:00" pubdate data-updated="true">Dec 11<span>th</span>, 2013</time>
         
       </p>
     
   </header>
 
 
-<div class="entry-content"><p>梳妆打扮净容颜，勿勿忙忙把班上。</p>
+<div class="entry-content"><h2>rails关联模型参数的使用</h2>
 
-<p>悄然一见是佳女，玲珑剔透傲身姿。</p>
-
-<p>肌肤赛雪小蛮腰，亭亭玉立勾神心。</p>
-
-<p>偷眼正看似西施，千言万语难起齿。</p>
-
-<p>但愿时间永停住，佳女相伴过一生。</p>
-
-<p>只恨佳女瞬离去，相思相望身影现。</p>
-
-<p>永记娇颜在心中，下次相见续前缘。</p>
+<p>上一篇<a href="http://yinsigan.github.io/blog/2013/12/10/rails-association/">rails association</a>说明了rails的各种模型的原理和设计,这篇我们来说说rails association具体参数的使用,通过一些案例或代码来分析它们的使用场景</p>
 </div>
 
 
@@ -139,12 +129,12 @@
   
 
 
-<time datetime="2013-07-05T12:52:00+08:00" pubdate data-updated="true">Jul 5<span>th</span>, 2013</time>
+<time datetime="2013-12-11T10:09:00+08:00" pubdate data-updated="true">Dec 11<span>th</span>, 2013</time>
       
 
 <span class="categories">
   
-    <a class='category' href='/blog/categories/wo-de-shi/'>我的诗</a>
+    <a class='category' href='/blog/categories/on/'>on</a>, <a class='category' href='/blog/categories/rails/'>rails</a>, <a class='category' href='/blog/categories/ruby/'>ruby</a>
   
 </span>
 
@@ -153,7 +143,7 @@
     
       <div class="sharing">
   
-  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://yinsigan.github.io/blog/2013/07/05/ren-sheng-jiu-shi-chu-jian/" data-via="" data-counturl="http://yinsigan.github.io/blog/2013/07/05/ren-sheng-jiu-shi-chu-jian/" >Tweet</a>
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://yinsigan.github.io/blog/2013/12/11/rails-association-reference/" data-via="" data-counturl="http://yinsigan.github.io/blog/2013/12/11/rails-association-reference/" >Tweet</a>
   
   
   
@@ -162,8 +152,8 @@
     
     <p class="meta">
       
+        <a class="basic-alignment left" href="/blog/2013/12/10/rails-association/" title="Previous Post: rails association">&laquo; rails association</a>
       
-        <a class="basic-alignment right" href="/blog/2013/07/10/wo-de-xue-xi-wang-zhan-shou-ji/" title="Next Post: 我的学习网站收集">我的学习网站收集 &raquo;</a>
       
     </p>
   </footer>
@@ -229,8 +219,8 @@
       
         
         // var disqus_developer = 1;
-        var disqus_identifier = 'http://yinsigan.github.io/blog/2013/07/05/ren-sheng-jiu-shi-chu-jian/';
-        var disqus_url = 'http://yinsigan.github.io/blog/2013/07/05/ren-sheng-jiu-shi-chu-jian/';
+        var disqus_identifier = 'http://yinsigan.github.io/blog/2013/12/11/rails-association-reference/';
+        var disqus_url = 'http://yinsigan.github.io/blog/2013/12/11/rails-association-reference/';
         var disqus_script = 'embed.js';
       
     (function () {
