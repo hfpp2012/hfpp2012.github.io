@@ -4,7 +4,7 @@
   <title><![CDATA[Category: on | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/on/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-11T18:08:21+08:00</updated>
+  <updated>2013-12-11T22:13:03+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -350,10 +350,70 @@ end
 
 <p>依赖性</p>
 
+<p>``` ruby
+class Squad &lt; ActiveRecord::Base
+  has_many :students, :dependent => :destroy
+end</p>
+
+<p>class Student &lt; ActiveRecord::Base
+  belongs_to :squad
+end
+```</p>
+
+<p>如果传入<code>:dependent =&gt; :nullify</code>不删除数据,只删除关联数据</p>
+
 <ul>
 <li>foreign_key</li>
+</ul>
+
+
+<p>外键</p>
+
+<p><code>ruby
+class Topic &lt; ActiveRecord::Base
+  belongs_to :creater, :class_name =&gt; 'User', :foreign_key =&gt; "creater_id"
+end
+</code></p>
+
+<p>当你的model name跟foreign_key不一致时就可以手动指定关联的foreign_key
+这样写当<code>topic.creater.try(:name)</code>就可以简单取得创建者的name了</p>
+
+<ul>
 <li>include</li>
-<li>readonly</li>
+</ul>
+
+
+<p>包含查询</p>
+
+<p>``` ruby
+class Squad &lt; ActiveRecord::Base
+  has_many :students
+end</p>
+
+<p>class Student &lt; ActiveRecord::Base
+  belongs_to :squad, :include => :school
+end</p>
+
+<p>class School &lt; ActiveRecord::Base
+  has_many :squads
+end</p>
+
+<p>s = Student.first
+s.squad</p>
+
+<h1>查了schools这个表,把数据一并取了出来</h1>
+
+<p>Squad Load (0.3ms)  SELECT <code>squads</code>.<em> FROM <code>squads</code> WHERE <code>squads</code>.<code>id</code> = 14 LIMIT 1
+School Load (0.3ms)  SELECT <code>schools</code>.</em> FROM <code>schools</code> WHERE <code>schools</code>.<code>id</code> IN (1)</p>
+
+<h1>前面已经查了schools的数据了,现在不会查sql的</h1>
+
+<p>s.squad.school
+```</p>
+
+<p>当你要查`Student.first.squad.school'就方便多了</p>
+
+<ul>
 <li>touch</li>
 <li>validate</li>
 <li>source</li>
