@@ -879,12 +879,45 @@ class School &hellip;">
 <h3>Association Callbacks</h3>
 
 <ul>
-<li>before_add</li>
-<li>after_add</li>
-<li>before_remove</li>
-<li>after_remove</li>
+<li>before_add 添加前</li>
+<li>after_add 添加后</li>
+<li>before_remove 删除前</li>
+<li>after_remove  删除后</li>
 </ul>
 
+
+<p>这是关联关系的Callbacks</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Squad</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">has_many</span> <span class="ss">:students</span><span class="p">,</span> <span class="ss">:after_add</span> <span class="o">=&gt;</span> <span class="ss">:update_accessed_at</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kp">private</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">update_accessed_at</span><span class="p">(</span><span class="n">student</span><span class="p">)</span>
+</span><span class='line'>      <span class="n">student</span><span class="o">.</span><span class="n">accessed_at</span> <span class="o">=</span> <span class="no">Time</span><span class="o">.</span><span class="n">now</span><span class="o">.</span><span class="n">utc</span>
+</span><span class='line'>      <span class="n">student</span><span class="o">.</span><span class="n">save</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="no">Squad</span><span class="o">.</span><span class="n">first</span>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">students</span> <span class="o">&lt;&lt;</span> <span class="no">Student</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="ss">:name</span> <span class="o">=&gt;</span> <span class="s2">&quot;学员&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>学会了这些,可以对数据库更加理解,而且减少代码量(减少自己写数据库查询),优化了代码</h2>
 </div>
   
   

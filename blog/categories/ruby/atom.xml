@@ -4,7 +4,7 @@
   <title><![CDATA[Category: ruby | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-12T10:51:36+08:00</updated>
+  <updated>2013-12-12T11:15:20+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -573,12 +573,34 @@ s.staff &lt; staff</p>
 <h3>Association Callbacks</h3>
 
 <ul>
-<li>before_add</li>
-<li>after_add</li>
-<li>before_remove</li>
-<li>after_remove</li>
+<li>before_add 添加前</li>
+<li>after_add 添加后</li>
+<li>before_remove 删除前</li>
+<li>after_remove  删除后</li>
 </ul>
 
+
+<p>这是关联关系的Callbacks</p>
+
+<p>``` ruby
+class Squad &lt; ActiveRecord::Base
+  has_many :students, :after_add => :update_accessed_at</p>
+
+<p>  private</p>
+
+<pre><code>def update_accessed_at(student)
+  student.accessed_at = Time.now.utc
+  student.save
+end
+</code></pre>
+
+<p>end</p>
+
+<p>s = Squad.first
+s.students &lt;&lt; Student.create(:name => &ldquo;学员&rdquo;)
+```</p>
+
+<h2>学会了这些,可以对数据库更加理解,而且减少代码量(减少自己写数据库查询),优化了代码</h2>
 ]]></content>
   </entry>
   
