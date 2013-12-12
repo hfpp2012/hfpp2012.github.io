@@ -4,7 +4,7 @@
   <title><![CDATA[Category: rails | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/rails/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-11T22:13:03+08:00</updated>
+  <updated>2013-12-12T10:51:36+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -411,20 +411,164 @@ School Load (0.3ms)  SELECT <code>schools</code>.</em> FROM <code>schools</code>
 <p>s.squad.school
 ```</p>
 
-<p>当你要查`Student.first.squad.school'就方便多了</p>
+<p>当你要查<code>Student.first.squad.school</code>就方便多了</p>
 
 <ul>
 <li>touch</li>
+</ul>
+
+
+<p>当子类被创建或更改时,更新父类的updated_at</p>
+
+<p>``` ruby
+class Student &lt; ActiveRecord::Base
+  belongs_to :squad, :touch => true
+end</p>
+
+<p>class Squad &lt; ActiveRecord::Base
+  has_many :students
+end</p>
+
+<p>s = Student.first
+s.name = &lsquo;学员&rsquo;
+s.save</p>
+
+<h1>其实就是把父的updated_at更新了一下</h1>
+
+<p>UPDATE <code>students</code> SET <code>name</code> = &lsquo;3333333333333&rsquo;, <code>updated_at</code> = &lsquo;2013-12-11 14:59:47&rsquo; WHERE <code>students</code>.<code>id</code> = 86
+Squad Load (0.6ms)  SELECT <code>squads</code>.* FROM <code>squads</code> WHERE <code>squads</code>.<code>id</code> = 14 LIMIT 1
+SQL (0.7ms)  UPDATE <code>squads</code> SET <code>updated_at</code> = &lsquo;2013-12-11 14:59:47&rsquo; WHERE <code>squads</code>.<code>id</code> = 14
+```</p>
+
+<p>如果不想更新updated_at, 还可以指定更新具体的column,例如<code>:touch =&gt; :accessed_at</code></p>
+
+<ul>
 <li>validate</li>
+</ul>
+
+
+<p>跳过验证</p>
+
+<p>``` ruby
+class Squad &lt; ActiveRecord::Base
+  has_many :students, :validate => true
+end</p>
+
+<p>class Student &lt; ActiveRecord::Base
+  belongs_to :squad
+  validates :name, :presence => true
+end</p>
+
+<h1>failure</h1>
+
+<p>Student.create</p>
+
+<h1>success</h1>
+
+<p>s = Squad.first
+s.students.create
+```</p>
+
+<p>在创建子对象时,可以跳过验证</p>
+
+<ul>
 <li>source</li>
+</ul>
+
+
+<p>指定查找源, 和has_one :through或has_many :through一起使用</p>
+
+<p>``` ruby
+class School &lt; ActiveRecord::Base
+  has_many :squads
+  has_many :squads_teachers, :through => :squads, :source => :teachers
+end</p>
+
+<p>class Squad &lt; ActiveRecord::Base
+  has_many :teachers
+  belongs_to :school
+end</p>
+
+<p>class Teacher &lt; ActiveRecord::Base
+  belongs_to :squad
+  belongs_to :staff
+end</p>
+
+<p>s = School.first
+s.squads_teachers</p>
+
+<h1>查找的是teachers表,不过teachers去joins squads表</h1>
+
+<p>School Load (1.5ms)  SELECT <code>schools</code>.<em> FROM <code>schools</code> LIMIT 1
+Teacher Load (90.0ms)  SELECT <code>teachers</code>.</em> FROM <code>teachers</code> INNER JOIN <code>squads</code> ON <code>teachers</code>.<code>squad_id</code> = <code>squads</code>.<code>id</code> WHERE <code>squads</code>.<code>school_id</code> = 1</p>
+
+<h1>grades belongs_to staff</h1>
+
+<p>has_many :grade_teachers, :through => :grades, :source => :staff  #年级组长
+```</p>
+
+<p>这种方式用得好真的好灵活</p>
+
+<ul>
 <li>group</li>
-<li>extend</li>
-<li>:order</li>
+</ul>
+
+
+<p>分组</p>
+
+<p>``` ruby
+class School &lt; ActiveRecord::Base
+  has_many :students, :through => :squads, :group => &lsquo;squads.id&rsquo;
+end</p>
+
+<p>s = School.first
+s.students</p>
+
+<h1>原理就是在数据库查询的时候加个分组group</h1>
+
+<p>Student Load (81.7ms)  SELECT <code>students</code>.* FROM <code>students</code> INNER JOIN <code>squads</code> ON <code>students</code>.<code>squad_id</code> = <code>squads</code>.<code>id</code> WHERE <code>squads</code>.<code>school_id</code> = 1 GROUP BY squads.id
+```</p>
+
+<ul>
 <li>:uniq</li>
 </ul>
 
 
-<p>除了这些参数还有:readonly, :select, :limit, :offset等</p>
+<p>确保查到的数据是唯一的</p>
+
+<p>``` ruby
+class Squad &lt; ActiveRecord::Base
+  has_many :staffs, :through => :teachers, :uniq => true
+  has_many :teachers
+end</p>
+
+<p>class Staff &lt; ActiveRecord::Base
+  has_many :squad, :through => :teachers
+  has_many :teachers
+end</p>
+
+<p>class Teacher &lt; ActiveRecord::Base
+  belongs_to :squad
+  belongs_to :staff
+end</p>
+
+<p>s = Squad.first
+staff = Staff.create
+s.staff &lt; staff
+s.staff &lt; staff</p>
+
+<h1>如果没有:unqi => true,将会输出多个staffs,数据库也是存在的(相同的数据),加上:unqi => true将只会输出一条数据,这样才符合逻辑</h1>
+
+<p>s.staff</p>
+
+<p>```</p>
+
+<p>在rails 4用-> { distinct }</p>
+
+<ul>
+<li>除了这些参数还有<strong>:readonly</strong>, <strong>:order</strong>, <strong>:select</strong>, <strong>:limit</strong>, <strong>:offset</strong>等</li>
+</ul>
+
 
 <h3>Association Callbacks</h3>
 

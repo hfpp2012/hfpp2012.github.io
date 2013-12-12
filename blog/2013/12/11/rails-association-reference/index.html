@@ -636,20 +636,242 @@ class School &hellip;">
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>当你要查`Student.first.squad.school&#8217;就方便多了</p>
+<p>当你要查<code>Student.first.squad.school</code>就方便多了</p>
 
 <ul>
 <li>touch</li>
+</ul>
+
+
+<p>当子类被创建或更改时,更新父类的updated_at</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Student</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">belongs_to</span> <span class="ss">:squad</span><span class="p">,</span> <span class="ss">:touch</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Squad</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">has_many</span> <span class="ss">:students</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="no">Student</span><span class="o">.</span><span class="n">first</span>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;学员&#39;</span>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">save</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 其实就是把父的updated_at更新了一下</span>
+</span><span class='line'><span class="no">UPDATE</span> <span class="sb">`students`</span> <span class="no">SET</span> <span class="sb">`name`</span> <span class="o">=</span> <span class="s1">&#39;3333333333333&#39;</span><span class="p">,</span> <span class="sb">`updated_at`</span> <span class="o">=</span> <span class="s1">&#39;2013-12-11 14:59:47&#39;</span> <span class="no">WHERE</span> <span class="sb">`students`</span><span class="o">.</span><span class="n">`</span><span class="nb">id</span><span class="sb">` = 86</span>
+</span><span class='line'><span class="sb">Squad Load (0.6ms)  SELECT `</span><span class="n">squads</span><span class="sb">`.* FROM `</span><span class="n">squads</span><span class="sb">` WHERE `</span><span class="n">squads</span><span class="sb">`.`</span><span class="nb">id</span><span class="sb">` = 14 LIMIT 1</span>
+</span><span class='line'><span class="sb">SQL (0.7ms)  UPDATE `</span><span class="n">squads</span><span class="sb">` SET `</span><span class="n">updated_at</span><span class="sb">` = &#39;2013-12-11 14:59:47&#39; WHERE `</span><span class="n">squads</span><span class="sb">`.`</span><span class="nb">id</span><span class="sb">` = 14</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>如果不想更新updated_at, 还可以指定更新具体的column,例如<code>:touch =&gt; :accessed_at</code></p>
+
+<ul>
 <li>validate</li>
+</ul>
+
+
+<p>跳过验证</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Squad</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">has_many</span> <span class="ss">:students</span><span class="p">,</span> <span class="ss">:validate</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Student</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">belongs_to</span> <span class="ss">:squad</span>
+</span><span class='line'>  <span class="n">validates</span> <span class="ss">:name</span><span class="p">,</span> <span class="ss">:presence</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># failure</span>
+</span><span class='line'><span class="no">Student</span><span class="o">.</span><span class="n">create</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># success</span>
+</span><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="no">Squad</span><span class="o">.</span><span class="n">first</span>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">students</span><span class="o">.</span><span class="n">create</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>在创建子对象时,可以跳过验证</p>
+
+<ul>
 <li>source</li>
+</ul>
+
+
+<p>指定查找源, 和has_one :through或has_many :through一起使用</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">School</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">has_many</span> <span class="ss">:squads</span>
+</span><span class='line'>  <span class="n">has_many</span> <span class="ss">:squads_teachers</span><span class="p">,</span> <span class="ss">:through</span> <span class="o">=&gt;</span> <span class="ss">:squads</span><span class="p">,</span> <span class="ss">:source</span> <span class="o">=&gt;</span> <span class="ss">:teachers</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Squad</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">has_many</span> <span class="ss">:teachers</span>
+</span><span class='line'>  <span class="n">belongs_to</span> <span class="ss">:school</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Teacher</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">belongs_to</span> <span class="ss">:squad</span>
+</span><span class='line'>  <span class="n">belongs_to</span> <span class="ss">:staff</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="no">School</span><span class="o">.</span><span class="n">first</span>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">squads_teachers</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 查找的是teachers表,不过teachers去joins squads表</span>
+</span><span class='line'><span class="no">School</span> <span class="no">Load</span> <span class="p">(</span><span class="mi">1</span><span class="o">.</span><span class="mi">5</span><span class="n">ms</span><span class="p">)</span>  <span class="no">SELECT</span> <span class="sb">`schools`</span><span class="o">.</span><span class="n">*</span> <span class="no">FROM</span> <span class="sb">`schools`</span> <span class="no">LIMIT</span> <span class="mi">1</span>
+</span><span class='line'><span class="no">Teacher</span> <span class="no">Load</span> <span class="p">(</span><span class="mi">90</span><span class="o">.</span><span class="mi">0</span><span class="n">ms</span><span class="p">)</span>  <span class="no">SELECT</span> <span class="sb">`teachers`</span><span class="o">.</span><span class="n">*</span> <span class="no">FROM</span> <span class="sb">`teachers`</span> <span class="no">INNER</span> <span class="no">JOIN</span> <span class="sb">`squads`</span> <span class="no">ON</span> <span class="sb">`teachers`</span><span class="o">.</span><span class="n">`squad_id</span><span class="sb">` = `</span><span class="n">squads</span><span class="sb">`.`</span><span class="nb">id</span><span class="sb">` WHERE `</span><span class="n">squads</span><span class="sb">`.`</span><span class="n">school_id</span><span class="sb">` = 1</span>
+</span><span class='line'>
+</span><span class='line'><span class="sb"># grades belongs_to staff</span>
+</span><span class='line'><span class="sb">has_many :grade_teachers, :through =&gt; :grades, :source =&gt; :staff  #年级组长</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这种方式用得好真的好灵活</p>
+
+<ul>
 <li>group</li>
-<li>extend</li>
-<li>:order</li>
+</ul>
+
+
+<p>分组</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">School</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">has_many</span> <span class="ss">:students</span><span class="p">,</span> <span class="ss">:through</span> <span class="o">=&gt;</span> <span class="ss">:squads</span><span class="p">,</span> <span class="ss">:group</span> <span class="o">=&gt;</span> <span class="s1">&#39;squads.id&#39;</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="no">School</span><span class="o">.</span><span class="n">first</span>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">students</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 原理就是在数据库查询的时候加个分组group</span>
+</span><span class='line'><span class="no">Student</span> <span class="no">Load</span> <span class="p">(</span><span class="mi">81</span><span class="o">.</span><span class="mi">7</span><span class="n">ms</span><span class="p">)</span>  <span class="no">SELECT</span> <span class="sb">`students`</span><span class="o">.</span><span class="n">*</span> <span class="no">FROM</span> <span class="sb">`students`</span> <span class="no">INNER</span> <span class="no">JOIN</span> <span class="sb">`squads`</span> <span class="no">ON</span> <span class="sb">`students`</span><span class="o">.</span><span class="n">`squad_id</span><span class="sb">` = `</span><span class="n">squads</span><span class="sb">`.`</span><span class="nb">id</span><span class="sb">` WHERE `</span><span class="n">squads</span><span class="sb">`.`</span><span class="n">school_id</span><span class="sb">` = 1 GROUP BY squads.id</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
 <li>:uniq</li>
 </ul>
 
 
-<p>除了这些参数还有:readonly, :select, :limit, :offset等</p>
+<p>确保查到的数据是唯一的</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Squad</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">has_many</span> <span class="ss">:staffs</span><span class="p">,</span> <span class="ss">:through</span> <span class="o">=&gt;</span> <span class="ss">:teachers</span><span class="p">,</span> <span class="ss">:uniq</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'>  <span class="n">has_many</span> <span class="ss">:teachers</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Staff</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">has_many</span> <span class="ss">:squad</span><span class="p">,</span> <span class="ss">:through</span> <span class="o">=&gt;</span> <span class="ss">:teachers</span>
+</span><span class='line'>  <span class="n">has_many</span> <span class="ss">:teachers</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Teacher</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">belongs_to</span> <span class="ss">:squad</span>
+</span><span class='line'>  <span class="n">belongs_to</span> <span class="ss">:staff</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="no">Squad</span><span class="o">.</span><span class="n">first</span>
+</span><span class='line'><span class="n">staff</span> <span class="o">=</span> <span class="no">Staff</span><span class="o">.</span><span class="n">create</span>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">staff</span> <span class="o">&lt;</span> <span class="n">staff</span>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">staff</span> <span class="o">&lt;</span> <span class="n">staff</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 如果没有:unqi =&gt; true,将会输出多个staffs,数据库也是存在的(相同的数据),加上:unqi =&gt; true将只会输出一条数据,这样才符合逻辑</span>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">staff</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>在rails 4用-> { distinct }</p>
+
+<ul>
+<li>除了这些参数还有<strong>:readonly</strong>, <strong>:order</strong>, <strong>:select</strong>, <strong>:limit</strong>, <strong>:offset</strong>等</li>
+</ul>
+
 
 <h3>Association Callbacks</h3>
 
