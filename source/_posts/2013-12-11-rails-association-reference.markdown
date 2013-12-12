@@ -471,6 +471,24 @@ s.staff.uniq
 
 + 除了这些参数还有**:readonly**, **:order**, **:select**, **:limit**, **:offset**等
 
++ 最后来个复杂的项目实例
+
+``` ruby
+class Relationship < ActiveRecord::Base
+  belongs_to :follower, class_name: "User"
+  belongs_to :followed, class_name: "User"
+end
+
+class User < ActiveRecord::Base
+  has_many :relationships, foreign_key: "follower_id", dependent: :destroy
+  has_many :followed_users, through: :relationships, source: :followed
+  has_many :reverse_relationships, foreign_key: "followed_id",
+                                   class_name:  "Relationship",
+                                   dependent:   :destroy
+  has_many :followers, through: :reverse_relationships, source: :follower
+end
+```
+
 
 ###Association Callbacks
 
