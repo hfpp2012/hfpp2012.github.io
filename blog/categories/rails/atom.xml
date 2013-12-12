@@ -4,7 +4,7 @@
   <title><![CDATA[Category: rails | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/rails/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-12T11:18:21+08:00</updated>
+  <updated>2013-12-12T11:26:21+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -563,6 +563,10 @@ s.staff &lt; staff</p>
 <h1>如果没有:unqi => true,将会输出多个staffs,数据库也是存在的(相同的数据),加上:unqi => true将只会输出一条数据,这样才符合逻辑</h1>
 
 <p>s.staff</p>
+
+<h1>如果不加这个:uniq => true,这样也可以实现同样的目的</h1>
+
+<p>s.staff.uniq</p>
 
 <p>```</p>
 

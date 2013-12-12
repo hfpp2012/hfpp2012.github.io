@@ -846,6 +846,9 @@ class School &hellip;">
 <span class='line-number'>20</span>
 <span class='line-number'>21</span>
 <span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
 </pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Squad</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
 </span><span class='line'>  <span class="n">has_many</span> <span class="ss">:staffs</span><span class="p">,</span> <span class="ss">:through</span> <span class="o">=&gt;</span> <span class="ss">:teachers</span><span class="p">,</span> <span class="ss">:uniq</span> <span class="o">=&gt;</span> <span class="kp">true</span>
 </span><span class='line'>  <span class="n">has_many</span> <span class="ss">:teachers</span>
@@ -868,6 +871,9 @@ class School &hellip;">
 </span><span class='line'>
 </span><span class='line'><span class="c1"># 如果没有:unqi =&gt; true,将会输出多个staffs,数据库也是存在的(相同的数据),加上:unqi =&gt; true将只会输出一条数据,这样才符合逻辑</span>
 </span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">staff</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 如果不加这个:uniq =&gt; true,这样也可以实现同样的目的</span>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">staff</span><span class="o">.</span><span class="n">uniq</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
