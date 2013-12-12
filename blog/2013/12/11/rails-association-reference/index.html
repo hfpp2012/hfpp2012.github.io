@@ -880,8 +880,38 @@ class School &hellip;">
 <p>在rails 4用-> { distinct }</p>
 
 <ul>
-<li>除了这些参数还有<strong>:readonly</strong>, <strong>:order</strong>, <strong>:select</strong>, <strong>:limit</strong>, <strong>:offset</strong>等</li>
+<li><p>除了这些参数还有<strong>:readonly</strong>, <strong>:order</strong>, <strong>:select</strong>, <strong>:limit</strong>, <strong>:offset</strong>等</p></li>
+<li><p>最后来个复杂的项目实例</p></li>
 </ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Relationship</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">belongs_to</span> <span class="ss">:follower</span><span class="p">,</span> <span class="n">class_name</span><span class="p">:</span> <span class="s2">&quot;User&quot;</span>
+</span><span class='line'>  <span class="n">belongs_to</span> <span class="ss">:followed</span><span class="p">,</span> <span class="n">class_name</span><span class="p">:</span> <span class="s2">&quot;User&quot;</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">User</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">has_many</span> <span class="ss">:relationships</span><span class="p">,</span> <span class="n">foreign_key</span><span class="p">:</span> <span class="s2">&quot;follower_id&quot;</span><span class="p">,</span> <span class="ss">dependent</span><span class="p">:</span> <span class="ss">:destroy</span>
+</span><span class='line'>  <span class="n">has_many</span> <span class="ss">:followed_users</span><span class="p">,</span> <span class="ss">through</span><span class="p">:</span> <span class="ss">:relationships</span><span class="p">,</span> <span class="ss">source</span><span class="p">:</span> <span class="ss">:followed</span>
+</span><span class='line'>  <span class="n">has_many</span> <span class="ss">:reverse_relationships</span><span class="p">,</span> <span class="n">foreign_key</span><span class="p">:</span> <span class="s2">&quot;followed_id&quot;</span><span class="p">,</span>
+</span><span class='line'>                                   <span class="n">class_name</span><span class="p">:</span>  <span class="s2">&quot;Relationship&quot;</span><span class="p">,</span>
+</span><span class='line'>                                   <span class="ss">dependent</span><span class="p">:</span>   <span class="ss">:destroy</span>
+</span><span class='line'>  <span class="n">has_many</span> <span class="ss">:followers</span><span class="p">,</span> <span class="ss">through</span><span class="p">:</span> <span class="ss">:reverse_relationships</span><span class="p">,</span> <span class="ss">source</span><span class="p">:</span> <span class="ss">:follower</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
 
 
 <h3>Association Callbacks</h3>

@@ -4,7 +4,7 @@
   <title><![CDATA[Category: ruby | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-12T11:34:42+08:00</updated>
+  <updated>2013-12-12T11:42:35+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -573,9 +573,29 @@ s.staff &lt; staff</p>
 <p>在rails 4用-> { distinct }</p>
 
 <ul>
-<li>除了这些参数还有<strong>:readonly</strong>, <strong>:order</strong>, <strong>:select</strong>, <strong>:limit</strong>, <strong>:offset</strong>等</li>
+<li><p>除了这些参数还有<strong>:readonly</strong>, <strong>:order</strong>, <strong>:select</strong>, <strong>:limit</strong>, <strong>:offset</strong>等</p></li>
+<li><p>最后来个复杂的项目实例</p></li>
 </ul>
 
+
+<p>``` ruby
+class Relationship &lt; ActiveRecord::Base
+  belongs_to :follower, class_name: &ldquo;User&rdquo;
+  belongs_to :followed, class_name: &ldquo;User&rdquo;
+end</p>
+
+<p>class User &lt; ActiveRecord::Base
+  has_many :relationships, foreign_key: &ldquo;follower_id&rdquo;, dependent: :destroy
+  has_many :followed_users, through: :relationships, source: :followed
+  has_many :reverse_relationships, foreign_key: &ldquo;followed_id&rdquo;,</p>
+
+<pre><code>                               class_name:  "Relationship",
+                               dependent:   :destroy
+</code></pre>
+
+<p>  has_many :followers, through: :reverse_relationships, source: :follower
+end
+```</p>
 
 <h3>Association Callbacks</h3>
 
