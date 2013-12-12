@@ -461,6 +461,9 @@ s.staff < staff
 # 如果没有:unqi => true,将会输出多个staffs,数据库也是存在的(相同的数据),加上:unqi => true将只会输出一条数据,这样才符合逻辑
 s.staff
 
+# 如果不加这个:uniq => true,这样也可以实现同样的目的
+s.staff.uniq
+
 ```
 
 在rails 4用-> { distinct }
