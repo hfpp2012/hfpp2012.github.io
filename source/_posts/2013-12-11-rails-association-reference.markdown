@@ -331,22 +331,165 @@ School Load (0.3ms)  SELECT `schools`.* FROM `schools` WHERE `schools`.`id` IN (
 s.squad.school
 ```
 
-当你要查`Student.first.squad.school'就方便多了
+当你要查`Student.first.squad.school`就方便多了
 
 + touch
+
+当子类被创建或更改时,更新父类的updated_at
+
+``` ruby
+class Student < ActiveRecord::Base
+  belongs_to :squad, :touch => true
+end
+
+class Squad < ActiveRecord::Base
+  has_many :students
+end
+
+s = Student.first
+s.name = '学员'
+s.save
+
+# 其实就是把父的updated_at更新了一下
+UPDATE `students` SET `name` = '3333333333333', `updated_at` = '2013-12-11 14:59:47' WHERE `students`.`id` = 86
+Squad Load (0.6ms)  SELECT `squads`.* FROM `squads` WHERE `squads`.`id` = 14 LIMIT 1
+SQL (0.7ms)  UPDATE `squads` SET `updated_at` = '2013-12-11 14:59:47' WHERE `squads`.`id` = 14
+```
+
+如果不想更新updated_at, 还可以指定更新具体的column,例如`:touch => :accessed_at`
+
 + validate
+
+跳过验证
+
+``` ruby
+class Squad < ActiveRecord::Base
+  has_many :students, :validate => true
+end
+
+class Student < ActiveRecord::Base
+  belongs_to :squad
+  validates :name, :presence => true
+end
+
+# failure
+Student.create
+
+# success
+s = Squad.first
+s.students.create
+```
+
+在创建子对象时,可以跳过验证
+
 + source
+
+指定查找源, 和has_one :through或has_many :through一起使用
+
+``` ruby
+class School < ActiveRecord::Base
+  has_many :squads
+  has_many :squads_teachers, :through => :squads, :source => :teachers
+end
+
+class Squad < ActiveRecord::Base
+  has_many :teachers
+  belongs_to :school
+end
+
+class Teacher < ActiveRecord::Base
+  belongs_to :squad
+  belongs_to :staff
+end
+
+s = School.first
+s.squads_teachers
+
+# 查找的是teachers表,不过teachers去joins squads表
+School Load (1.5ms)  SELECT `schools`.* FROM `schools` LIMIT 1
+Teacher Load (90.0ms)  SELECT `teachers`.* FROM `teachers` INNER JOIN `squads` ON `teachers`.`squad_id` = `squads`.`id` WHERE `squads`.`school_id` = 1
+
+# grades belongs_to staff
+has_many :grade_teachers, :through => :grades, :source => :staff  #年级组长
+```
+
+这种方式用得好真的好灵活
+
 + group
-+ extend
-+ :order
+
+分组
+
+``` ruby
+class School < ActiveRecord::Base
+  has_many :students, :through => :squads, :group => 'squads.id'
+end
+
+s = School.first
+s.students
+
+# 原理就是在数据库查询的时候加个分组group
+Student Load (81.7ms)  SELECT `students`.* FROM `students` INNER JOIN `squads` ON `students`.`squad_id` = `squads`.`id` WHERE `squads`.`school_id` = 1 GROUP BY squads.id
+```
+
 + :uniq
 
-除了这些参数还有:readonly, :select, :limit, :offset等
+确保查到的数据是唯一的
+
+``` ruby
+class Squad < ActiveRecord::Base
+  has_many :staffs, :through => :teachers, :uniq => true
+  has_many :teachers
+end
+
+class Staff < ActiveRecord::Base
+  has_many :squad, :through => :teachers
+  has_many :teachers
+end
+
+class Teacher < ActiveRecord::Base
+  belongs_to :squad
+  belongs_to :staff
+end
+
+s = Squad.first
+staff = Staff.create
+s.staff < staff
+s.staff < staff
+
+# 如果没有:unqi => true,将会输出多个staffs,数据库也是存在的(相同的数据),加上:unqi => true将只会输出一条数据,这样才符合逻辑
+s.staff
+
+```
+
+在rails 4用-> { distinct }
+
+
++ 除了这些参数还有**:readonly**, **:order**, **:select**, **:limit**, **:offset**等
 
 
 ###Association Callbacks
 
-+ before_add
-+ after_add
-+ before_remove
-+ after_remove
++ before_add 添加前
++ after_add 添加后
++ before_remove 删除前
++ after_remove  删除后
+
+这是关联关系的Callbacks
+
+``` ruby
+class Squad < ActiveRecord::Base
+  has_many :students, :after_add => :update_accessed_at
+
+  private
+    def update_accessed_at(student)
+      student.accessed_at = Time.now.utc
+      student.save
+    end
+
+end
+
+s = Squad.first
+s.students << Student.create(:name => "学员")
+```
+
+## 学会了这些,可以对数据库更加理解,而且减少代码量(减少自己写数据库查询),优化了代码
