@@ -32,6 +32,8 @@ end
 
 + association(force_reload = false)强制reload查数据库
 
+<!-- more -->
+
 ``` ruby
 s = Squad.first
 s.students
