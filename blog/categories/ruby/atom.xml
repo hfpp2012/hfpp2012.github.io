@@ -4,7 +4,7 @@
   <title><![CDATA[Category: ruby | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-12T11:26:21+08:00</updated>
+  <updated>2013-12-12T11:34:42+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -607,7 +607,9 @@ end
 s.students &lt;&lt; Student.create(:name => &ldquo;学员&rdquo;)
 ```</p>
 
-<h2>学会了这些,可以对数据库更加理解,而且减少代码量(减少自己写数据库查询),优化了代码</h2>
+<h2>总结</h2>
+
+<p>学会了这些,可以对数据库更加理解,而且减少代码量(减少自己写数据库查询),优化了代码</p>
 ]]></content>
   </entry>
   
