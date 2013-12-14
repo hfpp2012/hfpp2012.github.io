@@ -4,7 +4,7 @@
   <title><![CDATA[小子的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-15T01:37:35+08:00</updated>
+  <updated>2013-12-15T01:44:11+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -192,6 +192,8 @@
 <h4>在根(root)下创建个孩子</h4>
 
 <p><code>first_children = root.children.create</code></p>
+
+<p><img src="http://yinsigan.github.io/images/ancestry/first_children.png"></p>
 ]]></content>
   </entry>
   
