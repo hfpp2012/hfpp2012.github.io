@@ -4,7 +4,7 @@
   <title><![CDATA[Category: ruby | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-15T00:56:54+08:00</updated>
+  <updated>2013-12-15T01:37:35+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -76,11 +76,11 @@
 <p>只有五个文件</p>
 
 <ul>
-<li><p>ancestry.rb: 主程序文件,一些require语句</p></li>
-<li><p>class_methods.rb: 类方法的集全</p></li>
-<li><p>instance_methods.rb: 实例方法的集合</p></li>
-<li><p>exceptions.rb: 自定义的例外(关于报错的)</p></li>
-<li><p>has_ancestry.rb: 关于has_ancestry这个方法的源码</p></li>
+<li><p><strong>ancestry.rb</strong>: 主程序文件,一些require语句</p></li>
+<li><p><strong>class_methods.rb</strong>: 类方法的集全</p></li>
+<li><p><strong>instance_methods.rb</strong>: 实例方法的集合</p></li>
+<li><p><strong>exceptions.rb</strong>: 自定义的例外(关于报错的)</p></li>
+<li><p><strong>has_ancestry.rb</strong>: 关于has_ancestry这个方法的源码</p></li>
 </ul>
 
 
@@ -133,11 +133,35 @@ end
 end
 ```</p>
 
-<p>而has_ancestry的第一句是这样的</p>
+<p>而has_ancestry的是这样的</p>
 
-<p><code>ruby
-  class &lt;&lt; ActiveRecord::Base # 继承到ActiveRecord::Base都有has_ancestry这个方法哦
-</code></p>
+<p>``` ruby
+  class &lt;&lt; ActiveRecord::Base # 继承到ActiveRecord::Base都有has_ancestry这个方法哦</p>
+
+<pre><code>def has_ancestry options={}
+  # Include instance methods
+  include Ancestry::InstanceMethods
+
+  # Include dynamic class methods
+  extend Ancestry::ClassMethods
+  .......
+end
+</code></pre>
+
+<p>  end
+```</p>
+
+<h3>根据功能来解析代码</h3>
+
+<h4>创建根(root)</h4>
+
+<p>你懂的<code>root = Comment.create</code></p>
+
+<p><img src="/images/ancestry/root.png"></p>
+
+<h4>在根(root)下创建个孩子</h4>
+
+<p><code>first_children = root.children.create</code></p>
 ]]></content>
   </entry>
   
