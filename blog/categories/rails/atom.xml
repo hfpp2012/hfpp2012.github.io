@@ -4,7 +4,7 @@
   <title><![CDATA[Category: rails | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/rails/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-13T09:36:24+08:00</updated>
+  <updated>2013-12-15T00:56:54+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -12,6 +12,134 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[ancestry源码分析]]></title>
+    <link href="http://yinsigan.github.io/blog/2013/12/14/ancestryyuan-ma-fen-xi/"/>
+    <updated>2013-12-14T21:12:00+08:00</updated>
+    <id>http://yinsigan.github.io/blog/2013/12/14/ancestryyuan-ma-fen-xi</id>
+    <content type="html"><![CDATA[<ul>
+<li><a href="https://github.com/stefankroes/ancestry">ancestry</a></li>
+</ul>
+
+
+<h3>这个gem是做什么的,原理是什么</h3>
+
+<p>这个gem跟<a href="/blog/2013/12/09/acts-as-treeyuan-ma-fen-xi/">acts_as_tree</a>的作用是一样的,不明白的同学可以看这篇<a href="/blog/2013/12/09/acts-as-treeyuan-ma-fen-xi/">blog</a>.而且在这篇blog我们不直接来分析代码,而是通过使用ancestry的功能来分析代码,并作些比较.由于个人感觉这个gem的代码有点老式,会加上我自己认为可以改进的代码.</p>
+
+<h3>架构</h3>
+
+<p><strong>数据库表</strong></p>
+
+<p><img src="/images/ancestry/table.png"></p>
+
+<p><img src="/images/ancestry/table_content.png"></p>
+
+<p>在acts_as_tree中只要一个字段来存父与子的关系,然后用<code>has_many :children</code>和<code>belongs_to :parent</code>,而ancestry也是用一个字段(ancestry),不过它的存取方式跟acts_as_tree是不一样的,它不止存着父的id，还存父的父,也就是说存了祖先的id(62/63),而ancestry_depth存的是层次,类似于祖谱中的辈分,祖先是0(第一代),它的儿子是1(第二代)</p>
+
+<p>在上面的图中,id为62的comment就是root(祖先),它的ancestry是<strong>NULL</strong>,它的ancestry_depth是0</p>
+
+<p>id为64的comment的父为63,63的父为62,所以64的ancestry为62/63</p>
+
+<p>假如在id为64的comment下创建一个子,那这个子的ancestry就为62/63/64</p>
+
+<p>要找64的父也很简单,只要查找一下ancestry这个字段的值,最后一个数字就是了
+要找64的祖先也很简单,ancestry的第一个数字就是</p>
+
+<p>ancestry这个gem就是以这种方式来找子和父和存储整个关系的</p>
+
+<p>这种存储方式较act_as_tree的parent_id有更好的先进性</p>
+
+<ul>
+<li><strong>查询速度快</strong></li>
+</ul>
+
+
+<p>只存父的id(parent_id)要找祖先的话很麻烦的,只能一层一层往上找,很耗时间</p>
+
+<ul>
+<li><strong>查询和操作功能多</strong></li>
+</ul>
+
+
+<p>acts_as_tree只支持几个较简单的查询,查父:parent,查子:children,查祖先:ancestors,查根等</p>
+
+<p>而ancestry支持的查询就很多了,除了上面的,还能查path,children_ids之类的</p>
+
+<p>两者的区别的原因在于实现的方式不一样,acts_as_tree就是通过实例方法来实现的,而ancestry是通过scope
+来实现(比较灵活),下面会讲到</p>
+
+<p><strong>源码文件</strong></p>
+
+<p><img src="/images/ancestry/source_tree.png"></p>
+
+<p>只有五个文件</p>
+
+<ul>
+<li><p>ancestry.rb: 主程序文件,一些require语句</p></li>
+<li><p>class_methods.rb: 类方法的集全</p></li>
+<li><p>instance_methods.rb: 实例方法的集合</p></li>
+<li><p>exceptions.rb: 自定义的例外(关于报错的)</p></li>
+<li><p>has_ancestry.rb: 关于has_ancestry这个方法的源码</p></li>
+</ul>
+
+
+<p>PS:我觉得instance_methods.rb和class_methods.rb还有has_ancestry.rb可以合并在一个文件</p>
+
+<p>然后</p>
+
+<p>``` ruby</p>
+
+<p>module Ancestry
+  extend ActiveSupport::Concern</p>
+
+<p>  included do
+  end</p>
+
+<p>  module ClassMethods
+  # class_methods.rb文件的内容可放于此
+  end</p>
+
+<p>  module InstanceMethods
+  # instance_methods.rb文件的内容可放于此
+  end
+end</p>
+
+<p>```</p>
+
+<p>或者</p>
+
+<p>``` ruby
+module Ancestry
+  def self.included(base)</p>
+
+<pre><code>base.extend ClassMethods
+</code></pre>
+
+<p>  end</p>
+
+<p>  module ClassMethods</p>
+
+<pre><code>def has_ancestry
+  ...
+  include Ancestry::InstanceMethods
+end
+</code></pre>
+
+<p>  end</p>
+
+<p>  module InstanceMethods
+  end
+end
+```</p>
+
+<p>而has_ancestry的第一句是这样的</p>
+
+<p><code>ruby
+  class &lt;&lt; ActiveRecord::Base # 继承到ActiveRecord::Base都有has_ancestry这个方法哦
+</code></p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Rails Association Reference]]></title>
@@ -1672,292 +1800,6 @@ class Follow &lt; ActiveRecord::Base</p>
 <h3>总结</h3>
 
 <p>学会组织代码的能力和一些rails的内部的东西,学习这个gem查询一些数据的方法,还有双重多态的写法</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Acts As Commentable source analyse]]></title>
-    <link href="http://yinsigan.github.io/blog/2013/11/26/acts-as-commentable-source-analyse/"/>
-    <updated>2013-11-26T11:49:00+08:00</updated>
-    <id>http://yinsigan.github.io/blog/2013/11/26/acts-as-commentable-source-analyse</id>
-    <content type="html"><![CDATA[<ul>
-<li><a href="https://github.com/jackdempsey/acts_as_commentable">acts_as_commentable</a></li>
-</ul>
-
-
-<h3>这个gem是做什么的?原理是什么?</h3>
-
-<p>这个gem是用来实现评论,它跟一般的评论没什么区别,只是这个gem把一些代码进行了封装,这是我们可以学习的地方.</p>
-
-<p>它使用也很简单,只要在model里写上<code>acts_as_commentable</code>,就可以使用评论了,其实<code>acts_as_commentable</code>在实现上就等于
-<code>has_many :comments, :as =&gt; :commentable</code>, comment这个model是一个简单的多态,它在数据表中的存储是这样的。</p>
-
-<p><img src="/images/acts_as_comment_table.png"></p>
-
-<p>其实最主要的就是两个字段commentable_id, commentable_type,一个简单的多态</p>
-
-<p>由于<code>has_many :comments</code>那就可以进行很多操作，例如创建一条评论</p>
-
-<p><code>ruby
-Post.first.comments.create(:title =&gt; "First comment.", :comment =&gt; "This is the first comment.")
-</code></p>
-
-<p>经过这样的操作之后,在数据库中就会产生如下如果</p>
-
-<p><img src="/images/acts_as_comment_table_result.png"></p>
-
-<p>而这个存储方式是由rails自动处理的,更多的rails关系模型可查看<a href="http://guides.rubyonrails.org/association_basics.html">rails guides</a></p>
-
-<h4>分析</h4>
-
-<p>源码目录下如下</p>
-
-<p><img src="/images/acts_as_commentable_file_tree.png"></p>
-
-<p>这一步会生成一个rails migration文件和一个叫comment.rb的rails model文件</p>
-
-<p>原理很简单,会在数据库中生成一个叫comments的表
-它的字段包括title, comment, commentable_type, commentable_id, user_id等</p>
-
-<p>而生成这两个模版文件的源码如下:</p>
-
-<p>``` ruby lib/generators/comment/comment_generator.rb
-require &lsquo;rails/generators/migration&rsquo;</p>
-
-<p>class CommentGenerator &lt; Rails::Generators::Base
-  include Rails::Generators::Migration</p>
-
-<p>  def self.source_root</p>
-
-<pre><code>@_acts_as_commentable_source_root ||= File.expand_path("../templates", __FILE__)
-</code></pre>
-
-<p>  end</p>
-
-<p>  def self.next_migration_number(path)</p>
-
-<pre><code>Time.now.utc.strftime("%Y%m%d%H%M%S")
-</code></pre>
-
-<p>  end</p>
-
-<p>  def create_model_file</p>
-
-<pre><code>template "comment.rb", "app/models/comment.rb"
-migration_template "create_comments.rb", "db/migrate/create_comments.rb"
-</code></pre>
-
-<p>  end
-end
-```</p>
-
-<p>这是使用rails generation功能实现的</p>
-
-<!-- more -->
-
-
-<p>还可以查看其他gem的实现方式</p>
-
-<p><a href="https://github.com/LTe/acts-as-messageable/blob/master/lib/generators/acts-as-messageable/migration/migration_generator.rb">acts_as_messageable</a></p>
-
-<p>更详细的可参考<a href="http://guides.rubyonrails.org/generators.html">rails generation</a></p>
-
-<h3>如何使用</h3>
-
-<p>``` ruby
-class Post &lt; ActiveRecord::Base
-  acts_as_commentable
-end</p>
-
-<p>commentable = Post.create
-commentable.comments.create(:title => &ldquo;First comment.&rdquo;, :comment => &ldquo;This is the first comment.&rdquo;)
-```</p>
-
-<h4>分析</h4>
-
-<p>如果不使用gem来写评论，一般我们会在model上写has_many comments这样的东西，而acts_as_commentable这个gem它也是要实现这个的，只是它进行包装</p>
-
-<p>关键在<code>acts_as_commentable</code>这一行</p>
-
-<p>``` ruby lib/commentable_method.rb
-require &lsquo;active_record&rsquo;</p>
-
-<h1>ActsAsCommentable</h1>
-
-<p>module Juixe
-  module Acts #:nodoc:</p>
-
-<pre><code>module Commentable #:nodoc:
-
-  def self.included(base)
-    # active_record类会extend ClassMethods模块
-    base.extend ClassMethods  
-  end
-
-  module ClassMethods
-    # 由active_record继承的model都有acts_as_commentable这个方法
-    def acts_as_commentable(options={})
-      # 多态
-      has_many :comments, {:as =&gt; :commentable, :dependent =&gt; :destroy}.merge(options)
-      # 具体model实例方法
-      include Juixe::Acts::Commentable::InstanceMethods
-      # 具体model类的单例方法
-      extend Juixe::Acts::Commentable::SingletonMethods
-    end
-  end
-  ...
-</code></pre>
-
-<p>ActiveRecord::Base.send(:include, Juixe::Acts::Commentable)
-```</p>
-
-<p>有这一句<code>ActiveRecord::Base.send(:include, Juixe::Acts::Commentable)</code>只要任何继承ActiveRecord::Base的model都可以使用<code>acts_as_commentable</code> 它是一个classMethods</p>
-
-<p>现在我们来分析源码commentable_methods.rb</p>
-
-<p><code>ruby
-has_many :comments, {:as =&gt; :commentable, :dependent =&gt; :destroy}.merge(options)
-include Juixe::Acts::Commentable::InstanceMethods
-extend Juixe::Acts::Commentable::SingletonMethods
-</code></p>
-
-<p>第一行是一个activemodel relationship表示model使用多态的comment
-<code>Juixe::Acts::Commentable::SingletonMethods</code>是类的单例方法,下面的方法可以用Post.find_comments_by_user来调用,例如
-Book.find_comments_for(Book.last)</p>
-
-<p>``` ruby</p>
-
-<h1>This module contains class methods</h1>
-
-<p>module SingletonMethods
-  # Helper method to lookup for comments for a given object.
-  # This method is equivalent to obj.comments.
-  # 找一个对象的所有comments
-  def find_comments_for(obj)</p>
-
-<pre><code># 返回类似Topic, Article这样的字符串
-commentable = self.base_class.name
-# find_comments_for_commentable是Comment.rb通过include ActsAsCommentable::Comment引入进来的,它是一个类方法
-Comment.find_comments_for_commentable(commentable, obj.id)
-</code></pre>
-
-<p>  end</p>
-
-<p>  # Helper class method to lookup comments for
-  # the mixin commentable type written by a given user.<br/>
-  # This method is NOT equivalent to Comment.find_comments_for_user
-  # 通过创建者来找comments
-  def find_comments_by_user(user)</p>
-
-<pre><code>commentable = self.base_class.name
-Comment.where(["user_id = ? and commentable_type = ?", user.id, commentable]).order("created_at DESC")
-</code></pre>
-
-<p>  end
-end
-```</p>
-
-<p>Juixe::Acts::Commentable::InstanceMethods是实例方法
-可以通过类似这样的方式来调用实例方法
-<code>Book.last.add_comment Comment.create(comment: "second comment")</code></p>
-
-<p>接下来我们来看看comment.rb这边</p>
-
-<p>它总要来个belongs_to吧</p>
-
-<p>``` ruby comment.rb
-class Comment &lt; ActiveRecord::Base</p>
-
-<p>  # 引入一些Comment可以使用的方法
-  include ActsAsCommentable::Comment</p>
-
-<p>  belongs_to :commentable, :polymorphic => true</p>
-
-<p>  default_scope :order => &lsquo;created_at ASC&rsquo;</p>
-
-<p>  # NOTE: install the acts_as_votable plugin if you
-  # want user to vote on the quality of comments.
-  #acts_as_voteable</p>
-
-<p>  # NOTE: Comments belong to a user
-  belongs_to :user
-end
-```</p>
-
-<p><code>belongs_to :commentable, :polymorphic =&gt; true</code>这就是原理
-然而<code>include ActsAsCommentable::Comment</code>这个会做什么呢</p>
-
-<p>接上来往下看</p>
-
-<p>``` ruby lib/comment_method.rb
-module ActsAsCommentable
-  # including this module into your Comment model will give you finders and named scopes
-  # useful for working with Comments.
-  # The named scopes are:
-  #   in_order: Returns comments in the order they were created (created_at ASC).
-  #   recent: Returns comments by how recently they were created (created_at DESC).
-  #   limit(N): Return no more than N comments.
-  module Comment</p>
-
-<pre><code>def self.included(comment_model)
-  # 引入的是类方法
-  comment_model.extend Finders
-  # 引入一些scope
-  comment_model.scope :in_order, comment_model.order('created_at ASC')
-  comment_model.scope :recent,   comment_model.order('created_at DESC')
-end
-
-# 下面都是Comment model能使用的类方法
-module Finders
-  # Helper class method to lookup all comments assigned
-  # to all commentable types for a given user.
-  # 通过user来找所有comments
-  def find_comments_by_user(user)
-    where(["user_id = ?", user.id]).order("created_at DESC")
-  end
-
-  # Helper class method to look up all comments for 
-  # commentable class name and commentable id.
-  # 一个简单的where语句
-  def find_comments_for_commentable(commentable_str, commentable_id)
-    where(["commentable_type = ? and commentable_id = ?", commentable_str, commentable_id]).order("created_at DESC")
-  end
-
-  # Helper class method to look up a commentable object
-  # given the commentable class name and id 
-  # 找到使用评论的对象
-  def find_commentable(commentable_str, commentable_id)
-    # 返回类自身
-    model = commentable_str.constantize
-    model.respond_to?(:find_comments_for) ? model.find(commentable_id) : nil
-  end
-end
-</code></pre>
-
-<p>  end
-end
-```</p>
-
-<p>可以用Comment.find_comments_by_user的方式来调用</p>
-
-<h3>总结</h3>
-
-<p>它的源码并不复杂，我们通过它并不是要写出跟它一样或类似的gem来，只是可以让我们明白一个道理,代码的重用与组织, 就像在Post.rb里写上acts_as_commentable就可以创建评论了,很方便,还有,通过学习这个gem我们可以学习它是如何设计数据库的</p>
-
-<p>类似的gem还有</p>
-
-<ul>
-<li><a href="https://github.com/tcocca/acts_as_follower">acts_as_follower</a></li>
-<li><a href="https://github.com/LTe/acts-as-messageable">acts-as-messageable</a></li>
-<li><a href="https://github.com/mbleigh/acts-as-taggable-on">acts-as-taggable-on</a></li>
-<li><a href="https://github.com/goncalossilva/acts_as_paranoid">acts_as_paranoid</a></li>
-<li><a href="https://github.com/stefankroes/ancestry">ancestry</a></li>
-<li><a href="https://github.com/collectiveidea/awesome_nested_set">awesome_nested_set</a></li>
-</ul>
-
-
-<p>关于acts_as_commentable更详细的用法可查看
-<a href="http://juixe.com/techknow/index.php/2006/06/18/acts-as-commentable-plugin/">acts-as-commentable-plugin</a></p>
 ]]></content>
   </entry>
   
