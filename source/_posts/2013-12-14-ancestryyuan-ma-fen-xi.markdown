@@ -217,5 +217,172 @@ end
 
 这个时候save一下就会将数据保存到数据库中了
 
+看一下几个关于children的方法
 
+``` ruby instance_methods.rb
+# 查找所有孩子的id
+def child_ids
+  # 在rails 3或4中可以用children.pluck(:id)
+  children.all(:select => self.base_class.primary_key).map(&self.base_class.primary_key.to_sym)
+end
 
+# 判断是否有孩子
+def has_children?
+  self.children.exists?({})
+end
+
+# 是否叶子节点(没有孩子)
+def is_childless?
+  !has_children?
+end
+```
+
+#### 在first_children创建一个siblings(兄弟)节点
+
+{% img /images/ancestry/siblings_changes.png %}
+
+``` ruby instance_methods.rb
+# Siblings
+# 变成跟自己(first_children)一样的ancestry
+def sibling_conditions
+  {self.base_class.ancestry_column => read_attribute(self.base_class.ancestry_column)}
+end
+
+# 返回所有的兄弟节点,是包括自己的(first_children),因为是根据ancestry(父)来查的
+def siblings
+  self.base_class.scoped :conditions => sibling_conditions
+end
+
+# 返回所有的兄弟节点的id
+def sibling_ids
+   siblings.all(:select => self.base_class.primary_key).collect(&self.base_class.primary_key.to_sym)
+end
+
+def has_siblings?
+  self.siblings.count > 1
+end
+
+def is_only_child?
+  !has_siblings?
+end
+```
+
+如果不让siblings包含自己,只要`first_children.siblings - [first_children]`就行了
+
+#### 指定父(parent)节点创建一个Comment
+
+在comment.rb的白名单上加 ```attr_accessible :parent```
+
+{% img /images/ancestry/create_with_parent.png %}
+
+既然可以指定**parent**,那一定有`parent=()`这个方法
+
+``` ruby instance_methods.rb
+# Parent
+# 找到父那个对象再去找父的child_ancestry,即假如父为根就是它的id...
+def parent= parent
+  write_attribute(self.base_class.ancestry_column, if parent.blank? then nil else parent.child_ancestry end)
+end
+
+# 还是会执行paren= parent方法
+def parent_id= parent_id
+  self.parent = if parent_id.blank? then nil else self.base_class.find(parent_id) end
+end
+
+# 返回祖先链的最后一个id,即父的id,ancestors下面会讲到
+def parent_id
+  if ancestor_ids.empty? then nil else ancestor_ids.last end
+end
+
+# 用id找到那个parent,找不到就是nil
+def parent
+  if parent_id.blank? then nil else self.base_class.find(parent_id) end
+end
+```
+
+#### 查找刚创建的第三代的祖先链
+
+{% img /images/ancestry/ancestor_search.png %}
+
+``` ruby instance_methods.rb
+# Ancestors
+# 读取ancestry的值split后组成数组,取变量的值没有查数据库
+def ancestor_ids
+  read_attribute(self.base_class.ancestry_column).to_s.split('/').map { |id| cast_primary_key(id) }
+end
+
+# 把ancestor_ids数组传给id
+def ancestor_conditions
+  {self.base_class.primary_key => ancestor_ids}
+end
+
+def ancestors depth_options = {}
+  self.base_class.scope_depth(depth_options, depth).ordered_by_ancestry.scoped :conditions => ancestor_conditions
+end
+
+def path_ids
+  ancestor_ids + [id]
+end
+
+def path_conditions
+  {self.base_class.primary_key => path_ids}
+end
+
+def path depth_options = {}
+  self.base_class.scope_depth(depth_options, depth).ordered_by_ancestry.scoped :conditions => path_conditions
+end
+```
+
+**scope_depth**是个类方法,看它之前先来看看架构那部分那里,表据表除了有个**ancestry**字段,还有**ancestry_depth**这个字段
+
+这个**ancestry_depth**就是类变量**depth_cache_column**定义的
+
+``` ruby has_ancestry.rb
+# Create ancestry column accessor and set to option or default
+if options[:cache_depth]
+  # Create accessor for column name and set to option or default
+  self.cattr_accessor :depth_cache_column
+  self.depth_cache_column = options[:depth_cache_column] || :ancestry_depth
+
+  # Cache depth in depth cache column before save
+  # 验证depth_cache_column必须是整数且大于或等于0
+  before_validation :cache_depth
+
+  # Validate depth column
+  validates_numericality_of depth_cache_column, :greater_than_or_equal_to => 0, :only_integer => true, :allow_nil => false
+end
+
+# Create named scopes for depth
+# 下面就是一个条件,跟ancestry_depth比,例如before_depth就是'"ancestry_depth < ?", 3'之类的
+{:before_depth => '<', :to_depth => '<=', :at_depth => '=', :from_depth => '>=', :after_depth => '>'}.each do |scope_name, operator|
+  # send scope_method就是定义一个scope
+  send scope_method, scope_name, lambda { |depth|
+    raise Ancestry::AncestryException.new("Named scope '#{scope_name}' is only available when depth caching is enabled.") unless options[:cache_depth]
+    {:conditions => ["#{depth_cache_column} #{operator} ?", depth]}
+  }
+end
+```
+{% img /images/ancestry/scope_depth.png %}
+
+为什么数字会改变呢,原来那个**before_depth**不是基于**root**(根),而是基于**c**(孙),**c**有两个前辈1+1=2,所以数据库查的是2+2=4
+
+``` ruby class_methods.rb解读scope_depth
+def ancestors depth_options = {}
+  self.base_class.scope_depth(depth_options, depth).ordered_by_ancestry.scoped :conditions => ancestor_conditions
+end
+
+def depth
+  ancestor_ids.size
+end
+
+def scope_depth depth_options, depth
+  depth_options.inject(self.base_class) do |scope, option|
+    scope_name, relative_depth = option
+    if [:before_depth, :to_depth, :at_depth, :from_depth, :after_depth].include? scope_name
+      scope.send scope_name, depth + relative_depth
+    else
+      raise Ancestry::AncestryException.new("Unknown depth option: #{scope_name}.")
+    end
+  end
+end
+```
