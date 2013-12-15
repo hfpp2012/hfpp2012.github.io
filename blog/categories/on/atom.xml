@@ -4,7 +4,7 @@
   <title><![CDATA[Category: on | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/on/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-15T19:15:20+08:00</updated>
+  <updated>2013-12-15T20:13:46+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -434,15 +434,20 @@ def ancestors depth_options = {}
   self.base_class.scope_depth(depth_options, depth).ordered_by_ancestry.scoped :conditions => ancestor_conditions
 end</p>
 
+<h1>也就是自己ancestry_depth的值</h1>
+
 <p>def depth
   ancestor_ids.size
 end</p>
 
 <p>def scope_depth depth_options, depth
+  # inject方法很灵活
   depth_options.inject(self.base_class) do |scope, option|</p>
 
-<pre><code>scope_name, relative_depth = option
+<pre><code># relative_depth是传进来的值
+scope_name, relative_depth = option
 if [:before_depth, :to_depth, :at_depth, :from_depth, :after_depth].include? scope_name
+  # ancestry_depth的值加上传进来的值
   scope.send scope_name, depth + relative_depth
 else
   raise Ancestry::AncestryException.new("Unknown depth option: #{scope_name}.")
@@ -450,6 +455,57 @@ end
 </code></pre>
 
 <p>  end
+end</p>
+
+<p>scope_method = if rails_3 then :scope else :named_scope end</p>
+
+<h1>很多方法用到这个,在rails 3中会变成send :scope, :ordered_by_ancestry&hellip;</h1>
+
+<h1>如果是根会排在前面</h1>
+
+<p>send scope_method, :ordered_by_ancestry, :order => &ldquo;(case when #{table_name}.#{ancestry_column} is null then 0 else 1 end), #{table_name}.#{ancestry_column}&rdquo;
+```</p>
+
+<h4>其他几个查询方法</h4>
+
+<p>``` ruby</p>
+
+<h1>Subtree</h1>
+
+<h1>包括自己查后代,使用self.id, child_ancestry是查自己的子,&ldquo;#{child_ancestry}/"查孙一代起</h1>
+
+<p>def subtree_conditions
+  [&ldquo;#{self.base_class.table_name}.#{self.base_class.primary_key} = ? or #{self.base_class.table_name}.#{self.base_class.ancestry_column} like ? or #{self.base_class.table_name}.#{self.base_class.ancestry_column} = ?&rdquo;, self.id, &ldquo;#{child_ancestry}/%&rdquo;, child_ancestry]
+end</p>
+
+<p>def subtree depth_options = {}
+  self.base_class.ordered_by_ancestry.scope_depth(depth_options, depth).scoped :conditions => subtree_conditions
+end</p>
+
+<p>def subtree_ids depth_options = {}
+  subtree(depth_options).all(:select => self.base_class.primary_key).collect(&amp;self.base_class.primary_key.to_sym)
+end</p>
+
+<h1>Root</h1>
+
+<h1>返回根的id,在acts_as_tree可是要遍历的,这个就简单多了</h1>
+
+<h1>ancestor_ids是空的,那就返回自己的id</h1>
+
+<p>def root_id
+  if ancestor_ids.empty? then id else ancestor_ids.first end
+end</p>
+
+<h1>如果根就是自己,那就不用查了</h1>
+
+<p>def root
+  if root_id == id then self else self.base_class.find(root_id) end
+end</p>
+
+<h1>判断是不是nil而已</h1>
+
+<p>def is_root?
+  read_attribute(self.base_class.ancestry_column).blank?
 end
 ```</p>
 ]]></content>

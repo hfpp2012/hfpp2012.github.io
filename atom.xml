@@ -4,7 +4,7 @@
   <title><![CDATA[小子的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-15T19:15:20+08:00</updated>
+  <updated>2013-12-15T20:13:46+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -579,25 +579,110 @@ ancestry用了一个方式来实现,正是scope,可以说很多的查询都是�
 <span class='line-number'>16</span>
 <span class='line-number'>17</span>
 <span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
 </pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">ancestors</span> <span class="n">depth_options</span> <span class="o">=</span> <span class="p">{}</span>
 </span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">scope_depth</span><span class="p">(</span><span class="n">depth_options</span><span class="p">,</span> <span class="n">depth</span><span class="p">)</span><span class="o">.</span><span class="n">ordered_by_ancestry</span><span class="o">.</span><span class="n">scoped</span> <span class="ss">:conditions</span> <span class="o">=&gt;</span> <span class="n">ancestor_conditions</span>
 </span><span class='line'><span class="k">end</span>
 </span><span class='line'>
+</span><span class='line'><span class="c1"># 也就是自己ancestry_depth的值</span>
 </span><span class='line'><span class="k">def</span> <span class="nf">depth</span>
 </span><span class='line'>  <span class="n">ancestor_ids</span><span class="o">.</span><span class="n">size</span>
 </span><span class='line'><span class="k">end</span>
 </span><span class='line'>
 </span><span class='line'><span class="k">def</span> <span class="nf">scope_depth</span> <span class="n">depth_options</span><span class="p">,</span> <span class="n">depth</span>
+</span><span class='line'>  <span class="c1"># inject方法很灵活</span>
 </span><span class='line'>  <span class="n">depth_options</span><span class="o">.</span><span class="n">inject</span><span class="p">(</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">scope</span><span class="p">,</span> <span class="n">option</span><span class="o">|</span>
+</span><span class='line'>    <span class="c1"># relative_depth是传进来的值</span>
 </span><span class='line'>    <span class="n">scope_name</span><span class="p">,</span> <span class="n">relative_depth</span> <span class="o">=</span> <span class="n">option</span>
 </span><span class='line'>    <span class="k">if</span> <span class="o">[</span><span class="ss">:before_depth</span><span class="p">,</span> <span class="ss">:to_depth</span><span class="p">,</span> <span class="ss">:at_depth</span><span class="p">,</span> <span class="ss">:from_depth</span><span class="p">,</span> <span class="ss">:after_depth</span><span class="o">].</span><span class="n">include?</span> <span class="n">scope_name</span>
+</span><span class='line'>      <span class="c1"># ancestry_depth的值加上传进来的值</span>
 </span><span class='line'>      <span class="n">scope</span><span class="o">.</span><span class="n">send</span> <span class="n">scope_name</span><span class="p">,</span> <span class="n">depth</span> <span class="o">+</span> <span class="n">relative_depth</span>
 </span><span class='line'>    <span class="k">else</span>
 </span><span class='line'>      <span class="k">raise</span> <span class="ss">Ancestry</span><span class="p">:</span><span class="ss">:AncestryException</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;Unknown depth option: </span><span class="si">#{</span><span class="n">scope_name</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
 </span><span class='line'>    <span class="k">end</span>
 </span><span class='line'>  <span class="k">end</span>
 </span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">scope_method</span> <span class="o">=</span> <span class="k">if</span> <span class="n">rails_3</span> <span class="k">then</span> <span class="ss">:scope</span> <span class="k">else</span> <span class="ss">:named_scope</span> <span class="k">end</span>
+</span><span class='line'><span class="c1"># 很多方法用到这个,在rails 3中会变成send :scope, :ordered_by_ancestry...</span>
+</span><span class='line'><span class="c1"># 如果是根会排在前面</span>
+</span><span class='line'><span class="nb">send</span> <span class="n">scope_method</span><span class="p">,</span> <span class="ss">:ordered_by_ancestry</span><span class="p">,</span> <span class="ss">:order</span> <span class="o">=&gt;</span> <span class="s2">&quot;(case when </span><span class="si">#{</span><span class="n">table_name</span><span class="si">}</span><span class="s2">.</span><span class="si">#{</span><span class="n">ancestry_column</span><span class="si">}</span><span class="s2"> is null then 0 else 1 end), </span><span class="si">#{</span><span class="n">table_name</span><span class="si">}</span><span class="s2">.</span><span class="si">#{</span><span class="n">ancestry_column</span><span class="si">}</span><span class="s2">&quot;</span>
 </span></code></pre></td></tr></table></div></figure>
+
+
+<h4>其他几个查询方法</h4>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Subtree</span>
+</span><span class='line'><span class="c1"># 包括自己查后代,使用self.id, child_ancestry是查自己的子,&quot;#{child_ancestry}/&quot;查孙一代起</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">subtree_conditions</span>
+</span><span class='line'>  <span class="o">[</span><span class="s2">&quot;</span><span class="si">#{</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">table_name</span><span class="si">}</span><span class="s2">.</span><span class="si">#{</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">primary_key</span><span class="si">}</span><span class="s2"> = ? or </span><span class="si">#{</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">table_name</span><span class="si">}</span><span class="s2">.</span><span class="si">#{</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">ancestry_column</span><span class="si">}</span><span class="s2"> like ? or </span><span class="si">#{</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">table_name</span><span class="si">}</span><span class="s2">.</span><span class="si">#{</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">ancestry_column</span><span class="si">}</span><span class="s2"> = ?&quot;</span><span class="p">,</span> <span class="nb">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">child_ancestry</span><span class="si">}</span><span class="s2">/%&quot;</span><span class="p">,</span> <span class="n">child_ancestry</span><span class="o">]</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">subtree</span> <span class="n">depth_options</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">ordered_by_ancestry</span><span class="o">.</span><span class="n">scope_depth</span><span class="p">(</span><span class="n">depth_options</span><span class="p">,</span> <span class="n">depth</span><span class="p">)</span><span class="o">.</span><span class="n">scoped</span> <span class="ss">:conditions</span> <span class="o">=&gt;</span> <span class="n">subtree_conditions</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">subtree_ids</span> <span class="n">depth_options</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span class='line'>  <span class="n">subtree</span><span class="p">(</span><span class="n">depth_options</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="ss">:select</span> <span class="o">=&gt;</span> <span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">primary_key</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="o">&amp;</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">primary_key</span><span class="o">.</span><span class="n">to_sym</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># Root</span>
+</span><span class='line'><span class="c1"># 返回根的id,在acts_as_tree可是要遍历的,这个就简单多了</span>
+</span><span class='line'><span class="c1"># ancestor_ids是空的,那就返回自己的id</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">root_id</span>
+</span><span class='line'>  <span class="k">if</span> <span class="n">ancestor_ids</span><span class="o">.</span><span class="n">empty?</span> <span class="k">then</span> <span class="nb">id</span> <span class="k">else</span> <span class="n">ancestor_ids</span><span class="o">.</span><span class="n">first</span> <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 如果根就是自己,那就不用查了</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">root</span>
+</span><span class='line'>  <span class="k">if</span> <span class="n">root_id</span> <span class="o">==</span> <span class="nb">id</span> <span class="k">then</span> <span class="nb">self</span> <span class="k">else</span> <span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">root_id</span><span class="p">)</span> <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 判断是不是nil而已</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">is_root?</span>
+</span><span class='line'>  <span class="n">read_attribute</span><span class="p">(</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">ancestry_column</span><span class="p">)</span><span class="o">.</span><span class="n">blank?</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
 
 ]]></content>
   </entry>
