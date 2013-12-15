@@ -4,7 +4,7 @@
   <title><![CDATA[Category: ruby | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-15T21:07:16+08:00</updated>
+  <updated>2013-12-15T23:34:25+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -526,6 +526,92 @@ end
 <p>改变后:</p>
 
 <p><img src="/images/ancestry/after_change_parent.png"></p>
+
+<p>先来看看ancestry的变化</p>
+
+<p>他的后代的ancestry的变化是通过<strong>before_save</strong>来实现的</p>
+
+<p>在<strong>before_save</strong>之前c(77)的ancestry最先变化,它由"72/73"变成了"72"</p>
+
+<p>看上面那个命令图,第一个改的后代是id为78(c的子)那个
+它由"72/73/77"变成"72/77"</p>
+
+<p>id为79(c的孙)那个Comment的ancestry由"72/73/77/78"变成"72/77/78"</p>
+
+<p>看出一个规律就是把"72/73"变成"72"罢了,其他的不变,因为c的ancestry由"72/73"变成了"72",所以它的后代跟着变</p>
+
+<p>如果上面推测正确,那么&hellip;</p>
+
+<p>``` ruby has_ancestry.rb</p>
+
+<h1>Update descendants with new ancestry before save</h1>
+
+<p>before_save :update_descendants_with_new_ancestry
+```</p>
+
+<p>``` ruby instance_methods.rb</p>
+
+<h1>Update descendants with new ancestry</h1>
+
+<p>def update_descendants_with_new_ancestry
+  # Skip this if callbacks are disabled
+  unless ancestry_callbacks_disabled?</p>
+
+<pre><code># If node is valid, not a new record and ancestry was updated ...
+if changed.include?(self.base_class.ancestry_column.to_s) &amp;&amp; !new_record? &amp;&amp; valid?
+  # ... for each descendant ...
+  unscoped_descendants.each do |descendant|
+    # ... replace old ancestry with new ancestry
+    descendant.without_ancestry_callbacks do
+      descendant.update_attribute(
+        self.base_class.ancestry_column,
+        descendant.read_attribute(descendant.class.ancestry_column).gsub(
+          /^#{self.child_ancestry}/,
+          if read_attribute(self.class.ancestry_column).blank? then id.to_s else "#{read_attribute self.class.ancestry_column }/#{id}" end
+        )
+      )
+    end
+  end
+end
+</code></pre>
+
+<p>  end
+end</p>
+
+<h1>Descendants</h1>
+
+<p>def descendant_conditions
+  [&ldquo;#{self.base_class.table_name}.#{self.base_class.ancestry_column} like ? or #{self.base_class.table_name}.#{self.base_class.ancestry_column} = ?&rdquo;, &ldquo;#{child_ancestry}/%&rdquo;, child_ancestry]
+end</p>
+
+<p>def descendants depth_options = {}
+  self.base_class.ordered_by_ancestry.scope_depth(depth_options, depth).scoped :conditions => descendant_conditions
+end</p>
+
+<p>def descendant_ids depth_options = {}
+  descendants(depth_options).all(:select => self.base_class.primary_key).collect(&amp;self.base_class.primary_key.to_sym)
+end</p>
+
+<p>def unscoped_descendants
+  self.base_class.send(:with_exclusive_scope) do</p>
+
+<pre><code>self.base_class.all(:conditions =&gt; descendant_conditions) 
+</code></pre>
+
+<p>  end
+end</p>
+
+<p>   # Callback disabling
+def without_ancestry_callbacks
+  @disable_ancestry_callbacks = true
+  yield
+  @disable_ancestry_callbacks = false
+end</p>
+
+<p>def ancestry_callbacks_disabled?
+  !!@disable_ancestry_callbacks
+end
+```</p>
 ]]></content>
   </entry>
   
