@@ -161,11 +161,11 @@
 <p>只有五个文件</p>
 
 <ul>
-<li><p><strong>ancestry.rb</strong>: 主程序文件,一些require语句</p></li>
-<li><p><strong>class_methods.rb</strong>: 类方法的集全</p></li>
-<li><p><strong>instance_methods.rb</strong>: 实例方法的集合</p></li>
-<li><p><strong>exceptions.rb</strong>: 自定义的例外(关于报错的)</p></li>
-<li><p><strong>has_ancestry.rb</strong>: 关于has_ancestry这个方法的源码</p></li>
+<li><strong>ancestry.rb</strong>: 主程序文件,一些require语句</li>
+<li><strong>class_methods.rb</strong>: 类方法的集全</li>
+<li><strong>instance_methods.rb</strong>: 实例方法的集合</li>
+<li><strong>exceptions.rb</strong>: 自定义的例外(关于报错的)</li>
+<li><strong>has_ancestry.rb</strong>: 关于has_ancestry这个方法的源码</li>
 </ul>
 
 
@@ -279,6 +279,115 @@
 <p><code>first_children = root.children.create</code></p>
 
 <p><img src="/images/ancestry/first_children.png"></p>
+
+<p>在acts_as_tree也可以通过这样的方式来创建子
+但在ancestry中是没有<code>has_many children</code>的
+猜想一下源码肯定会有一个实例方法叫children(<code>root.children</code>)
+即使有这个方法也不能create啊
+ancestry用了一个方式来实现,正是scope,可以说很多的查询都是基于它</p>
+
+<p>你肯定用过类似<code>Topic.where(:title =&gt; 'xx').order("created_at DESC").limit(4)</code>这样的方法
+就是用的scope</p>
+
+<p>先来看看实例方法<strong>children</strong></p>
+
+<figure class='code'><figcaption><span>instance_methods.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">children</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">scoped</span> <span class="ss">:conditions</span> <span class="o">=&gt;</span> <span class="n">child_conditions</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>base_class是什么东西呢</p>
+
+<figure class='code'><figcaption><span>has_ancestry.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="o">&lt;&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="o">.</span><span class="n">.</span><span class="o">.</span>
+</span><span class='line'>  <span class="c1"># Save self as base class (for STI)</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">ancestry</span> <span class="n">options</span><span class="o">=</span><span class="p">{}</span>
+</span><span class='line'>    <span class="c1"># :base_class是个类变量(相当于java中的static变量)</span>
+</span><span class='line'>    <span class="n">cattr_accessor</span> <span class="ss">:base_class</span>
+</span><span class='line'>    <span class="c1"># self就是Comment</span>
+</span><span class='line'>    <span class="nb">self</span><span class="o">.</span><span class="n">base_class</span> <span class="o">=</span> <span class="nb">self</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>  <span class="o">.</span><span class="n">.</span><span class="o">.</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>原来就是引用<strong>Comment</strong>自己嘛</p>
+
+<p>scoped是什么呢,看这里<a href="http://apidock.com/rails/ActiveRecord/NamedScope/ClassMethods/scoped">scoped</a></p>
+
+<p>child_conditions呢</p>
+
+<figure class='code'><figcaption><span>instance_methods.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Children</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">child_conditions</span>
+</span><span class='line'>  <span class="p">{</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">ancestry_column</span> <span class="o">=&gt;</span> <span class="n">child_ancestry</span><span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>ancestry_column默认是ancestry,就是数据库那个列名</p>
+
+<figure class='code'><figcaption><span>has_ancestry.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Create ancestry column accessor and set to option or default</span>
+</span><span class='line'><span class="n">cattr_accessor</span> <span class="ss">:ancestry_column</span>
+</span><span class='line'><span class="nb">self</span><span class="o">.</span><span class="n">ancestry_column</span> <span class="o">=</span> <span class="n">options</span><span class="o">[</span><span class="ss">:ancestry_column</span><span class="o">]</span> <span class="o">||</span> <span class="ss">:ancestry</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>重头戏在<strong>child_ancestry</strong></p>
+
+<figure class='code'><figcaption><span>instance_methods.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># The ancestry value for this record&#39;s children</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">child_ancestry</span>
+</span><span class='line'>  <span class="c1"># New records cannot have children</span>
+</span><span class='line'>  <span class="k">raise</span> <span class="ss">Ancestry</span><span class="p">:</span><span class="ss">:AncestryException</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s1">&#39;No child ancestry for new record. Save record before performing tree operations.&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">new_record?</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># 这段代码比较长,最佳实践不推荐这样写,应该拆成多行</span>
+</span><span class='line'>  <span class="k">if</span> <span class="nb">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">#{</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">ancestry_column</span><span class="si">}</span><span class="s2">_was&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">blank?</span> <span class="k">then</span> <span class="nb">id</span><span class="o">.</span><span class="n">to_s</span> <span class="k">else</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="nb">self</span><span class="o">.</span><span class="n">send</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">ancestry_column</span><span class="si">}</span><span class="s2">_was&quot;</span><span class="si">}</span><span class="s2">/</span><span class="si">#{</span><span class="nb">id</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>"#{self.base_class.ancestry_column}_was"</code>这是什么东西来的,看这里<a href="http://api.rubyonrails.org/classes/ActiveModel/Dirty.html">Active Model Dirty</a></p>
+
+<p><strong>root</strong>的<strong>ancestry</strong>(root.base_class.ancestry_column)就是<strong>nil</strong>,所以<code>self.base_class_column =&gt; child_ancestry</code>就是<strong>root</strong>的<strong>id.to_s(&ldquo;72&rdquo;)</strong></p>
+
+<p>如果不是root呢,那就是<code>"#{self.send "#{self.base_class.ancestry_column}_was"}/#{id}"</code>,例如如果是first_children,那就是&#8221;72/73&#8221;</p>
+
+<p>经过<strong>child_conditions</strong>,ancestry的值被改变了,我们通过scoped链过来的build方法看它的改变,所以</p>
+
+<p><img src="/images/ancestry/root_ancestry_changes.png">
+<img src="/images/ancestry/first_child_ancestry_changes.png"></p>
+
+<p>这个时候save一下就会将数据保存到数据库中了</p>
 </div>
   
   

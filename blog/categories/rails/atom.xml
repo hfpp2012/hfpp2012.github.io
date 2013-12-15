@@ -4,7 +4,7 @@
   <title><![CDATA[Category: rails | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/rails/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-15T01:44:11+08:00</updated>
+  <updated>2013-12-15T16:15:37+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -76,11 +76,11 @@
 <p>只有五个文件</p>
 
 <ul>
-<li><p><strong>ancestry.rb</strong>: 主程序文件,一些require语句</p></li>
-<li><p><strong>class_methods.rb</strong>: 类方法的集全</p></li>
-<li><p><strong>instance_methods.rb</strong>: 实例方法的集合</p></li>
-<li><p><strong>exceptions.rb</strong>: 自定义的例外(关于报错的)</p></li>
-<li><p><strong>has_ancestry.rb</strong>: 关于has_ancestry这个方法的源码</p></li>
+<li><strong>ancestry.rb</strong>: 主程序文件,一些require语句</li>
+<li><strong>class_methods.rb</strong>: 类方法的集全</li>
+<li><strong>instance_methods.rb</strong>: 实例方法的集合</li>
+<li><strong>exceptions.rb</strong>: 自定义的例外(关于报错的)</li>
+<li><strong>has_ancestry.rb</strong>: 关于has_ancestry这个方法的源码</li>
 </ul>
 
 
@@ -164,6 +164,95 @@ end
 <p><code>first_children = root.children.create</code></p>
 
 <p><img src="/images/ancestry/first_children.png"></p>
+
+<p>在acts_as_tree也可以通过这样的方式来创建子
+但在ancestry中是没有<code>has_many children</code>的
+猜想一下源码肯定会有一个实例方法叫children(<code>root.children</code>)
+即使有这个方法也不能create啊
+ancestry用了一个方式来实现,正是scope,可以说很多的查询都是基于它</p>
+
+<p>你肯定用过类似<code>Topic.where(:title =&gt; 'xx').order("created_at DESC").limit(4)</code>这样的方法
+就是用的scope</p>
+
+<p>先来看看实例方法<strong>children</strong></p>
+
+<p><code>ruby instance_methods.rb
+def children
+  self.base_class.scoped :conditions =&gt; child_conditions
+end
+</code></p>
+
+<p>base_class是什么东西呢</p>
+
+<p>``` ruby has_ancestry.rb
+class &lt;&lt; ActiveRecord::Base
+  &hellip;
+  # Save self as base class (for STI)
+  def ancestry options={}</p>
+
+<pre><code># :base_class是个类变量(相当于java中的static变量)
+cattr_accessor :base_class
+# self就是Comment
+self.base_class = self
+</code></pre>
+
+<p>  end
+  &hellip;
+end
+```</p>
+
+<p>原来就是引用<strong>Comment</strong>自己嘛</p>
+
+<p>scoped是什么呢,看这里<a href="http://apidock.com/rails/ActiveRecord/NamedScope/ClassMethods/scoped">scoped</a></p>
+
+<p>child_conditions呢</p>
+
+<p>``` ruby instance_methods.rb</p>
+
+<h1>Children</h1>
+
+<p>def child_conditions
+  {self.base_class.ancestry_column => child_ancestry}
+end
+```</p>
+
+<p>ancestry_column默认是ancestry,就是数据库那个列名</p>
+
+<p>``` ruby has_ancestry.rb</p>
+
+<h1>Create ancestry column accessor and set to option or default</h1>
+
+<p>cattr_accessor :ancestry_column
+self.ancestry_column = options[:ancestry_column] || :ancestry
+```</p>
+
+<p>重头戏在<strong>child_ancestry</strong></p>
+
+<p>``` ruby instance_methods.rb</p>
+
+<h1>The ancestry value for this record&rsquo;s children</h1>
+
+<p>def child_ancestry
+  # New records cannot have children
+  raise Ancestry::AncestryException.new(&lsquo;No child ancestry for new record. Save record before performing tree operations.&rsquo;) if new_record?</p>
+
+<p>  # 这段代码比较长,最佳实践不推荐这样写,应该拆成多行
+  if self.send(&ldquo;#{self.base_class.ancestry_column}<em>was&rdquo;).blank? then id.to_s else &ldquo;#{self.send &rdquo;#{self.base_class.ancestry_column}</em>was"}/#{id}&ldquo; end
+end
+```</p>
+
+<p><code>"#{self.base_class.ancestry_column}_was"</code>这是什么东西来的,看这里<a href="http://api.rubyonrails.org/classes/ActiveModel/Dirty.html">Active Model Dirty</a></p>
+
+<p><strong>root</strong>的<strong>ancestry</strong>(root.base_class.ancestry_column)就是<strong>nil</strong>,所以<code>self.base_class_column =&gt; child_ancestry</code>就是<strong>root</strong>的<strong>id.to_s(&ldquo;72&rdquo;)</strong></p>
+
+<p>如果不是root呢,那就是<code>"#{self.send "#{self.base_class.ancestry_column}_was"}/#{id}"</code>,例如如果是first_children,那就是"72/73"</p>
+
+<p>经过<strong>child_conditions</strong>,ancestry的值被改变了,我们通过scoped链过来的build方法看它的改变,所以</p>
+
+<p><img src="/images/ancestry/root_ancestry_changes.png">
+<img src="/images/ancestry/first_child_ancestry_changes.png"></p>
+
+<p>这个时候save一下就会将数据保存到数据库中了</p>
 ]]></content>
   </entry>
   
