@@ -385,6 +385,96 @@ ancestry用了一个方式来实现,正是scope,可以说很多的查询都是�
 <img src="/images/ancestry/first_child_ancestry_changes.png"></p>
 
 <p>这个时候save一下就会将数据保存到数据库中了</p>
+
+<p>看一下几个关于children的方法</p>
+
+<figure class='code'><figcaption><span>instance_methods.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># 查找所有孩子的id</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">child_ids</span>
+</span><span class='line'>  <span class="c1"># 在rails 3或4中可以用children.pluck(:id)</span>
+</span><span class='line'>  <span class="n">children</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="ss">:select</span> <span class="o">=&gt;</span> <span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">primary_key</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="o">&amp;</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">primary_key</span><span class="o">.</span><span class="n">to_sym</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 判断是否有孩子</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">has_children?</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">exists?</span><span class="p">({})</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 是否叶子节点(没有孩子)</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">is_childless?</span>
+</span><span class='line'>  <span class="o">!</span><span class="n">has_children?</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>在first_children创建一个siblings(兄弟)节点</h4>
+
+<p><img src="/images/ancestry/siblings_changes.png"></p>
+
+<figure class='code'><figcaption><span>instance_methods.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Siblings</span>
+</span><span class='line'><span class="c1"># 变成跟自己(first_children)一样的ancestry</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">sibling_conditions</span>
+</span><span class='line'>  <span class="p">{</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">ancestry_column</span> <span class="o">=&gt;</span> <span class="n">read_attribute</span><span class="p">(</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">ancestry_column</span><span class="p">)}</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 返回所有的兄弟节点,是包括自己的(first_children),因为是根据ancestry(父)来查的</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">siblings</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">scoped</span> <span class="ss">:conditions</span> <span class="o">=&gt;</span> <span class="n">sibling_conditions</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 返回所有的兄弟节点的id</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">sibling_ids</span>
+</span><span class='line'>   <span class="n">siblings</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="ss">:select</span> <span class="o">=&gt;</span> <span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">primary_key</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="o">&amp;</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">primary_key</span><span class="o">.</span><span class="n">to_sym</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">has_siblings?</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">siblings</span><span class="o">.</span><span class="n">count</span> <span class="o">&gt;</span> <span class="mi">1</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">is_only_child?</span>
+</span><span class='line'>  <span class="o">!</span><span class="n">has_siblings?</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>如果不让siblings包含自己,只要<code>first_children.siblings - [first_children]</code>就行了</p>
 </div>
 
 

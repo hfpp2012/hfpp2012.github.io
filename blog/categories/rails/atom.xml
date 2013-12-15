@@ -4,7 +4,7 @@
   <title><![CDATA[Category: rails | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/rails/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-15T16:15:37+08:00</updated>
+  <updated>2013-12-15T16:53:54+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -253,6 +253,67 @@ end
 <img src="/images/ancestry/first_child_ancestry_changes.png"></p>
 
 <p>这个时候save一下就会将数据保存到数据库中了</p>
+
+<p>看一下几个关于children的方法</p>
+
+<p>``` ruby instance_methods.rb</p>
+
+<h1>查找所有孩子的id</h1>
+
+<p>def child_ids
+  # 在rails 3或4中可以用children.pluck(:id)
+  children.all(:select => self.base_class.primary_key).map(&amp;self.base_class.primary_key.to_sym)
+end</p>
+
+<h1>判断是否有孩子</h1>
+
+<p>def has_children?
+  self.children.exists?({})
+end</p>
+
+<h1>是否叶子节点(没有孩子)</h1>
+
+<p>def is_childless?
+  !has_children?
+end
+```</p>
+
+<h4>在first_children创建一个siblings(兄弟)节点</h4>
+
+<p><img src="/images/ancestry/siblings_changes.png"></p>
+
+<p>``` ruby instance_methods.rb</p>
+
+<h1>Siblings</h1>
+
+<h1>变成跟自己(first_children)一样的ancestry</h1>
+
+<p>def sibling_conditions
+  {self.base_class.ancestry_column => read_attribute(self.base_class.ancestry_column)}
+end</p>
+
+<h1>返回所有的兄弟节点,是包括自己的(first_children),因为是根据ancestry(父)来查的</h1>
+
+<p>def siblings
+  self.base_class.scoped :conditions => sibling_conditions
+end</p>
+
+<h1>返回所有的兄弟节点的id</h1>
+
+<p>def sibling_ids
+   siblings.all(:select => self.base_class.primary_key).collect(&amp;self.base_class.primary_key.to_sym)
+end</p>
+
+<p>def has_siblings?
+  self.siblings.count > 1
+end</p>
+
+<p>def is_only_child?
+  !has_siblings?
+end
+```</p>
+
+<p>如果不让siblings包含自己,只要<code>first_children.siblings - [first_children]</code>就行了</p>
 ]]></content>
   </entry>
   
