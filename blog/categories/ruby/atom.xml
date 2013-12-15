@@ -4,7 +4,7 @@
   <title><![CDATA[Category: ruby | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-15T16:53:54+08:00</updated>
+  <updated>2013-12-15T18:46:28+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -314,6 +314,144 @@ end
 ```</p>
 
 <p>如果不让siblings包含自己,只要<code>first_children.siblings - [first_children]</code>就行了</p>
+
+<h4>指定父(parent)节点创建一个Comment</h4>
+
+<p>在comment.rb的白名单上加 <code>attr_accessible :parent</code></p>
+
+<p><img src="/images/ancestry/create_with_parent.png"></p>
+
+<p>既然可以指定<strong>parent</strong>,那一定有<code>parent=()</code>这个方法</p>
+
+<p>``` ruby instance_methods.rb</p>
+
+<h1>Parent</h1>
+
+<h1>找到父那个对象再去找父的child_ancestry,即假如父为根就是它的id&hellip;</h1>
+
+<p>def parent= parent
+  write_attribute(self.base_class.ancestry_column, if parent.blank? then nil else parent.child_ancestry end)
+end</p>
+
+<h1>还是会执行paren= parent方法</h1>
+
+<p>def parent_id= parent_id
+  self.parent = if parent_id.blank? then nil else self.base_class.find(parent_id) end
+end</p>
+
+<h1>返回祖先链的最后一个id,即父的id,ancestors下面会讲到</h1>
+
+<p>def parent_id
+  if ancestor_ids.empty? then nil else ancestor_ids.last end
+end</p>
+
+<h1>用id找到那个parent,找不到就是nil</h1>
+
+<p>def parent
+  if parent_id.blank? then nil else self.base_class.find(parent_id) end
+end
+```</p>
+
+<h4>查找刚创建的第三代的祖先链</h4>
+
+<p><img src="/images/ancestry/ancestor_search.png"></p>
+
+<p>``` ruby instance_methods.rb</p>
+
+<h1>Ancestors</h1>
+
+<h1>读取ancestry的值split后组成数组,取变量的值没有查数据库</h1>
+
+<p>def ancestor_ids
+  read_attribute(self.base_class.ancestry_column).to_s.split(&lsquo;/&rsquo;).map { |id| cast_primary_key(id) }
+end</p>
+
+<h1>把ancestor_ids数组传给id</h1>
+
+<p>def ancestor_conditions
+  {self.base_class.primary_key => ancestor_ids}
+end</p>
+
+<p>def ancestors depth_options = {}
+  self.base_class.scope_depth(depth_options, depth).ordered_by_ancestry.scoped :conditions => ancestor_conditions
+end</p>
+
+<p>def path_ids
+  ancestor_ids + [id]
+end</p>
+
+<p>def path_conditions
+  {self.base_class.primary_key => path_ids}
+end</p>
+
+<p>def path depth_options = {}
+  self.base_class.scope_depth(depth_options, depth).ordered_by_ancestry.scoped :conditions => path_conditions
+end
+```</p>
+
+<p><strong>scope_depth</strong>是个类方法,看它之前先来看看架构那部分那里,表据表除了有个<strong>ancestry</strong>字段,还有<strong>ancestry_depth</strong>这个字段</p>
+
+<p>这个<strong>ancestry_depth</strong>就是类变量<strong>depth_cache_column</strong>定义的</p>
+
+<p>``` ruby has_ancestry.rb</p>
+
+<h1>Create ancestry column accessor and set to option or default</h1>
+
+<p>if options[:cache_depth]
+  # Create accessor for column name and set to option or default
+  self.cattr_accessor :depth_cache_column
+  self.depth_cache_column = options[:depth_cache_column] || :ancestry_depth</p>
+
+<p>  # Cache depth in depth cache column before save
+  # 验证depth_cache_column必须是整数且大于或等于0
+  before_validation :cache_depth</p>
+
+<p>  # Validate depth column
+  validates_numericality_of depth_cache_column, :greater_than_or_equal_to => 0, :only_integer => true, :allow_nil => false
+end</p>
+
+<h1>Create named scopes for depth</h1>
+
+<h1>下面就是一个条件,跟ancestry_depth比,例如before_depth就是'&ldquo;ancestry_depth &lt; ?&rdquo;, 3'之类的</h1>
+
+<p>{:before_depth => &lsquo;&lt;&rsquo;, :to_depth => &lsquo;&lt;=&rsquo;, :at_depth => &lsquo;=&rsquo;, :from_depth => &lsquo;>=&rsquo;, :after_depth => &lsquo;>&rsquo;}.each do |scope_name, operator|
+  # send scope_method就是定义一个scope
+  send scope_method, scope_name, lambda { |depth|</p>
+
+<pre><code>raise Ancestry::AncestryException.new("Named scope '#{scope_name}' is only available when depth caching is enabled.") unless options[:cache_depth]
+{:conditions =&gt; ["#{depth_cache_column} #{operator} ?", depth]}
+</code></pre>
+
+<p>  }
+end
+```
+<img src="/images/ancestry/scope_depth.png"></p>
+
+<p>为什么数字会改变呢,原来那个<strong>before_depth</strong>不是基于<strong>root</strong>(根),而是基于<strong>c</strong>(孙),<strong>c</strong>有两个前辈1+1=2,所以数据库查的是2+2=4</p>
+
+<p>``` ruby class_methods.rb解读scope_depth
+def ancestors depth_options = {}
+  self.base_class.scope_depth(depth_options, depth).ordered_by_ancestry.scoped :conditions => ancestor_conditions
+end</p>
+
+<p>def depth
+  ancestor_ids.size
+end</p>
+
+<p>def scope_depth depth_options, depth
+  depth_options.inject(self.base_class) do |scope, option|</p>
+
+<pre><code>scope_name, relative_depth = option
+if [:before_depth, :to_depth, :at_depth, :from_depth, :after_depth].include? scope_name
+  scope.send scope_name, depth + relative_depth
+else
+  raise Ancestry::AncestryException.new("Unknown depth option: #{scope_name}.")
+end
+</code></pre>
+
+<p>  end
+end
+```</p>
 ]]></content>
   </entry>
   
