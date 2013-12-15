@@ -4,7 +4,7 @@
   <title><![CDATA[Category: rails | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/rails/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-15T20:13:46+08:00</updated>
+  <updated>2013-12-15T21:07:16+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -468,6 +468,8 @@ end</p>
 
 <h4>其他几个查询方法</h4>
 
+<p>主要是<strong>subtree</strong>和<strong>root</strong></p>
+
 <p>``` ruby</p>
 
 <h1>Subtree</h1>
@@ -508,6 +510,22 @@ end</p>
   read_attribute(self.base_class.ancestry_column).blank?
 end
 ```</p>
+
+<h4>将第三代c的父改为根(root),变成了第二代</h4>
+
+<p>第三代要变成第二代,把ancestry改为第一代的id,ancestry_depth从2变成1即可</p>
+
+<p><strong>但是</strong>第三代也有后代,而且可能有很多(第四代,第五代&hellip;),他们怎么办</p>
+
+<p>改变前:</p>
+
+<p><img src="/images/ancestry/before_change_parent.png"></p>
+
+<p><img src="/images/ancestry/change_parent.png"></p>
+
+<p>改变后:</p>
+
+<p><img src="/images/ancestry/after_change_parent.png"></p>
 ]]></content>
   </entry>
   

@@ -4,7 +4,7 @@
   <title><![CDATA[小子的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-15T20:13:46+08:00</updated>
+  <updated>2013-12-15T21:07:16+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -620,6 +620,8 @@ ancestry用了一个方式来实现,正是scope,可以说很多的查询都是�
 
 <h4>其他几个查询方法</h4>
 
+<p>主要是<strong>subtree</strong>和<strong>root</strong></p>
+
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
@@ -683,7 +685,21 @@ ancestry用了一个方式来实现,正是scope,可以说很多的查询都是�
 </span></code></pre></td></tr></table></div></figure>
 
 
+<h4>将第三代c的父改为根(root),变成了第二代</h4>
 
+<p>第三代要变成第二代,把ancestry改为第一代的id,ancestry_depth从2变成1即可</p>
+
+<p><strong>但是</strong>第三代也有后代,而且可能有很多(第四代,第五代&hellip;),他们怎么办</p>
+
+<p>改变前:</p>
+
+<p><img src="http://yinsigan.github.io/images/ancestry/before_change_parent.png"></p>
+
+<p><img src="http://yinsigan.github.io/images/ancestry/change_parent.png"></p>
+
+<p>改变后:</p>
+
+<p><img src="http://yinsigan.github.io/images/ancestry/after_change_parent.png"></p>
 ]]></content>
   </entry>
   
