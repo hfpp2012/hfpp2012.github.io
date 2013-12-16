@@ -538,3 +538,127 @@ end
 
 代码果然如我们预期的效果一样
 
+接下来我们来看看ancestry_depth的变化
+
+说到这个必须谈下`has_ancestry :cache_depth => true`
+
+`:cache_depth => true`开启了之后就可以在**ancestry_depth**(默认)存树的深度,root为0,第一代为1
+
+``` ruby has_ancestry.rb
+# Create ancestry column accessor and set to option or default
+if options[:cache_depth]
+  ...
+  # Cache depth in depth cache column before save
+  # 在验证之前会执行这个的
+  before_validation :cache_depth
+  ...
+end
+```
+
+:cache_depth到底做了什么事儿
+
+``` ruby
+# 求深度,例如,ancestry为'72/73'的深度就是'2'(第三代)
+def depth
+  ancestor_ids.size
+end
+
+# write_attribute是save(false)的,更改ancestry_depth的值
+def cache_depth
+  write_attribute self.base_class.depth_cache_column, depth
+end
+```
+
+在改descendant时根本没有改它的**ancestry_depth**,所以descendant的ancestry_depth没有即时更新,跟我们预期的结果不一样
+
+只要重载**update_descendants_with_new_ancestry**方法
+
+加上下面的代码就可以解决那个问题了
+
+``` ruby
+def update_descendants_with_new_ancestry
+  ...
+  descendant.update_attribute(
+    self.base_class.ancestry_column,
+    descendant.read_attribute(descendant.class.ancestry_column).gsub(
+      /^#{self.child_ancestry}/,
+      if read_attribute(self.class.ancestry_column).blank? then id.to_s else "#{read_attribute self.class.ancestry_column }/#{id}" end
+    )
+  )
+  # 加入下面的代码哦
+  descendant.reload
+  descendant.update_attribute(
+    self.base_class.depth_cache_column,
+    descendant.depth
+  )
+  ...
+end
+```
+
+#### 删除c(有后代)
+
+删除一个Comment很简单,只要把那条记录删除就行了,但是删除后它的后代怎么办
+
+ancestry是通过:orphan_strategy这个参数来控制,而has_ancestry.rb有这句`before_destroy :apply_orphan_strategy`
+
+:orphan_strategy只有三个值: :rootify, :destroy, :restrict
+
+先看下:rootify
+
+改变前:
+
+{% img /images/ancestry/destroy_rootify.png %}
+
+改变后:
+
+{% img /images/ancestry/after_destroy_rootify.png %}
+
+c被删除后,它的子(81)没有了父,就把ancestry设为NULL,它自己的子(82)的ancestry还是指向自己(81),依此类推...
+
+其实做的就是把id为82的comment的ancestry:"72/73/80/81"的"72/73/80"(81的ancestry,也就是c.child_ancestry)删除掉
+
+:destroy就不做这些改变了,直接删除数据
+
+:restrict,只要有后代就抛出异常
+
+来看下代码
+
+``` ruby
+# Apply orphan strategy
+def apply_orphan_strategy
+  # Skip this if callbacks are disabled
+  unless ancestry_callbacks_disabled?
+    # If this isn't a new record ...
+    unless new_record?
+      # ... make all children root if orphan strategy is rootify
+      if self.base_class.orphan_strategy == :rootify
+        unscoped_descendants.each do |descendant|
+          descendant.without_ancestry_callbacks do
+            # descendant.ancestry == child_ancestry就是c的子,直接设为NULL
+            # 从c的"孙"开始,把ancestry的值前面一部分替换掉,也就是子的ancestry,所有孙之后的后代的这部分都替换成空
+            descendant.update_attribute descendant.class.ancestry_column, (if descendant.ancestry == child_ancestry then nil else descendant.ancestry.gsub(/^#{child_ancestry}\//, '') end)
+          end
+        end
+      # ... destroy all descendants if orphan strategy is destroy
+      elsif self.base_class.orphan_strategy == :destroy
+        unscoped_descendants.each do |descendant|
+          descendant.without_ancestry_callbacks do
+            # 直接删除后代
+            descendant.destroy
+          end
+        end
+      # ... throw an exception if it has children and orphan strategy is restrict
+      elsif self.base_class.orphan_strategy == :restrict
+        # 抛出异常
+        raise Ancestry::AncestryException.new('Cannot delete record because it has descendants.') unless is_childless?
+      end
+    end
+  end
+end
+```
+
+### 总结
+
+1. 通过这个gem我们可以学习比较先进的数据库设计的理念,就是减少数据库的查询次数
+2. 学习scope的灵活用法
+3. 高效查询算法的设计
