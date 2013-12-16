@@ -4,7 +4,7 @@
   <title><![CDATA[Category: on | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/on/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-15T23:34:25+08:00</updated>
+  <updated>2013-12-16T11:21:11+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -211,6 +211,8 @@ end
 
 <h1>Children</h1>
 
+<h1>改了ancestry值了哦,这个时候对象变"脏"了</h1>
+
 <p>def child_conditions
   {self.base_class.ancestry_column => child_ancestry}
 end
@@ -237,6 +239,7 @@ self.ancestry_column = options[:ancestry_column] || :ancestry
   raise Ancestry::AncestryException.new(&lsquo;No child ancestry for new record. Save record before performing tree operations.&rsquo;) if new_record?</p>
 
 <p>  # 这段代码比较长,最佳实践不推荐这样写,应该拆成多行
+  # 求原始数据,was
   if self.send(&ldquo;#{self.base_class.ancestry_column}<em>was&rdquo;).blank? then id.to_s else &ldquo;#{self.send &rdquo;#{self.base_class.ancestry_column}</em>was"}/#{id}&ldquo; end
 end
 ```</p>
@@ -287,6 +290,8 @@ end
 <h1>Siblings</h1>
 
 <h1>变成跟自己(first_children)一样的ancestry</h1>
+
+<h1>改ancestry值,对象变"脏"(Dirty)</h1>
 
 <p>def sibling_conditions
   {self.base_class.ancestry_column => read_attribute(self.base_class.ancestry_column)}
@@ -551,22 +556,55 @@ end
 
 <p>``` ruby instance_methods.rb</p>
 
+<h1>Descendants</h1>
+
+<h1>查的是所有后代,下面的update_descendants_with_new_ancestry会用到</h1>
+
+<p>def descendant_conditions
+  [&ldquo;#{self.base_class.table_name}.#{self.base_class.ancestry_column} like ? or #{self.base_class.table_name}.#{self.base_class.ancestry_column} = ?&rdquo;, &ldquo;#{child_ancestry}/%&rdquo;, child_ancestry]
+end</p>
+
+<p>def descendants depth_options = {}
+  self.base_class.ordered_by_ancestry.scope_depth(depth_options, depth).scoped :conditions => descendant_conditions
+end</p>
+
+<h1>在外面包装一个scope</h1>
+
+<p>def unscoped_descendants
+  # with_exclusive_scope就是with_scope,不明白的可以看<a href="http://apidock.com/rails/ActiveRecord/Base/with_scope/class">http://apidock.com/rails/ActiveRecord/Base/with_scope/class</a>
+  self.base_class.send(:with_exclusive_scope) do</p>
+
+<pre><code>self.base_class.all(:conditions =&gt; descendant_conditions)
+</code></pre>
+
+<p>  end
+end</p>
+
 <h1>Update descendants with new ancestry</h1>
 
 <p>def update_descendants_with_new_ancestry
   # Skip this if callbacks are disabled
+  # ancestry_callbacks_disabled?是一个开关,为了让下面的更改有序的进行而不发生数据更改的碰撞,可以看下面相关的代码
   unless ancestry_callbacks_disabled?</p>
 
 <pre><code># If node is valid, not a new record and ancestry was updated ...
+# ancestry_column肯定先改变啦,那就那个c的值啦,!new_reocrd?也肯定不是新数据啦,必须要是有效的valid?(验证通过)
 if changed.include?(self.base_class.ancestry_column.to_s) &amp;&amp; !new_record? &amp;&amp; valid?
   # ... for each descendant ...
+  # 会去循环每个后代哦
   unscoped_descendants.each do |descendant|
     # ... replace old ancestry with new ancestry
+    # 进行有without_ancestry_callbacks的代码,里面包装的是一个原子操作,防止数据被错误修改
     descendant.without_ancestry_callbacks do
+      # 更改ancestry的值哦
       descendant.update_attribute(
+        # 就是ancestry那个列嘛
         self.base_class.ancestry_column,
+        # 读取每个后代ancestry的值,gsub进行全局替换
         descendant.read_attribute(descendant.class.ancestry_column).gsub(
+          # child_ancestry是没变之前的ancestry的值,例如上例中的c的ancestry值"72/73"
           /^#{self.child_ancestry}/,
+          # self就是c,替换成c现有的值,也就是"72"
           if read_attribute(self.class.ancestry_column).blank? then id.to_s else "#{read_attribute self.class.ancestry_column }/#{id}" end
         )
       )
@@ -578,31 +616,11 @@ end
 <p>  end
 end</p>
 
-<h1>Descendants</h1>
+<h1>开关控制</h1>
 
-<p>def descendant_conditions
-  [&ldquo;#{self.base_class.table_name}.#{self.base_class.ancestry_column} like ? or #{self.base_class.table_name}.#{self.base_class.ancestry_column} = ?&rdquo;, &ldquo;#{child_ancestry}/%&rdquo;, child_ancestry]
-end</p>
+<h1>Callback disabling</h1>
 
-<p>def descendants depth_options = {}
-  self.base_class.ordered_by_ancestry.scope_depth(depth_options, depth).scoped :conditions => descendant_conditions
-end</p>
-
-<p>def descendant_ids depth_options = {}
-  descendants(depth_options).all(:select => self.base_class.primary_key).collect(&amp;self.base_class.primary_key.to_sym)
-end</p>
-
-<p>def unscoped_descendants
-  self.base_class.send(:with_exclusive_scope) do</p>
-
-<pre><code>self.base_class.all(:conditions =&gt; descendant_conditions) 
-</code></pre>
-
-<p>  end
-end</p>
-
-<p>   # Callback disabling
-def without_ancestry_callbacks
+<p>def without_ancestry_callbacks
   @disable_ancestry_callbacks = true
   yield
   @disable_ancestry_callbacks = false
@@ -612,6 +630,8 @@ end</p>
   !!@disable_ancestry_callbacks
 end
 ```</p>
+
+<p>代码果然如我们预期的效果一样</p>
 ]]></content>
   </entry>
   

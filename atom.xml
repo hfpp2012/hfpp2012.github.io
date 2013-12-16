@@ -4,7 +4,7 @@
   <title><![CDATA[小子的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-15T23:34:25+08:00</updated>
+  <updated>2013-12-16T11:21:11+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -252,7 +252,9 @@ ancestry用了一个方式来实现,正是scope,可以说很多的查询都是�
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
+<span class='line-number'>5</span>
 </pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Children</span>
+</span><span class='line'><span class="c1"># 改了ancestry值了哦,这个时候对象变&quot;脏&quot;了</span>
 </span><span class='line'><span class="k">def</span> <span class="nf">child_conditions</span>
 </span><span class='line'>  <span class="p">{</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">ancestry_column</span> <span class="o">=&gt;</span> <span class="n">child_ancestry</span><span class="p">}</span>
 </span><span class='line'><span class="k">end</span>
@@ -280,12 +282,14 @@ ancestry用了一个方式来实现,正是scope,可以说很多的查询都是�
 <span class='line-number'>6</span>
 <span class='line-number'>7</span>
 <span class='line-number'>8</span>
+<span class='line-number'>9</span>
 </pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># The ancestry value for this record&#39;s children</span>
 </span><span class='line'><span class="k">def</span> <span class="nf">child_ancestry</span>
 </span><span class='line'>  <span class="c1"># New records cannot have children</span>
 </span><span class='line'>  <span class="k">raise</span> <span class="ss">Ancestry</span><span class="p">:</span><span class="ss">:AncestryException</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s1">&#39;No child ancestry for new record. Save record before performing tree operations.&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">new_record?</span>
 </span><span class='line'>
 </span><span class='line'>  <span class="c1"># 这段代码比较长,最佳实践不推荐这样写,应该拆成多行</span>
+</span><span class='line'>  <span class="c1"># 求原始数据,was</span>
 </span><span class='line'>  <span class="k">if</span> <span class="nb">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">#{</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">ancestry_column</span><span class="si">}</span><span class="s2">_was&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">blank?</span> <span class="k">then</span> <span class="nb">id</span><span class="o">.</span><span class="n">to_s</span> <span class="k">else</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="nb">self</span><span class="o">.</span><span class="n">send</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">ancestry_column</span><span class="si">}</span><span class="s2">_was&quot;</span><span class="si">}</span><span class="s2">/</span><span class="si">#{</span><span class="nb">id</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">end</span>
 </span><span class='line'><span class="k">end</span>
 </span></code></pre></td></tr></table></div></figure>
@@ -366,8 +370,10 @@ ancestry用了一个方式来实现,正是scope,可以说很多的查询都是�
 <span class='line-number'>21</span>
 <span class='line-number'>22</span>
 <span class='line-number'>23</span>
+<span class='line-number'>24</span>
 </pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Siblings</span>
 </span><span class='line'><span class="c1"># 变成跟自己(first_children)一样的ancestry</span>
+</span><span class='line'><span class="c1"># 改ancestry值,对象变&quot;脏&quot;(Dirty)</span>
 </span><span class='line'><span class="k">def</span> <span class="nf">sibling_conditions</span>
 </span><span class='line'>  <span class="p">{</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">ancestry_column</span> <span class="o">=&gt;</span> <span class="n">read_attribute</span><span class="p">(</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">ancestry_column</span><span class="p">)}</span>
 </span><span class='line'><span class="k">end</span>
@@ -777,20 +783,56 @@ ancestry用了一个方式来实现,正是scope,可以说很多的查询都是�
 <span class='line-number'>50</span>
 <span class='line-number'>51</span>
 <span class='line-number'>52</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Update descendants with new ancestry</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Descendants</span>
+</span><span class='line'><span class="c1"># 查的是所有后代,下面的update_descendants_with_new_ancestry会用到</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">descendant_conditions</span>
+</span><span class='line'>  <span class="o">[</span><span class="s2">&quot;</span><span class="si">#{</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">table_name</span><span class="si">}</span><span class="s2">.</span><span class="si">#{</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">ancestry_column</span><span class="si">}</span><span class="s2"> like ? or </span><span class="si">#{</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">table_name</span><span class="si">}</span><span class="s2">.</span><span class="si">#{</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">ancestry_column</span><span class="si">}</span><span class="s2"> = ?&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">child_ancestry</span><span class="si">}</span><span class="s2">/%&quot;</span><span class="p">,</span> <span class="n">child_ancestry</span><span class="o">]</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">descendants</span> <span class="n">depth_options</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">ordered_by_ancestry</span><span class="o">.</span><span class="n">scope_depth</span><span class="p">(</span><span class="n">depth_options</span><span class="p">,</span> <span class="n">depth</span><span class="p">)</span><span class="o">.</span><span class="n">scoped</span> <span class="ss">:conditions</span> <span class="o">=&gt;</span> <span class="n">descendant_conditions</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 在外面包装一个scope</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">unscoped_descendants</span>
+</span><span class='line'>  <span class="c1"># with_exclusive_scope就是with_scope,不明白的可以看http://apidock.com/rails/ActiveRecord/Base/with_scope/class</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="ss">:with_exclusive_scope</span><span class="p">)</span> <span class="k">do</span>
+</span><span class='line'>    <span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="ss">:conditions</span> <span class="o">=&gt;</span> <span class="n">descendant_conditions</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># Update descendants with new ancestry</span>
 </span><span class='line'><span class="k">def</span> <span class="nf">update_descendants_with_new_ancestry</span>
 </span><span class='line'>  <span class="c1"># Skip this if callbacks are disabled</span>
+</span><span class='line'>  <span class="c1"># ancestry_callbacks_disabled?是一个开关,为了让下面的更改有序的进行而不发生数据更改的碰撞,可以看下面相关的代码</span>
 </span><span class='line'>  <span class="k">unless</span> <span class="n">ancestry_callbacks_disabled?</span>
 </span><span class='line'>    <span class="c1"># If node is valid, not a new record and ancestry was updated ...</span>
+</span><span class='line'>    <span class="c1"># ancestry_column肯定先改变啦,那就那个c的值啦,!new_reocrd?也肯定不是新数据啦,必须要是有效的valid?(验证通过)</span>
 </span><span class='line'>    <span class="k">if</span> <span class="n">changed</span><span class="o">.</span><span class="n">include?</span><span class="p">(</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">ancestry_column</span><span class="o">.</span><span class="n">to_s</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">new_record?</span> <span class="o">&amp;&amp;</span> <span class="n">valid?</span>
 </span><span class='line'>      <span class="c1"># ... for each descendant ...</span>
+</span><span class='line'>      <span class="c1"># 会去循环每个后代哦</span>
 </span><span class='line'>      <span class="n">unscoped_descendants</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">descendant</span><span class="o">|</span>
 </span><span class='line'>        <span class="c1"># ... replace old ancestry with new ancestry</span>
+</span><span class='line'>        <span class="c1"># 进行有without_ancestry_callbacks的代码,里面包装的是一个原子操作,防止数据被错误修改</span>
 </span><span class='line'>        <span class="n">descendant</span><span class="o">.</span><span class="n">without_ancestry_callbacks</span> <span class="k">do</span>
+</span><span class='line'>          <span class="c1"># 更改ancestry的值哦</span>
 </span><span class='line'>          <span class="n">descendant</span><span class="o">.</span><span class="n">update_attribute</span><span class="p">(</span>
+</span><span class='line'>            <span class="c1"># 就是ancestry那个列嘛</span>
 </span><span class='line'>            <span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">ancestry_column</span><span class="p">,</span>
+</span><span class='line'>            <span class="c1"># 读取每个后代ancestry的值,gsub进行全局替换</span>
 </span><span class='line'>            <span class="n">descendant</span><span class="o">.</span><span class="n">read_attribute</span><span class="p">(</span><span class="n">descendant</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">ancestry_column</span><span class="p">)</span><span class="o">.</span><span class="n">gsub</span><span class="p">(</span>
+</span><span class='line'>              <span class="c1"># child_ancestry是没变之前的ancestry的值,例如上例中的c的ancestry值&quot;72/73&quot;</span>
 </span><span class='line'>              <span class="sr">/^</span><span class="si">#{</span><span class="nb">self</span><span class="o">.</span><span class="n">child_ancestry</span><span class="si">}</span><span class="sr">/</span><span class="p">,</span>
+</span><span class='line'>              <span class="c1"># self就是c,替换成c现有的值,也就是&quot;72&quot;</span>
 </span><span class='line'>              <span class="k">if</span> <span class="n">read_attribute</span><span class="p">(</span><span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">ancestry_column</span><span class="p">)</span><span class="o">.</span><span class="n">blank?</span> <span class="k">then</span> <span class="nb">id</span><span class="o">.</span><span class="n">to_s</span> <span class="k">else</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">read_attribute</span> <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">ancestry_column</span> <span class="si">}</span><span class="s2">/</span><span class="si">#{</span><span class="nb">id</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">end</span>
 </span><span class='line'>            <span class="p">)</span>
 </span><span class='line'>          <span class="p">)</span>
@@ -800,26 +842,8 @@ ancestry用了一个方式来实现,正是scope,可以说很多的查询都是�
 </span><span class='line'>  <span class="k">end</span>
 </span><span class='line'><span class="k">end</span>
 </span><span class='line'>
-</span><span class='line'><span class="c1"># Descendants</span>
-</span><span class='line'><span class="k">def</span> <span class="nf">descendant_conditions</span>
-</span><span class='line'>  <span class="o">[</span><span class="s2">&quot;</span><span class="si">#{</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">table_name</span><span class="si">}</span><span class="s2">.</span><span class="si">#{</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">ancestry_column</span><span class="si">}</span><span class="s2"> like ? or </span><span class="si">#{</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">table_name</span><span class="si">}</span><span class="s2">.</span><span class="si">#{</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">ancestry_column</span><span class="si">}</span><span class="s2"> = ?&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">child_ancestry</span><span class="si">}</span><span class="s2">/%&quot;</span><span class="p">,</span> <span class="n">child_ancestry</span><span class="o">]</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">def</span> <span class="nf">descendants</span> <span class="n">depth_options</span> <span class="o">=</span> <span class="p">{}</span>
-</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">ordered_by_ancestry</span><span class="o">.</span><span class="n">scope_depth</span><span class="p">(</span><span class="n">depth_options</span><span class="p">,</span> <span class="n">depth</span><span class="p">)</span><span class="o">.</span><span class="n">scoped</span> <span class="ss">:conditions</span> <span class="o">=&gt;</span> <span class="n">descendant_conditions</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">def</span> <span class="nf">descendant_ids</span> <span class="n">depth_options</span> <span class="o">=</span> <span class="p">{}</span>
-</span><span class='line'>  <span class="n">descendants</span><span class="p">(</span><span class="n">depth_options</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="ss">:select</span> <span class="o">=&gt;</span> <span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">primary_key</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="o">&amp;</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">primary_key</span><span class="o">.</span><span class="n">to_sym</span><span class="p">)</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">def</span> <span class="nf">unscoped_descendants</span>
-</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="ss">:with_exclusive_scope</span><span class="p">)</span> <span class="k">do</span>
-</span><span class='line'>    <span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="ss">:conditions</span> <span class="o">=&gt;</span> <span class="n">descendant_conditions</span><span class="p">)</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'>   <span class="c1"># Callback disabling</span>
+</span><span class='line'><span class="c1"># 开关控制</span>
+</span><span class='line'><span class="c1"># Callback disabling</span>
 </span><span class='line'><span class="k">def</span> <span class="nf">without_ancestry_callbacks</span>
 </span><span class='line'>  <span class="vi">@disable_ancestry_callbacks</span> <span class="o">=</span> <span class="kp">true</span>
 </span><span class='line'>  <span class="k">yield</span>
@@ -832,7 +856,7 @@ ancestry用了一个方式来实现,正是scope,可以说很多的查询都是�
 </span></code></pre></td></tr></table></div></figure>
 
 
-
+<p>代码果然如我们预期的效果一样</p>
 ]]></content>
   </entry>
   
