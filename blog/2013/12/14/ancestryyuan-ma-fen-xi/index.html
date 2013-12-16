@@ -939,6 +939,199 @@ ancestry用了一个方式来实现,正是scope,可以说很多的查询都是�
 
 
 <p>代码果然如我们预期的效果一样</p>
+
+<p>接下来我们来看看ancestry_depth的变化</p>
+
+<p>说到这个必须谈下<code>has_ancestry :cache_depth =&gt; true</code></p>
+
+<p><code>:cache_depth =&gt; true</code>开启了之后就可以在<strong>ancestry_depth</strong>(默认)存树的深度,root为0,第一代为1</p>
+
+<figure class='code'><figcaption><span>has_ancestry.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Create ancestry column accessor and set to option or default</span>
+</span><span class='line'><span class="k">if</span> <span class="n">options</span><span class="o">[</span><span class="ss">:cache_depth</span><span class="o">]</span>
+</span><span class='line'>  <span class="o">.</span><span class="n">.</span><span class="o">.</span>
+</span><span class='line'>  <span class="c1"># Cache depth in depth cache column before save</span>
+</span><span class='line'>  <span class="c1"># 在验证之前会执行这个的</span>
+</span><span class='line'>  <span class="n">before_validation</span> <span class="ss">:cache_depth</span>
+</span><span class='line'>  <span class="o">.</span><span class="n">.</span><span class="o">.</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>:cache_depth到底做了什么事儿</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># 求深度,例如,ancestry为&#39;72/73&#39;的深度就是&#39;2&#39;(第三代)</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">depth</span>
+</span><span class='line'>  <span class="n">ancestor_ids</span><span class="o">.</span><span class="n">size</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># write_attribute是save(false)的,更改ancestry_depth的值</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">cache_depth</span>
+</span><span class='line'>  <span class="n">write_attribute</span> <span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">depth_cache_column</span><span class="p">,</span> <span class="n">depth</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>在改descendant时根本没有改它的<strong>ancestry_depth</strong>,所以descendant的ancestry_depth没有即时更新,跟我们预期的结果不一样</p>
+
+<p>只要重载<strong>update_descendants_with_new_ancestry</strong>方法</p>
+
+<p>加上下面的代码就可以解决那个问题了</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">update_descendants_with_new_ancestry</span>
+</span><span class='line'>  <span class="o">.</span><span class="n">.</span><span class="o">.</span>
+</span><span class='line'>  <span class="n">descendant</span><span class="o">.</span><span class="n">update_attribute</span><span class="p">(</span>
+</span><span class='line'>    <span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">ancestry_column</span><span class="p">,</span>
+</span><span class='line'>    <span class="n">descendant</span><span class="o">.</span><span class="n">read_attribute</span><span class="p">(</span><span class="n">descendant</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">ancestry_column</span><span class="p">)</span><span class="o">.</span><span class="n">gsub</span><span class="p">(</span>
+</span><span class='line'>      <span class="sr">/^</span><span class="si">#{</span><span class="nb">self</span><span class="o">.</span><span class="n">child_ancestry</span><span class="si">}</span><span class="sr">/</span><span class="p">,</span>
+</span><span class='line'>      <span class="k">if</span> <span class="n">read_attribute</span><span class="p">(</span><span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">ancestry_column</span><span class="p">)</span><span class="o">.</span><span class="n">blank?</span> <span class="k">then</span> <span class="nb">id</span><span class="o">.</span><span class="n">to_s</span> <span class="k">else</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">read_attribute</span> <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">ancestry_column</span> <span class="si">}</span><span class="s2">/</span><span class="si">#{</span><span class="nb">id</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">end</span>
+</span><span class='line'>    <span class="p">)</span>
+</span><span class='line'>  <span class="p">)</span>
+</span><span class='line'>  <span class="c1"># 加入下面的代码哦</span>
+</span><span class='line'>  <span class="n">descendant</span><span class="o">.</span><span class="n">reload</span>
+</span><span class='line'>  <span class="n">descendant</span><span class="o">.</span><span class="n">update_attribute</span><span class="p">(</span>
+</span><span class='line'>    <span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">depth_cache_column</span><span class="p">,</span>
+</span><span class='line'>    <span class="n">descendant</span><span class="o">.</span><span class="n">depth</span>
+</span><span class='line'>  <span class="p">)</span>
+</span><span class='line'>  <span class="o">.</span><span class="n">.</span><span class="o">.</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>删除c(有后代)</h4>
+
+<p>删除一个Comment很简单,只要把那条记录删除就行了,但是删除后它的后代怎么办</p>
+
+<p>ancestry是通过:orphan_strategy这个参数来控制,而has_ancestry.rb有这句<code>before_destroy :apply_orphan_strategy</code></p>
+
+<p>:orphan_strategy只有三个值: :rootify, :destroy, :restrict</p>
+
+<p>先看下:rootify</p>
+
+<p>改变前:</p>
+
+<p><img src="/images/ancestry/destroy_rootify.png"></p>
+
+<p>改变后:</p>
+
+<p><img src="/images/ancestry/after_destroy_rootify.png"></p>
+
+<p>c被删除后,它的子(81)没有了父,就把ancestry设为NULL,它自己的子(82)的ancestry还是指向自己(81),依此类推&hellip;</p>
+
+<p>其实做的就是把id为82的comment的ancestry:&ldquo;72/73/80/81&#8221;的&#8221;72/73/80&rdquo;(81的ancestry,也就是c.child_ancestry)删除掉</p>
+
+<p>:destroy就不做这些改变了,直接删除数据</p>
+
+<p>:restrict,只要有后代就抛出异常</p>
+
+<p>来看下代码</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Apply orphan strategy</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">apply_orphan_strategy</span>
+</span><span class='line'>  <span class="c1"># Skip this if callbacks are disabled</span>
+</span><span class='line'>  <span class="k">unless</span> <span class="n">ancestry_callbacks_disabled?</span>
+</span><span class='line'>    <span class="c1"># If this isn&#39;t a new record ...</span>
+</span><span class='line'>    <span class="k">unless</span> <span class="n">new_record?</span>
+</span><span class='line'>      <span class="c1"># ... make all children root if orphan strategy is rootify</span>
+</span><span class='line'>      <span class="k">if</span> <span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">orphan_strategy</span> <span class="o">==</span> <span class="ss">:rootify</span>
+</span><span class='line'>        <span class="n">unscoped_descendants</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">descendant</span><span class="o">|</span>
+</span><span class='line'>          <span class="n">descendant</span><span class="o">.</span><span class="n">without_ancestry_callbacks</span> <span class="k">do</span>
+</span><span class='line'>            <span class="c1"># descendant.ancestry == child_ancestry就是c的子,直接设为NULL</span>
+</span><span class='line'>            <span class="c1"># 从c的&quot;孙&quot;开始,把ancestry的值前面一部分替换掉,也就是子的ancestry,所有孙之后的后代的这部分都替换成空</span>
+</span><span class='line'>            <span class="n">descendant</span><span class="o">.</span><span class="n">update_attribute</span> <span class="n">descendant</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">ancestry_column</span><span class="p">,</span> <span class="p">(</span><span class="k">if</span> <span class="n">descendant</span><span class="o">.</span><span class="n">ancestry</span> <span class="o">==</span> <span class="n">child_ancestry</span> <span class="k">then</span> <span class="kp">nil</span> <span class="k">else</span> <span class="n">descendant</span><span class="o">.</span><span class="n">ancestry</span><span class="o">.</span><span class="n">gsub</span><span class="p">(</span><span class="sr">/^</span><span class="si">#{</span><span class="n">child_ancestry</span><span class="si">}</span><span class="sr">\//</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="k">end</span><span class="p">)</span>
+</span><span class='line'>          <span class="k">end</span>
+</span><span class='line'>        <span class="k">end</span>
+</span><span class='line'>      <span class="c1"># ... destroy all descendants if orphan strategy is destroy</span>
+</span><span class='line'>      <span class="k">elsif</span> <span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">orphan_strategy</span> <span class="o">==</span> <span class="ss">:destroy</span>
+</span><span class='line'>        <span class="n">unscoped_descendants</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">descendant</span><span class="o">|</span>
+</span><span class='line'>          <span class="n">descendant</span><span class="o">.</span><span class="n">without_ancestry_callbacks</span> <span class="k">do</span>
+</span><span class='line'>            <span class="c1"># 直接删除后代</span>
+</span><span class='line'>            <span class="n">descendant</span><span class="o">.</span><span class="n">destroy</span>
+</span><span class='line'>          <span class="k">end</span>
+</span><span class='line'>        <span class="k">end</span>
+</span><span class='line'>      <span class="c1"># ... throw an exception if it has children and orphan strategy is restrict</span>
+</span><span class='line'>      <span class="k">elsif</span> <span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">orphan_strategy</span> <span class="o">==</span> <span class="ss">:restrict</span>
+</span><span class='line'>        <span class="c1"># 抛出异常</span>
+</span><span class='line'>        <span class="k">raise</span> <span class="ss">Ancestry</span><span class="p">:</span><span class="ss">:AncestryException</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s1">&#39;Cannot delete record because it has descendants.&#39;</span><span class="p">)</span> <span class="k">unless</span> <span class="n">is_childless?</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>总结</h3>
+
+<ol>
+<li>通过这个gem我们可以学习比较先进的数据库设计的理念,就是减少数据库的查询次数</li>
+<li>学习scope的灵活用法</li>
+<li>高效查询算法的设计</li>
+</ol>
+
 </div>
 
 
