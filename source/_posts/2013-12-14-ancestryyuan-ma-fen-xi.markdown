@@ -178,6 +178,7 @@ child_conditions呢
 
 ``` ruby instance_methods.rb
 # Children
+# 改了ancestry值了哦,这个时候对象变"脏"了
 def child_conditions
   {self.base_class.ancestry_column => child_ancestry}
 end
@@ -200,6 +201,7 @@ def child_ancestry
   raise Ancestry::AncestryException.new('No child ancestry for new record. Save record before performing tree operations.') if new_record?
 
   # 这段代码比较长,最佳实践不推荐这样写,应该拆成多行
+  # 求原始数据,was
   if self.send("#{self.base_class.ancestry_column}_was").blank? then id.to_s else "#{self.send "#{self.base_class.ancestry_column}_was"}/#{id}" end
 end
 ```
@@ -244,6 +246,7 @@ end
 ``` ruby instance_methods.rb
 # Siblings
 # 变成跟自己(first_children)一样的ancestry
+# 改ancestry值,对象变"脏"(Dirty)
 def sibling_conditions
   {self.base_class.ancestry_column => read_attribute(self.base_class.ancestry_column)}
 end
@@ -371,18 +374,167 @@ def ancestors depth_options = {}
   self.base_class.scope_depth(depth_options, depth).ordered_by_ancestry.scoped :conditions => ancestor_conditions
 end
 
+# 也就是自己ancestry_depth的值
 def depth
   ancestor_ids.size
 end
 
 def scope_depth depth_options, depth
+  # inject方法很灵活
   depth_options.inject(self.base_class) do |scope, option|
+    # relative_depth是传进来的值
     scope_name, relative_depth = option
     if [:before_depth, :to_depth, :at_depth, :from_depth, :after_depth].include? scope_name
+      # ancestry_depth的值加上传进来的值
       scope.send scope_name, depth + relative_depth
     else
       raise Ancestry::AncestryException.new("Unknown depth option: #{scope_name}.")
     end
   end
 end
+
+scope_method = if rails_3 then :scope else :named_scope end
+# 很多方法用到这个,在rails 3中会变成send :scope, :ordered_by_ancestry...
+# 如果是根会排在前面
+send scope_method, :ordered_by_ancestry, :order => "(case when #{table_name}.#{ancestry_column} is null then 0 else 1 end), #{table_name}.#{ancestry_column}"
 ```
+
+#### 其他几个查询方法
+
+主要是**subtree**和**root**
+
+``` ruby
+# Subtree
+# 包括自己查后代,使用self.id, child_ancestry是查自己的子,"#{child_ancestry}/"查孙一代起
+def subtree_conditions
+  ["#{self.base_class.table_name}.#{self.base_class.primary_key} = ? or #{self.base_class.table_name}.#{self.base_class.ancestry_column} like ? or #{self.base_class.table_name}.#{self.base_class.ancestry_column} = ?", self.id, "#{child_ancestry}/%", child_ancestry]
+end
+
+def subtree depth_options = {}
+  self.base_class.ordered_by_ancestry.scope_depth(depth_options, depth).scoped :conditions => subtree_conditions
+end
+
+def subtree_ids depth_options = {}
+  subtree(depth_options).all(:select => self.base_class.primary_key).collect(&self.base_class.primary_key.to_sym)
+end
+
+# Root
+# 返回根的id,在acts_as_tree可是要遍历的,这个就简单多了
+# ancestor_ids是空的,那就返回自己的id
+def root_id
+  if ancestor_ids.empty? then id else ancestor_ids.first end
+end
+
+# 如果根就是自己,那就不用查了
+def root
+  if root_id == id then self else self.base_class.find(root_id) end
+end
+
+# 判断是不是nil而已
+def is_root?
+  read_attribute(self.base_class.ancestry_column).blank?
+end
+```
+
+#### 将第三代c的父改为根(root),变成了第二代
+
+第三代要变成第二代,把ancestry改为第一代的id,ancestry_depth从2变成1即可
+
+**但是**第三代也有后代,而且可能有很多(第四代,第五代...),他们怎么办
+
+改变前:
+
+{% img /images/ancestry/before_change_parent.png %}
+
+{% img /images/ancestry/change_parent.png %}
+
+改变后:
+
+{% img /images/ancestry/after_change_parent.png %}
+
+先来看看ancestry的变化
+
+他的后代的ancestry的变化是通过**before_save**来实现的
+
+在**before_save**之前c(77)的ancestry最先变化,它由"72/73"变成了"72"
+
+看上面那个命令图,第一个改的后代是id为78(c的子)那个
+它由"72/73/77"变成"72/77"
+
+id为79(c的孙)那个Comment的ancestry由"72/73/77/78"变成"72/77/78"
+
+看出一个规律就是把"72/73"变成"72"罢了,其他的不变,因为c的ancestry由"72/73"变成了"72",所以它的后代跟着变
+
+如果上面推测正确,那么...
+
+``` ruby has_ancestry.rb
+# Update descendants with new ancestry before save
+before_save :update_descendants_with_new_ancestry
+```
+
+``` ruby instance_methods.rb
+# Descendants
+# 查的是所有后代,下面的update_descendants_with_new_ancestry会用到
+def descendant_conditions
+  ["#{self.base_class.table_name}.#{self.base_class.ancestry_column} like ? or #{self.base_class.table_name}.#{self.base_class.ancestry_column} = ?", "#{child_ancestry}/%", child_ancestry]
+end
+
+def descendants depth_options = {}
+  self.base_class.ordered_by_ancestry.scope_depth(depth_options, depth).scoped :conditions => descendant_conditions
+end
+
+# 在外面包装一个scope
+def unscoped_descendants
+  # with_exclusive_scope就是with_scope,不明白的可以看http://apidock.com/rails/ActiveRecord/Base/with_scope/class
+  self.base_class.send(:with_exclusive_scope) do
+    self.base_class.all(:conditions => descendant_conditions)
+  end
+end
+
+# Update descendants with new ancestry
+def update_descendants_with_new_ancestry
+  # Skip this if callbacks are disabled
+  # ancestry_callbacks_disabled?是一个开关,为了让下面的更改有序的进行而不发生数据更改的碰撞,可以看下面相关的代码
+  unless ancestry_callbacks_disabled?
+    # If node is valid, not a new record and ancestry was updated ...
+    # ancestry_column肯定先改变啦,那就那个c的值啦,!new_reocrd?也肯定不是新数据啦,必须要是有效的valid?(验证通过)
+    if changed.include?(self.base_class.ancestry_column.to_s) && !new_record? && valid?
+      # ... for each descendant ...
+      # 会去循环每个后代哦
+      unscoped_descendants.each do |descendant|
+        # ... replace old ancestry with new ancestry
+        # 进行有without_ancestry_callbacks的代码,里面包装的是一个原子操作,防止数据被错误修改
+        descendant.without_ancestry_callbacks do
+          # 更改ancestry的值哦
+          descendant.update_attribute(
+            # 就是ancestry那个列嘛
+            self.base_class.ancestry_column,
+            # 读取每个后代ancestry的值,gsub进行全局替换
+            descendant.read_attribute(descendant.class.ancestry_column).gsub(
+              # child_ancestry是没变之前的ancestry的值,例如上例中的c的ancestry值"72/73"
+              /^#{self.child_ancestry}/,
+              # self就是c,替换成c现有的值,也就是"72"
+              if read_attribute(self.class.ancestry_column).blank? then id.to_s else "#{read_attribute self.class.ancestry_column }/#{id}" end
+            )
+          )
+        end
+      end
+    end
+  end
+end
+
+# 开关控制
+# Callback disabling
+def without_ancestry_callbacks
+  @disable_ancestry_callbacks = true
+  yield
+  @disable_ancestry_callbacks = false
+end
+
+def ancestry_callbacks_disabled?
+  !!@disable_ancestry_callbacks
+end
+```
+
+代码果然如我们预期的效果一样
+
