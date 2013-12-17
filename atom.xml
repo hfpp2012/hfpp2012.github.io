@@ -4,7 +4,7 @@
   <title><![CDATA[小子的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-17T17:29:35+08:00</updated>
+  <updated>2013-12-17T20:25:11+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -14,7 +14,7 @@
 
   
   <entry>
-    <title type="html"><![CDATA[ancestry源码分析]]></title>
+    <title type="html"><![CDATA[ancestry-1.3.0源码分析]]></title>
     <link href="http://yinsigan.github.io/blog/2013/12/14/ancestryyuan-ma-fen-xi/"/>
     <updated>2013-12-14T21:12:00+08:00</updated>
     <id>http://yinsigan.github.io/blog/2013/12/14/ancestryyuan-ma-fen-xi</id>
@@ -2272,6 +2272,8 @@ ancestry用了一个方式来实现,正是scope,可以说很多的查询都是�
 <p><img src="http://yinsigan.github.io/images/acts_as_tree_table.png"></p>
 
 <h3>分析</h3>
+
+<p>这个gem的版本是1.4.0</p>
 
 <p>它的核心文件只有一个<strong>lib/acts_as_tree.rb</strong></p>
 
