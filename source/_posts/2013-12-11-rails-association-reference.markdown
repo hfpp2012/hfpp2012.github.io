@@ -292,6 +292,8 @@ end
 
 如果传入`:dependent => :nullify`不删除数据,只删除关联数据
 
+:delete_all和:destroy的区别就是调不调用before_save的问题
+
 
 + foreign_key
 
