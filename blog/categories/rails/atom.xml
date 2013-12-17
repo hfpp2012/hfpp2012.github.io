@@ -4,7 +4,7 @@
   <title><![CDATA[Category: rails | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/rails/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-16T23:35:15+08:00</updated>
+  <updated>2013-12-17T10:01:41+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -32,6 +32,9 @@
 <p><strong>数据库表</strong></p>
 
 <p><img src="/images/ancestry/table.png"></p>
+
+<!-- more -->
+
 
 <p><img src="/images/ancestry/table_content.png"></p>
 
