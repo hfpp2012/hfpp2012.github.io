@@ -4,7 +4,7 @@
   <title><![CDATA[小子的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-17T20:25:11+08:00</updated>
+  <updated>2013-12-17T20:55:57+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -2226,7 +2226,7 @@ ancestry用了一个方式来实现,正是scope,可以说很多的查询都是�
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[acts_as_tree源码分析]]></title>
+    <title type="html"><![CDATA[acts_as_tree源码分析[upgraded]]]></title>
     <link href="http://yinsigan.github.io/blog/2013/12/09/acts-as-treeyuan-ma-fen-xi/"/>
     <updated>2013-12-09T14:30:00+08:00</updated>
     <id>http://yinsigan.github.io/blog/2013/12/09/acts-as-treeyuan-ma-fen-xi</id>
@@ -2799,6 +2799,53 @@ ancestry用了一个方式来实现,正是scope,可以说很多的查询都是�
 <h3>总结</h3>
 
 <p>通过这个gem我们可以学一些查询方法,例如关于根节点，祖先节点的查找啊,还可以学习自关联的写法,一些递归写法等</p>
+
+<hr />
+
+<h3>1.5.0相比于1.4.0的changed</h3>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Returns list of descendants, starting from current node, not including cu</span>
+</span><span class='line'><span class="c1">#</span>
+</span><span class='line'><span class="c1">#   root.descendants # =&gt; [child1, child2, subchild1, subchild2, subchild3,</span>
+</span><span class='line'><span class="c1"># 返回后代</span>
+</span><span class='line'><span class="c1"># each_with_object是灵活的用法,具体看http://apidock.com/rails/Enumerable/each_with_object</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">descendants</span>
+</span><span class='line'>  <span class="c1"># child是结果,arr是每个children,children是默认值,也就是说会先执行children.concat child.descendants</span>
+</span><span class='line'>  <span class="c1"># 会遍历执行,直到没有children</span>
+</span><span class='line'>  <span class="n">children</span><span class="o">.</span><span class="n">each_with_object</span><span class="p">(</span><span class="n">children</span><span class="p">)</span> <span class="p">{</span><span class="o">|</span><span class="n">child</span><span class="p">,</span> <span class="n">arr</span><span class="o">|</span>
+</span><span class='line'>    <span class="n">arr</span><span class="o">.</span><span class="n">concat</span> <span class="n">child</span><span class="o">.</span><span class="n">descendants</span>
+</span><span class='line'>  <span class="p">}</span><span class="o">.</span><span class="n">uniq</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># Returns list of descendants, starting from current node, including curren</span>
+</span><span class='line'><span class="c1">#</span>
+</span><span class='line'><span class="c1">#   root.self_and_descendants # =&gt; [root, child1, child2, subchild1, subchi</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">self_and_descendants</span>
+</span><span class='line'>  <span class="o">[</span><span class="nb">self</span><span class="o">]</span> <span class="o">+</span> <span class="n">descendants</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
 ]]></content>
   </entry>
   

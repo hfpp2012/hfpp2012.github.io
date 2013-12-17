@@ -4,7 +4,7 @@
   <title><![CDATA[Category: on | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/on/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-17T20:25:11+08:00</updated>
+  <updated>2013-12-17T20:55:57+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -1633,7 +1633,7 @@ end
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[acts_as_tree源码分析]]></title>
+    <title type="html"><![CDATA[acts_as_tree源码分析[upgraded]]]></title>
     <link href="http://yinsigan.github.io/blog/2013/12/09/acts-as-treeyuan-ma-fen-xi/"/>
     <updated>2013-12-09T14:30:00+08:00</updated>
     <id>http://yinsigan.github.io/blog/2013/12/09/acts-as-treeyuan-ma-fen-xi</id>
@@ -1962,6 +1962,44 @@ end</p>
 <h3>总结</h3>
 
 <p>通过这个gem我们可以学一些查询方法,例如关于根节点，祖先节点的查找啊,还可以学习自关联的写法,一些递归写法等</p>
+
+<hr />
+
+<h3>1.5.0相比于1.4.0的changed</h3>
+
+<p>``` ruby</p>
+
+<h1>Returns list of descendants, starting from current node, not including cu</h1>
+
+<p>#</p>
+
+<h1>root.descendants # => [child1, child2, subchild1, subchild2, subchild3,</h1>
+
+<h1>返回后代</h1>
+
+<h1>each_with_object是灵活的用法,具体看<a href="http://apidock.com/rails/Enumerable/each_with_object">http://apidock.com/rails/Enumerable/each_with_object</a></h1>
+
+<p>def descendants
+  # child是结果,arr是每个children,children是默认值,也就是说会先执行children.concat child.descendants
+  # 会遍历执行,直到没有children
+  children.each_with_object(children) {|child, arr|</p>
+
+<pre><code>arr.concat child.descendants
+</code></pre>
+
+<p>  }.uniq
+end</p>
+
+<h1>Returns list of descendants, starting from current node, including curren</h1>
+
+<p>#</p>
+
+<h1>root.self_and_descendants # => [root, child1, child2, subchild1, subchi</h1>
+
+<p>def self_and_descendants
+  [self] + descendants
+end
+```</p>
 ]]></content>
   </entry>
   
