@@ -4,7 +4,7 @@
   <title><![CDATA[Category: rails | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/rails/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-17T20:55:57+08:00</updated>
+  <updated>2013-12-17T22:35:34+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -14,7 +14,7 @@
 
   
   <entry>
-    <title type="html"><![CDATA[ancestry-1.3.0源码分析]]></title>
+    <title type="html"><![CDATA[ancestry源码分析]]></title>
     <link href="http://yinsigan.github.io/blog/2013/12/14/ancestryyuan-ma-fen-xi/"/>
     <updated>2013-12-14T21:12:00+08:00</updated>
     <id>http://yinsigan.github.io/blog/2013/12/14/ancestryyuan-ma-fen-xi</id>
@@ -26,6 +26,8 @@
 <h3>这个gem是做什么的,原理是什么</h3>
 
 <p>这个gem跟<a href="/blog/2013/12/09/acts-as-treeyuan-ma-fen-xi/">acts_as_tree</a>的作用是一样的,不明白的同学可以看这篇<a href="/blog/2013/12/09/acts-as-treeyuan-ma-fen-xi/">blog</a>.而且在这篇blog我们不直接来分析代码,而是通过使用ancestry的功能来分析代码,并作些比较.由于个人感觉这个gem的代码有点老式,会加上我自己认为可以改进的代码.</p>
+
+<p>这个gem的版本是1.3.0,关于新版的变化可以看文章的最后部分</p>
 
 <h3>架构</h3>
 
@@ -779,6 +781,91 @@ end
 <li>高效查询算法的设计</li>
 </ol>
 
+
+<hr />
+
+<h3>关于新版本的改变</h3>
+
+<ul>
+<li><p>去掉了primary_key_format这个参数(没什么用处)</p></li>
+<li><p>用上了reorder这个scope</p></li>
+</ul>
+
+
+<p><code>ruby
+-  send scope_method, :ordered_by_ancestry, :order =&gt; "(case when #{table_name}.#{ancestry_column} is null then 0 else 1 end), #{table_name}.#{ancestry_column}"
+-  send scope_method, :ordered_by_ancestry_and, lambda { |order| {:order =&gt; "(case when #{table_name}.#{ancestry_column} is null then 0 else 1 end), #{table_name}.#{ancestry_column}, #{order}"} }
++  send scope_method, :ordered_by_ancestry, reorder("(case when #{table_name}.#{ancestry_column} is null then 0 else 1 end), #{table_name}.#{ancestry_column}")
++  send scope_method, :ordered_by_ancestry_and, lambda { |order| reorder("(case when #{table_name}.#{ancestry_column} is null then 0 else 1 end), #{table_name}.#{ancestry_column}, #{order}") }
+</code></p>
+
+<ul>
+<li><p>不用with_exclusive_scope,用unscoped代替</p></li>
+<li><p><code>send scope</code>用<code>scope</code>代替</p></li>
+<li><p>/\A[0-9]+(\/[0-9]+)*\Z/这个用常量替换</p></li>
+</ul>
+
+
+<p><code>ruby
+-  validates_format_of ancestry_column, :with =&gt; /\A[0-9]+(\/[0-9]+)*\Z/, :allow_nil =&gt; true
++  validates_format_of ancestry_column, :with =&gt; Ancestry::ANCESTRY_PATTERN, :allow_nil =&gt; true
+</code></p>
+
+<ul>
+<li>更改before_save那个方法</li>
+</ul>
+
+
+<p><code>ruby
+-  if changed.include?(self.base_class.ancestry_column.to_s) &amp;&amp; !new_record? &amp;&amp; valid?
++  if changed.include?(self.base_class.ancestry_column.to_s) &amp;&amp; !new_record? &amp;&amp; sane_ancestry?
+def sane_ancestry?
+  ancestry.nil? || (ancestry.to_s =~ Ancestry::ANCESTRY_PATTERN &amp;&amp; !ancestor_ids.include?(self.id))
+end
+</code></p>
+
+<ul>
+<li>find用unscoped包住</li>
+</ul>
+
+
+<p><code>ruby
+-  self.parent = if parent_id.blank? then nil else self.base_class.find(parent_id) end
++  self.parent = if parent_id.blank? then nil else unscoped_find(parent_id) end
+def unscoped_find id
+  self.base_class.unscoped { self.base_class.find(id) }
+end
+</code></p>
+
+<ul>
+<li>conditions用where代替</li>
+</ul>
+
+
+<p><code>ruby
+-  self.base_class.scoped :conditions =&gt; child_conditions
++  self.base_class.where child_conditions
+</code></p>
+
+<ul>
+<li>用上了select方法</li>
+</ul>
+
+
+<p><code>ruby
+-  children.all(:select =&gt; self.base_class.primary_key).map(&amp;self.base_class.primary_key.to_sym)
++  children.select(self.base_class.primary_key).map(&amp;self.base_class.primary_key.to_sym)
+</code></p>
+
+<ul>
+<li>nil?代替blank?</li>
+</ul>
+
+
+<p><code>ruby
+-  write_attribute(self.base_class.ancestry_column, if parent.blank? then nil else parent.child_ancestry end)
++  write_attribute(self.base_class.ancestry_column, if parent.nil? then nil else parent.child_ancestry end)
+</code></p>
 ]]></content>
   </entry>
   
@@ -1633,7 +1720,7 @@ end
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[acts_as_tree源码分析[upgraded]]]></title>
+    <title type="html"><![CDATA[acts_as_tree源码分析]]></title>
     <link href="http://yinsigan.github.io/blog/2013/12/09/acts-as-treeyuan-ma-fen-xi/"/>
     <updated>2013-12-09T14:30:00+08:00</updated>
     <id>http://yinsigan.github.io/blog/2013/12/09/acts-as-treeyuan-ma-fen-xi</id>
@@ -1675,7 +1762,7 @@ has_many   :children...
 
 <h3>分析</h3>
 
-<p>这个gem的版本是1.4.0</p>
+<p>这个gem的版本是1.4.0,关于新版的改变可以看文章的最后部分</p>
 
 <p>它的核心文件只有一个<strong>lib/acts_as_tree.rb</strong></p>
 
@@ -1965,7 +2052,9 @@ end</p>
 
 <hr />
 
-<h3>1.5.0相比于1.4.0的changed</h3>
+<h3>新版本的变化</h3>
+
+<p><strong>1.5.0相比于1.4.0的changed</strong></p>
 
 <p>``` ruby</p>
 
