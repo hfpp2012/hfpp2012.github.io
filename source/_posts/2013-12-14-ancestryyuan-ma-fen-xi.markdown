@@ -19,6 +19,8 @@ categories: ruby on rails
 
 {% img /images/ancestry/table.png %}
 
+<!-- more -->
+
 {% img /images/ancestry/table_content.png %}
 
 在acts_as_tree中只要一个字段来存父与子的关系,然后用`has_many :children`和`belongs_to :parent`,而ancestry也是用一个字段(ancestry),不过它的存取方式跟acts_as_tree是不一样的,它不止存着父的id，还存父的父,也就是说存了祖先的id(62/63),而ancestry_depth存的是层次,类似于祖谱中的辈分,祖先是0(第一代),它的儿子是1(第二代)
