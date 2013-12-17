@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "ancestry源码分析"
+title: "ancestry-1.3.0源码分析"
 date: 2013-12-14 21:12
 comments: true
 categories: ruby on rails

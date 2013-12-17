@@ -37,6 +37,8 @@ has_many   :children...
 
 ### 分析
 
+这个gem的版本是1.4.0
+
 它的核心文件只有一个**lib/acts_as_tree.rb**
 
 ``` ruby lib/acts_as_tree.rb
