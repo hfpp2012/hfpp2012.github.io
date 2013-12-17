@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "acts_as_tree源码分析[upgraded]"
+title: "acts_as_tree源码分析"
 date: 2013-12-09 14:30
 comments: true
 categories: ruby on rails
@@ -37,7 +37,7 @@ has_many   :children...
 
 ### 分析
 
-这个gem的版本是1.4.0
+这个gem的版本是1.4.0,关于新版的改变可以看文章的最后部分
 
 它的核心文件只有一个**lib/acts_as_tree.rb**
 
@@ -310,7 +310,9 @@ require 'acts_as_tree/active_record/acts/tree'
 
 -----------------------------------
 
-### 1.5.0相比于1.4.0的changed
+### 新版本的变化
+
+**1.5.0相比于1.4.0的changed**
 
 ``` ruby
 # Returns list of descendants, starting from current node, not including cu

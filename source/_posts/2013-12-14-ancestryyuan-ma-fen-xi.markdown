@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "ancestry-1.3.0源码分析"
+title: "ancestry源码分析"
 date: 2013-12-14 21:12
 comments: true
 categories: ruby on rails
@@ -12,6 +12,7 @@ categories: ruby on rails
 
 这个gem跟[acts_as_tree](/blog/2013/12/09/acts-as-treeyuan-ma-fen-xi/)的作用是一样的,不明白的同学可以看这篇[blog](/blog/2013/12/09/acts-as-treeyuan-ma-fen-xi/).而且在这篇blog我们不直接来分析代码,而是通过使用ancestry的功能来分析代码,并作些比较.由于个人感觉这个gem的代码有点老式,会加上我自己认为可以改进的代码.
 
+这个gem的版本是1.3.0,关于新版的变化可以看文章的最后部分
 
 ### 架构
 
@@ -664,3 +665,70 @@ end
 1. 通过这个gem我们可以学习比较先进的数据库设计的理念,就是减少数据库的查询次数
 2. 学习scope的灵活用法
 3. 高效查询算法的设计
+
+----------------------------------------------------------------------------
+
+### 关于新版本的改变
+
++ 去掉了primary_key_format这个参数(没什么用处)
+
++ 用上了reorder这个scope
+
+``` ruby
+-  send scope_method, :ordered_by_ancestry, :order => "(case when #{table_name}.#{ancestry_column} is null then 0 else 1 end), #{table_name}.#{ancestry_column}"
+-  send scope_method, :ordered_by_ancestry_and, lambda { |order| {:order => "(case when #{table_name}.#{ancestry_column} is null then 0 else 1 end), #{table_name}.#{ancestry_column}, #{order}"} }
++  send scope_method, :ordered_by_ancestry, reorder("(case when #{table_name}.#{ancestry_column} is null then 0 else 1 end), #{table_name}.#{ancestry_column}")
++  send scope_method, :ordered_by_ancestry_and, lambda { |order| reorder("(case when #{table_name}.#{ancestry_column} is null then 0 else 1 end), #{table_name}.#{ancestry_column}, #{order}") }
+```
+
++ 不用with_exclusive_scope,用unscoped代替
+
++ `send scope`用`scope`代替
+
++ /\A[0-9]+(\/[0-9]+)*\Z/这个用常量替换
+
+``` ruby
+-  validates_format_of ancestry_column, :with => /\A[0-9]+(\/[0-9]+)*\Z/, :allow_nil => true
++  validates_format_of ancestry_column, :with => Ancestry::ANCESTRY_PATTERN, :allow_nil => true
+```
+
++ 更改before_save那个方法
+
+``` ruby
+-  if changed.include?(self.base_class.ancestry_column.to_s) && !new_record? && valid?
++  if changed.include?(self.base_class.ancestry_column.to_s) && !new_record? && sane_ancestry?
+def sane_ancestry?
+  ancestry.nil? || (ancestry.to_s =~ Ancestry::ANCESTRY_PATTERN && !ancestor_ids.include?(self.id))
+end
+```
+
++ find用unscoped包住
+
+``` ruby
+-  self.parent = if parent_id.blank? then nil else self.base_class.find(parent_id) end
++  self.parent = if parent_id.blank? then nil else unscoped_find(parent_id) end
+def unscoped_find id
+  self.base_class.unscoped { self.base_class.find(id) }
+end
+```
+
++ conditions用where代替
+
+``` ruby
+-  self.base_class.scoped :conditions => child_conditions
++  self.base_class.where child_conditions
+```
+
++ 用上了select方法
+
+``` ruby
+-  children.all(:select => self.base_class.primary_key).map(&self.base_class.primary_key.to_sym)
++  children.select(self.base_class.primary_key).map(&self.base_class.primary_key.to_sym)
+```
+
++ nil?代替blank?
+
+``` ruby
+-  write_attribute(self.base_class.ancestry_column, if parent.blank? then nil else parent.child_ancestry end)
++  write_attribute(self.base_class.ancestry_column, if parent.nil? then nil else parent.child_ancestry end)
+```
