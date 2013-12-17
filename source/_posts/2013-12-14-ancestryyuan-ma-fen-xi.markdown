@@ -732,3 +732,18 @@ end
 -  write_attribute(self.base_class.ancestry_column, if parent.blank? then nil else parent.child_ancestry end)
 +  write_attribute(self.base_class.ancestry_column, if parent.nil? then nil else parent.child_ancestry end)
 ```
+
++ 用in查询
+
+``` ruby
+def ancestor_conditions
+  t = get_arel_table
+  t[get_primary_key_column].in(ancestor_ids)
+end
+
+def get_arel_table
+  self.ancestry_base_class.arel_table
+end
+```
+
+
