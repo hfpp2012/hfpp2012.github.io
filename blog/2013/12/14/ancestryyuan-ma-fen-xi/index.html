@@ -1244,6 +1244,32 @@ ancestry用了一个方式来实现,正是scope,可以说很多的查询都是�
 </span><span class='line'><span class="o">+</span>  <span class="n">write_attribute</span><span class="p">(</span><span class="nb">self</span><span class="o">.</span><span class="n">base_class</span><span class="o">.</span><span class="n">ancestry_column</span><span class="p">,</span> <span class="k">if</span> <span class="n">parent</span><span class="o">.</span><span class="n">nil?</span> <span class="k">then</span> <span class="kp">nil</span> <span class="k">else</span> <span class="n">parent</span><span class="o">.</span><span class="n">child_ancestry</span> <span class="k">end</span><span class="p">)</span>
 </span></code></pre></td></tr></table></div></figure>
 
+
+<ul>
+<li>用in查询</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">ancestor_conditions</span>
+</span><span class='line'>  <span class="n">t</span> <span class="o">=</span> <span class="n">get_arel_table</span>
+</span><span class='line'>  <span class="n">t</span><span class="o">[</span><span class="n">get_primary_key_column</span><span class="o">].</span><span class="n">in</span><span class="p">(</span><span class="n">ancestor_ids</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">get_arel_table</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">ancestry_base_class</span><span class="o">.</span><span class="n">arel_table</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
 </div>
 
 

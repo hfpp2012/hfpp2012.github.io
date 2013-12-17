@@ -4,7 +4,7 @@
   <title><![CDATA[Category: rails | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/rails/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-17T22:35:34+08:00</updated>
+  <updated>2013-12-17T23:06:27+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -866,6 +866,22 @@ end
 -  write_attribute(self.base_class.ancestry_column, if parent.blank? then nil else parent.child_ancestry end)
 +  write_attribute(self.base_class.ancestry_column, if parent.nil? then nil else parent.child_ancestry end)
 </code></p>
+
+<ul>
+<li>用in查询</li>
+</ul>
+
+
+<p>``` ruby
+def ancestor_conditions
+  t = get_arel_table
+  t[get_primary_key_column].in(ancestor_ids)
+end</p>
+
+<p>def get_arel_table
+  self.ancestry_base_class.arel_table
+end
+```</p>
 ]]></content>
   </entry>
   
