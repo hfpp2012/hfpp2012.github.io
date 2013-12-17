@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "acts_as_tree源码分析"
+title: "acts_as_tree源码分析[upgraded]"
 date: 2013-12-09 14:30
 comments: true
 categories: ruby on rails
@@ -307,3 +307,30 @@ require 'acts_as_tree/active_record/acts/tree'
 ### 总结
 
 通过这个gem我们可以学一些查询方法,例如关于根节点，祖先节点的查找啊,还可以学习自关联的写法,一些递归写法等
+
+-----------------------------------
+
+### 1.5.0相比于1.4.0的changed
+
+``` ruby
+# Returns list of descendants, starting from current node, not including cu
+#
+#   root.descendants # => [child1, child2, subchild1, subchild2, subchild3,
+# 返回后代
+# each_with_object是灵活的用法,具体看http://apidock.com/rails/Enumerable/each_with_object
+def descendants
+  # child是结果,arr是每个children,children是默认值,也就是说会先执行children.concat child.descendants
+  # 会遍历执行,直到没有children
+  children.each_with_object(children) {|child, arr|
+    arr.concat child.descendants
+  }.uniq
+end
+
+# Returns list of descendants, starting from current node, including curren
+#
+#   root.self_and_descendants # => [root, child1, child2, subchild1, subchi
+def self_and_descendants
+  [self] + descendants
+end
+```
+
