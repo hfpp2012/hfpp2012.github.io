@@ -4,7 +4,7 @@
   <title><![CDATA[小子的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-17T10:01:41+08:00</updated>
+  <updated>2013-12-17T17:29:35+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -1516,6 +1516,8 @@ ancestry用了一个方式来实现,正是scope,可以说很多的查询都是�
 
 
 <p>如果传入<code>:dependent =&gt; :nullify</code>不删除数据,只删除关联数据</p>
+
+<p>:delete_all和:destroy的区别就是调不调用before_save的问题</p>
 
 <ul>
 <li>foreign_key</li>
