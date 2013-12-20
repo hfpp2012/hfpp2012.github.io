@@ -4,7 +4,7 @@
   <title><![CDATA[小子的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-17T23:06:27+08:00</updated>
+  <updated>2013-12-20T22:22:38+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -12,6 +12,42 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[acts_as_paranoid源码分析]]></title>
+    <link href="http://yinsigan.github.io/blog/2013/12/20/acts-as-paranoidyuan-ma-fen-xi/"/>
+    <updated>2013-12-20T21:57:00+08:00</updated>
+    <id>http://yinsigan.github.io/blog/2013/12/20/acts-as-paranoidyuan-ma-fen-xi</id>
+    <content type="html"><![CDATA[<ul>
+<li><a href="https://github.com/goncalossilva/acts_as_paranoid">acts_as_paranoid</a></li>
+</ul>
+
+
+<p>它的作用就是假删除,在实际中还是会很有用的。有一天,客户说我刚才误删了一个东西要把它找回来,这个时候它就派上用场了。</p>
+
+<p>其实它实际上不删除数据中的数据,只不过是隐藏起来而已,只要让用户看不到,它就等于删除了,实际上,要还原的话修改一下数据库就可以回来了</p>
+
+<p>它实现的原理很简单,只不过是用一个标志来实现隐藏数据,在数据表中加一个字段,把它的值改一下,它就删除了(隐藏),修改回来,它又出现了</p>
+
+<p>什么字段呢,acts_as_paranoid默认情况下用<strong>&ldquo;deleted_at&rdquo;</strong>,用一个参数<strong>column</strong>来指定,它可以有三种类型boolean, string, time,这三个参数用<strong>column_type</strong>参数来指定</p>
+
+<p>  boolean:布尔型,被删除时值为true
+  string:字符串型,被删除时值为&#8221;deleted&#8221;,这个值可以用deleted_value参数来指定
+  time:时间型,被删除时值为当前时间(删除操作的时间)</p>
+
+<p>  以上三个类型未删除时值都为NULL(nil)。建议使用time类型</p>
+
+<p>  使用举例如下:</p>
+
+<pre><code>class School &lt; ActiveRecord::Base
+  acts_as_paranoid :column_type =&gt; :boolean
+  或
+  acts_as_paranoid :column =&gt; "is_deleted", :column_type =&gt; :string, :deleted_value =&gt; "deleted"
+  ...
+end
+</code></pre>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[ancestry源码分析]]></title>
@@ -4345,6 +4381,7 @@ Book.find_comments_for(Book.last)</p>
 <li><a href="https://github.com/diaspora/diaspora">diaspora</a>一个社区网络</li>
 <li><a href="http://www.opensourcerails.com/">开源的cms</a></li>
 <li><a href="https://github.com/huacnlee/imax.im">imax.im</a></li>
+<li><a href="https://github.com/happypeter/onestep">haoqicat.com source code</a></li>
 </ul>
 
 
