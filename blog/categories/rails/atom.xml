@@ -4,7 +4,7 @@
   <title><![CDATA[Category: rails | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/rails/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-21T19:51:56+08:00</updated>
+  <updated>2013-12-21T20:31:52+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -209,6 +209,39 @@ self.paranoid_column_reference = "#{self.table_name}.#{paranoid_configuration[:c
 </code></p>
 
 <p>paranoid_configuration是?</p>
+
+<p>``` ruby
+raise ArgumentError, &ldquo;Hash expected, got #{options.class.name}&rdquo; if not options.is_a?(Hash) and not options.empty?
+class_attribute :paranoid_configuration, :paranoid_column_reference</p>
+
+<p>self.paranoid_configuration = { :column => &ldquo;deleted_at&rdquo;, :column_type => &ldquo;time&rdquo;, :recover_dependent_associations => true, :dependent_recovery_window => 2.minutes }
+self.paranoid_configuration.merge!({ :deleted_value => &ldquo;deleted&rdquo; }) if options[:column_type] == &ldquo;string&rdquo;
+self.paranoid_configuration.merge!(options) # user options</p>
+
+<p>raise ArgumentError, &ldquo;&lsquo;time&rsquo;, &lsquo;boolean&rsquo; or &lsquo;string&rsquo; expected for :column_type option, got #{paranoid_configuration[:column_type]}&rdquo; unless [&lsquo;time&rsquo;, &lsquo;boolean&rsquo;, &lsquo;string&rsquo;].include? paranoid_configuration[:column_type]</p>
+
+<p>self.paranoid_column_reference = &ldquo;#{self.table_name}.#{paranoid_configuration[:column]}&rdquo;</p>
+
+<p>return if paranoid?
+```</p>
+
+<p>class_attribute[<a href="http://apidock.com/rails/Class/class_attribute">http://apidock.com/rails/Class/class_attribute</a>]这个和cattr_accessor[<a href="http://apidock.com/rails/Class/cattr_accessor">http://apidock.com/rails/Class/cattr_accessor</a>]可以作这个比较</p>
+
+<p>class_attribute和cattr_accessor都包含read(get)和write(set),但是class_attribute只属于类,子类都不能共享,而cattr_accessor是类和子类和实例共享的,具体的看文件就知道了</p>
+
+<p>merge和merge!的区别是后者会改变原来的array</p>
+
+<p>merge和update差不多,如果有相同的key,会替换原来的值,没有的会添加</p>
+
+<p>raise ArgumentError, &ldquo;Hash expected, got #{options.class.name}&rdquo; if not options.is_a?(Hash) and not options.empty?这种写法蛮美观的</p>
+
+<p><code>ruby
+def paranoid?
+  self.included_modules.include?(ActsAsParanoid::Core)
+end
+</code></p>
+
+<p>included_modules是类方法,返回所以它include的module</p>
 
 <p>至此with_deleted已经解释完了</p>
 ]]></content>
