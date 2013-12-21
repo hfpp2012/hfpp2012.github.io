@@ -9,7 +9,7 @@
   <meta name="author" content="小子">
 
   
-  <meta name="description" content="acts_as_paranoid 它的作用就是假删除,在实际中还是会很有用的。有一天,客户说我刚才误删了一个东西要把它找回来,这个时候它就派上用场了。 其实它实际上不删除数据中的数据,只不过是隐藏起来而已,只要让用户看不到,它就等于删除了,实际上,要还原的话修改一下数据库就可以回来了 &hellip;">
+  <meta name="description" content="acts_as_paranoid 它的作用就是假删除,在实际中还是会很有用的。有一天,客户说,她刚才误删了一个东西,要你把它找回来,这个时候它就派上用场了。 回收站或者垃圾箱也是假删除的典型应用.假如一个邮箱系统中,用户把邮件删除掉,这个时候这些邮件并没有被彻底删除掉,它其实是先到了垃圾箱中, &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -105,17 +105,23 @@
 </ul>
 
 
-<p>它的作用就是假删除,在实际中还是会很有用的。有一天,客户说我刚才误删了一个东西要把它找回来,这个时候它就派上用场了。</p>
+<p>它的作用就是假删除,在实际中还是会很有用的。有一天,客户说,她刚才误删了一个东西,要你把它找回来,这个时候它就派上用场了。</p>
+
+<p>回收站或者垃圾箱也是假删除的典型应用.假如一个邮箱系统中,用户把邮件删除掉,这个时候这些邮件并没有被彻底删除掉,它其实是先到了垃圾箱中,如果要彻底删除它,请到垃圾箱那里再删一次吧</p>
 
 <p>其实它实际上不删除数据中的数据,只不过是隐藏起来而已,只要让用户看不到,它就等于删除了,实际上,要还原的话修改一下数据库就可以回来了</p>
 
 <p>它实现的原理很简单,只不过是用一个标志来实现隐藏数据,在数据表中加一个字段,把它的值改一下,它就删除了(隐藏),修改回来,它又出现了</p>
 
-<p>什么字段呢,acts_as_paranoid默认情况下用<strong>&ldquo;deleted_at&rdquo;</strong>,用一个参数<strong>column</strong>来指定,它可以有三种类型boolean, string, time,这三个参数用<strong>column_type</strong>参数来指定</p>
+<p>它的目的就是保护数据的安全,让用户能在误操作的情况下也能恢复数据。但是缺点也很明显,由于不是真正的删除,数据库中仍然保留着那条数据,数据库会越来越庞大,垃圾的信息也是越来越多</p>
 
-<p>boolean:布尔型,被删除时值为true
-string:字符串型,被删除时值为&#8221;deleted&#8221;,这个值可以用deleted_value参数来指定
-time:时间型,被删除时值为当前时间(删除操作的时间)</p>
+<p>默认情况下用<strong>&ldquo;deleted_at&rdquo;</strong>这个字段,用一个参数<strong>column</strong>来指定,它可以有三种类型boolean, string, time,这三个类型用<strong>column_type</strong>参数来指定</p>
+
+<p>boolean:布尔型,被删除时值为true</p>
+
+<p>string:字符串型,被删除时值为&#8221;deleted&#8221;,这个值可以用deleted_value参数来指定</p>
+
+<p>time:时间型,被删除时值为当前时间(删除操作的时间)</p>
 
 <p>以上三个类型未删除时值都为NULL(nil)。建议使用time类型</p>
 
@@ -127,16 +133,200 @@ time:时间型,被删除时值为当前时间(删除操作的时间)</p>
 <span class='line-number'>4</span>
 <span class='line-number'>5</span>
 <span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'>  <span class="k">class</span> <span class="nc">School</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
-</span><span class='line'>    <span class="n">acts_as_paranoid</span> <span class="ss">:column_type</span> <span class="o">=&gt;</span> <span class="ss">:boolean</span>
-</span><span class='line'>    <span class="err">或</span>
-</span><span class='line'>    <span class="n">acts_as_paranoid</span> <span class="ss">:column</span> <span class="o">=&gt;</span> <span class="s2">&quot;is_deleted&quot;</span><span class="p">,</span> <span class="ss">:column_type</span> <span class="o">=&gt;</span> <span class="ss">:string</span><span class="p">,</span> <span class="ss">:deleted_value</span> <span class="o">=&gt;</span> <span class="s2">&quot;deleted&quot;</span>
-</span><span class='line'>    <span class="o">.</span><span class="n">.</span><span class="o">.</span>
-</span><span class='line'>  <span class="k">end</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">School</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">acts_as_paranoid</span> <span class="ss">:column_type</span> <span class="o">=&gt;</span> <span class="ss">:boolean</span>
+</span><span class='line'>  <span class="err">或</span>
+</span><span class='line'>  <span class="n">acts_as_paranoid</span> <span class="ss">:column</span> <span class="o">=&gt;</span> <span class="s2">&quot;is_deleted&quot;</span><span class="p">,</span> <span class="ss">:column_type</span> <span class="o">=&gt;</span> <span class="ss">:string</span><span class="p">,</span> <span class="ss">:deleted_value</span> <span class="o">=&gt;</span> <span class="s2">&quot;deleted&quot;</span>
+</span><span class='line'>  <span class="o">.</span><span class="n">.</span><span class="o">.</span>
+</span><span class='line'><span class="k">end</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
+<p>分析该gem的源码可以懂得下面的知识</p>
 
+<ol>
+<li>attr_protected的使用</li>
+<li>写一个callback</li>
+<li>included_modules的用法</li>
+<li>scoped unscoped的用法</li>
+<li>activerecord/Reflection的用法</li>
+<li>自己写一个validator</li>
+<li>class_attribute的用法</li>
+</ol>
+
+
+<h2>代码分析</h2>
+
+<h3>代码结构</h3>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="err">├──</span> <span class="n">lib</span>
+</span><span class='line'><span class="err">│  </span> <span class="err">├──</span> <span class="n">acts_as_paranoid</span>
+</span><span class='line'><span class="err">│  </span> <span class="err">│  </span> <span class="err">├──</span> <span class="n">associations</span><span class="o">.</span><span class="n">rb</span>   <span class="err">关于关联模型的</span>
+</span><span class='line'><span class="err">│  </span> <span class="err">│  </span> <span class="err">├──</span> <span class="n">core</span><span class="o">.</span><span class="n">rb</span>   <span class="err">核心文件</span>
+</span><span class='line'><span class="err">│  </span> <span class="err">│  </span> <span class="err">├──</span> <span class="n">relation</span><span class="o">.</span><span class="n">rb</span>     <span class="err">关于</span><span class="n">relation</span><span class="err">的操作</span>
+</span><span class='line'><span class="err">│  </span> <span class="err">│  </span> <span class="err">└──</span> <span class="n">validations</span><span class="o">.</span><span class="n">rb</span>   <span class="err">一个验证方法</span>
+</span><span class='line'><span class="err">│  </span> <span class="err">└──</span> <span class="n">acts_as_paranoid</span><span class="o">.</span><span class="n">rb</span>  <span class="err">主程序</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Filtering(过滤)</h3>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">School</span><span class="o">.</span><span class="n">only_deleted</span> <span class="c1"># 找到所有已经假删除的数据</span>
+</span><span class='line'><span class="no">School</span><span class="o">.</span><span class="n">with_deleted</span> <span class="c1"># 找到所有数据(不管有没有假删除的)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><img src="/images/acts_as_paranoid/delete_record.png"></p>
+
+<p>现在我们执行School.only_deleted来看看有什么效果</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">School</span> <span class="no">Load</span> <span class="p">(</span><span class="mi">0</span><span class="o">.</span><span class="mi">8</span><span class="n">ms</span><span class="p">)</span>  <span class="no">SELECT</span> <span class="sb">`schools`</span><span class="o">.</span><span class="n">*</span> <span class="no">FROM</span> <span class="sb">`schools`</span> <span class="no">WHERE</span> <span class="p">(</span><span class="n">schools</span><span class="o">.</span><span class="n">deleted_at</span> <span class="no">IS</span> <span class="no">NOT</span> <span class="no">NULL</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>如果我们自己写only_deleted的实现代码可能会写成这样</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">deleted_at</span> <span class="o">=</span> <span class="n">options</span><span class="o">[</span><span class="ss">:column</span><span class="o">]</span>
+</span><span class='line'><span class="no">School</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">#{</span><span class="n">deleted_at</span><span class="si">}</span><span class="s2"> IS NOT NULL&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>其实acts_as_paranoid的源码也差不多</p>
+
+<figure class='code'><figcaption><span>acts_as_paranoid</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">only_deleted</span>
+</span><span class='line'>  <span class="c1"># 判断是不是string类型</span>
+</span><span class='line'>  <span class="k">if</span> <span class="n">string_type_with_deleted_value?</span>
+</span><span class='line'>    <span class="n">without_paranoid_default_scope</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">#{</span><span class="n">paranoid_column_reference</span><span class="si">}</span><span class="s2"> IS ?&quot;</span><span class="p">,</span> <span class="n">paranoid_configuration</span><span class="o">[</span><span class="ss">:deleted_value</span><span class="o">]</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">else</span>
+</span><span class='line'>    <span class="n">without_paranoid_default_scope</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">#{</span><span class="n">paranoid_column_reference</span><span class="si">}</span><span class="s2"> IS NOT ?&quot;</span><span class="p">,</span> <span class="kp">nil</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>由于string这种类型的不能判断是不是等于NULL,而是要看是不是等于一个值(默认为&#8221;deleted&#8221;, 由&#8221;:deleted_value&#8221;这个参数决定)</p>
+
+<p>于是</p>
+
+<figure class='code'><figcaption><span>伪代码</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">string_type_with_deleted_value?</span>
+</span><span class='line'>  <span class="k">if</span> <span class="n">options</span><span class="o">[</span><span class="ss">:column_type</span><span class="o">]</span> <span class="o">==</span> <span class="ss">:string</span>
+</span><span class='line'>    <span class="k">return</span> <span class="kp">true</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>  <span class="kp">false</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>acts_as_paranoid的代码为</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">string_type_with_deleted_value?</span>
+</span><span class='line'>  <span class="n">paranoid_column_type</span> <span class="o">==</span> <span class="ss">:string</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">paranoid_configuration</span><span class="o">[</span><span class="ss">:deleted_value</span><span class="o">].</span><span class="n">nil?</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>without_paranoid_default_scope是?</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">without_paranoid_default_scope</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="o">=</span> <span class="nb">self</span><span class="o">.</span><span class="n">scoped</span><span class="o">.</span><span class="n">with_default_scope</span>
+</span><span class='line'>  <span class="n">scope</span><span class="o">.</span><span class="n">where_values</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">paranoid_default_scope_sql</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">scope</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>如果不是一个gem它不要也行,我们写成School.where&hellip;照样目的能达到</p>
+
+<p>既然做成了一个gem,每个用acts_as_paranoid的model都默认加了一个default_scope,一般情况下,假删除的数据是查不到的,所以要隐藏起来,with_deleted会使用,或者你执行School.all也会使用的</p>
+
+<p>default_scope的效果大约是这样的</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">School</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="s2">&quot;deleted_at IS NULL&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>所以without_paranoid_default_scope的作用就是去掉这个效果</p>
+
+<p>其实要去掉只要用unscoped就可以了,但acts_as_paranoid把with_deleted,和only_deleted做成了scope(activerecord/relations)的效果</p>
+
+<p>也就是可以这样玩</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">School</span><span class="o">.</span><span class="n">with_deleted</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">.</span><span class="n">.</span><span class="o">.</span><span class="p">)</span>
+</span><span class='line'><span class="no">School</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">.</span><span class="n">.</span><span class="o">.</span><span class="p">)</span><span class="o">.</span><span class="n">with_deleted</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>而acts_as_paranoid的default_scope是这样的</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">default_scope</span> <span class="p">{</span> <span class="n">where</span><span class="p">(</span><span class="n">paranoid_default_scope_sql</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">paranoid_default_scope_sql</span>
+</span><span class='line'>  <span class="k">if</span> <span class="n">string_type_with_deleted_value?</span>
+</span><span class='line'>    <span class="nb">self</span><span class="o">.</span><span class="n">scoped</span><span class="o">.</span><span class="n">table</span><span class="o">[</span><span class="n">paranoid_column</span><span class="o">].</span><span class="n">eq</span><span class="p">(</span><span class="kp">nil</span><span class="p">)</span><span class="o">.</span>
+</span><span class='line'>      <span class="ow">or</span><span class="p">(</span><span class="nb">self</span><span class="o">.</span><span class="n">scoped</span><span class="o">.</span><span class="n">table</span><span class="o">[</span><span class="n">paranoid_column</span><span class="o">].</span><span class="n">not_eq</span><span class="p">(</span><span class="n">paranoid_configuration</span><span class="o">[</span><span class="ss">:deleted_value</span><span class="o">]</span><span class="p">))</span><span class="o">.</span>
+</span><span class='line'>      <span class="n">to_sql</span>
+</span><span class='line'>  <span class="k">else</span>
+</span><span class='line'>    <span class="nb">self</span><span class="o">.</span><span class="n">scoped</span><span class="o">.</span><span class="n">table</span><span class="o">[</span><span class="n">paranoid_column</span><span class="o">].</span><span class="n">eq</span><span class="p">(</span><span class="kp">nil</span><span class="p">)</span><span class="o">.</span><span class="n">to_sql</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>paranoid_column_reference是?</p>
+
+<p>paranoid_configuration是?</p>
+
+<p>至此with_deleted已经解释完了</p>
 </div>
 
 

@@ -4,7 +4,7 @@
   <title><![CDATA[Category: on | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/on/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-21T15:04:33+08:00</updated>
+  <updated>2013-12-21T18:30:01+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -23,33 +23,188 @@
 </ul>
 
 
-<p>它的作用就是假删除,在实际中还是会很有用的。有一天,客户说我刚才误删了一个东西要把它找回来,这个时候它就派上用场了。</p>
+<p>它的作用就是假删除,在实际中还是会很有用的。有一天,客户说,她刚才误删了一个东西,要你把它找回来,这个时候它就派上用场了。</p>
+
+<p>回收站或者垃圾箱也是假删除的典型应用.假如一个邮箱系统中,用户把邮件删除掉,这个时候这些邮件并没有被彻底删除掉,它其实是先到了垃圾箱中,如果要彻底删除它,请到垃圾箱那里再删一次吧</p>
 
 <p>其实它实际上不删除数据中的数据,只不过是隐藏起来而已,只要让用户看不到,它就等于删除了,实际上,要还原的话修改一下数据库就可以回来了</p>
 
 <p>它实现的原理很简单,只不过是用一个标志来实现隐藏数据,在数据表中加一个字段,把它的值改一下,它就删除了(隐藏),修改回来,它又出现了</p>
 
-<p>什么字段呢,acts_as_paranoid默认情况下用<strong>&ldquo;deleted_at&rdquo;</strong>,用一个参数<strong>column</strong>来指定,它可以有三种类型boolean, string, time,这三个参数用<strong>column_type</strong>参数来指定</p>
+<p>它的目的就是保护数据的安全,让用户能在误操作的情况下也能恢复数据。但是缺点也很明显,由于不是真正的删除,数据库中仍然保留着那条数据,数据库会越来越庞大,垃圾的信息也是越来越多</p>
 
-<p>boolean:布尔型,被删除时值为true
-string:字符串型,被删除时值为"deleted",这个值可以用deleted_value参数来指定
-time:时间型,被删除时值为当前时间(删除操作的时间)</p>
+<p>默认情况下用<strong>&ldquo;deleted_at&rdquo;</strong>这个字段,用一个参数<strong>column</strong>来指定,它可以有三种类型boolean, string, time,这三个类型用<strong>column_type</strong>参数来指定</p>
+
+<p>boolean:布尔型,被删除时值为true</p>
+
+<p>string:字符串型,被删除时值为"deleted",这个值可以用deleted_value参数来指定</p>
+
+<p>time:时间型,被删除时值为当前时间(删除操作的时间)</p>
 
 <p>以上三个类型未删除时值都为NULL(nil)。建议使用time类型</p>
 
 <p>使用举例如下:</p>
 
-<p>``` ruby
-  class School &lt; ActiveRecord::Base</p>
+<p><code>ruby
+class School &lt; ActiveRecord::Base
+  acts_as_paranoid :column_type =&gt; :boolean
+  或
+  acts_as_paranoid :column =&gt; "is_deleted", :column_type =&gt; :string, :deleted_value =&gt; "deleted"
+  ...
+end
+</code></p>
 
-<pre><code>acts_as_paranoid :column_type =&gt; :boolean
-或
-acts_as_paranoid :column =&gt; "is_deleted", :column_type =&gt; :string, :deleted_value =&gt; "deleted"
-...
+<p>分析该gem的源码可以懂得下面的知识</p>
+
+<ol>
+<li>attr_protected的使用</li>
+<li>写一个callback</li>
+<li>included_modules的用法</li>
+<li>scoped unscoped的用法</li>
+<li>activerecord/Reflection的用法</li>
+<li>自己写一个validator</li>
+<li>class_attribute的用法</li>
+</ol>
+
+
+<h2>代码分析</h2>
+
+<h3>代码结构</h3>
+
+<p><code>
+├── lib
+│   ├── acts_as_paranoid
+│   │   ├── associations.rb   关于关联模型的
+│   │   ├── core.rb   核心文件
+│   │   ├── relation.rb     关于relation的操作
+│   │   └── validations.rb   一个验证方法
+│   └── acts_as_paranoid.rb  主程序
+</code></p>
+
+<h3>Filtering(过滤)</h3>
+
+<p><code>ruby
+School.only_deleted # 找到所有已经假删除的数据
+School.with_deleted # 找到所有数据(不管有没有假删除的)
+</code></p>
+
+<p><img src="/images/acts_as_paranoid/delete_record.png"></p>
+
+<p>现在我们执行School.only_deleted来看看有什么效果</p>
+
+<p><code>
+School Load (0.8ms)  SELECT `schools`.* FROM `schools` WHERE (schools.deleted_at IS NOT NULL)
+</code></p>
+
+<p>如果我们自己写only_deleted的实现代码可能会写成这样</p>
+
+<p><code>ruby
+deleted_at = options[:column]
+School.where("#{deleted_at} IS NOT NULL")
+</code></p>
+
+<p>其实acts_as_paranoid的源码也差不多</p>
+
+<p>``` ruby acts_as_paranoid
+def only_deleted
+  # 判断是不是string类型
+  if string_type_with_deleted_value?</p>
+
+<pre><code>without_paranoid_default_scope.where("#{paranoid_column_reference} IS ?", paranoid_configuration[:deleted_value])
+</code></pre>
+
+<p>  else</p>
+
+<pre><code>without_paranoid_default_scope.where("#{paranoid_column_reference} IS NOT ?", nil)
 </code></pre>
 
 <p>  end
+end
 ```</p>
+
+<p>由于string这种类型的不能判断是不是等于NULL,而是要看是不是等于一个值(默认为"deleted", 由":deleted_value"这个参数决定)</p>
+
+<p>于是</p>
+
+<p>``` ruby 伪代码
+def string_type_with_deleted_value?
+  if options[:column_type] == :string</p>
+
+<pre><code>return true
+</code></pre>
+
+<p>  end
+  false
+end
+```</p>
+
+<p>acts_as_paranoid的代码为</p>
+
+<p><code>ruby
+def string_type_with_deleted_value?
+  paranoid_column_type == :string &amp;&amp; !paranoid_configuration[:deleted_value].nil?
+end
+</code></p>
+
+<p>without_paranoid_default_scope是?</p>
+
+<p>``` ruby
+def without_paranoid_default_scope
+  scope = self.scoped.with_default_scope
+  scope.where_values.delete(paranoid_default_scope_sql)</p>
+
+<p>  scope
+end
+```</p>
+
+<p>如果不是一个gem它不要也行,我们写成School.where&hellip;照样目的能达到</p>
+
+<p>既然做成了一个gem,每个用acts_as_paranoid的model都默认加了一个default_scope,一般情况下,假删除的数据是查不到的,所以要隐藏起来,with_deleted会使用,或者你执行School.all也会使用的</p>
+
+<p>default_scope的效果大约是这样的</p>
+
+<p><code>ruby
+School.where("deleted_at IS NULL")
+</code></p>
+
+<p>所以without_paranoid_default_scope的作用就是去掉这个效果</p>
+
+<p>其实要去掉只要用unscoped就可以了,但acts_as_paranoid把with_deleted,和only_deleted做成了scope(activerecord/relations)的效果</p>
+
+<p>也就是可以这样玩</p>
+
+<p><code>ruby
+School.with_deleted.where(...)
+School.where(...).with_deleted
+</code></p>
+
+<p>而acts_as_paranoid的default_scope是这样的</p>
+
+<p>``` ruby
+default_scope { where(paranoid_default_scope_sql) }</p>
+
+<p>def paranoid_default_scope_sql
+  if string_type_with_deleted_value?</p>
+
+<pre><code>self.scoped.table[paranoid_column].eq(nil).
+  or(self.scoped.table[paranoid_column].not_eq(paranoid_configuration[:deleted_value])).
+  to_sql
+</code></pre>
+
+<p>  else</p>
+
+<pre><code>self.scoped.table[paranoid_column].eq(nil).to_sql
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>paranoid_column_reference是?</p>
+
+<p>paranoid_configuration是?</p>
+
+<p>至此with_deleted已经解释完了</p>
 ]]></content>
   </entry>
   
