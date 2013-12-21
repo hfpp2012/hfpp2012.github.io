@@ -4,7 +4,7 @@
   <title><![CDATA[Category: rails | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/rails/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-21T13:36:58+08:00</updated>
+  <updated>2013-12-21T15:04:33+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -73,12 +73,12 @@ acts_as_paranoid :column =&gt; "is_deleted", :column_type =&gt; :string, :delete
 
 <p><strong>数据库表</strong></p>
 
-<p>{% img /images/ancestry/table.png %}</p>
+<p><img src="/images/ancestry/table.png"></p>
 
 <!-- more -->
 
 
-<p>{% img /images/ancestry/table_content.png %}</p>
+<p><img src="/images/ancestry/table_content.png"></p>
 
 <p>在acts_as_tree中只要一个字段来存父与子的关系,然后用<code>has_many :children</code>和<code>belongs_to :parent</code>,而ancestry也是用一个字段(ancestry),不过它的存取方式跟acts_as_tree是不一样的,它不止存着父的id，还存父的父,也就是说存了祖先的id(62/63),而ancestry_depth存的是层次,类似于祖谱中的辈分,祖先是0(第一代),它的儿子是1(第二代)</p>
 
@@ -116,7 +116,7 @@ acts_as_paranoid :column =&gt; "is_deleted", :column_type =&gt; :string, :delete
 
 <p><strong>源码文件</strong></p>
 
-<p>{% img /images/ancestry/source_tree.png %}</p>
+<p><img src="/images/ancestry/source_tree.png"></p>
 
 <p>只有五个文件</p>
 
@@ -202,13 +202,13 @@ end
 
 <p>你懂的<code>root = Comment.create</code></p>
 
-<p>{% img /images/ancestry/root.png %}</p>
+<p><img src="/images/ancestry/root.png"></p>
 
 <h4>在根(root)下创建个孩子</h4>
 
 <p><code>first_children = root.children.create</code></p>
 
-<p>{% img /images/ancestry/first_children.png %}</p>
+<p><img src="/images/ancestry/first_children.png"></p>
 
 <p>在acts_as_tree也可以通过这样的方式来创建子
 但在ancestry中是没有<code>has_many children</code>的
@@ -297,8 +297,8 @@ end
 
 <p>经过<strong>child_conditions</strong>,ancestry的值被改变了,我们通过scoped链过来的build方法看它的改变,所以</p>
 
-<p>{% img /images/ancestry/root_ancestry_changes.png %}
-{% img /images/ancestry/first_child_ancestry_changes.png %}</p>
+<p><img src="/images/ancestry/root_ancestry_changes.png">
+<img src="/images/ancestry/first_child_ancestry_changes.png"></p>
 
 <p>这个时候save一下就会将数据保存到数据库中了</p>
 
@@ -328,7 +328,7 @@ end
 
 <h4>在first_children创建一个siblings(兄弟)节点</h4>
 
-<p>{% img /images/ancestry/siblings_changes.png %}</p>
+<p><img src="/images/ancestry/siblings_changes.png"></p>
 
 <p>``` ruby instance_methods.rb</p>
 
@@ -369,7 +369,7 @@ end
 
 <p>在comment.rb的白名单上加 <code>attr_accessible :parent</code></p>
 
-<p>{% img /images/ancestry/create_with_parent.png %}</p>
+<p><img src="/images/ancestry/create_with_parent.png"></p>
 
 <p>既然可以指定<strong>parent</strong>,那一定有<code>parent=()</code>这个方法</p>
 
@@ -404,7 +404,7 @@ end
 
 <h4>查找刚创建的第三代的祖先链</h4>
 
-<p>{% img /images/ancestry/ancestor_search.png %}</p>
+<p><img src="/images/ancestry/ancestor_search.png"></p>
 
 <p>``` ruby instance_methods.rb</p>
 
@@ -475,7 +475,7 @@ end</p>
 <p>  }
 end
 ```
-{% img /images/ancestry/scope_depth.png %}</p>
+<img src="/images/ancestry/scope_depth.png"></p>
 
 <p>为什么数字会改变呢,原来那个<strong>before_depth</strong>不是基于<strong>root</strong>(根),而是基于<strong>c</strong>(孙),<strong>c</strong>有两个前辈1+1=2,所以数据库查的是2+2=4</p>
 
@@ -569,13 +569,13 @@ end
 
 <p>改变前:</p>
 
-<p>{% img /images/ancestry/before_change_parent.png %}</p>
+<p><img src="/images/ancestry/before_change_parent.png"></p>
 
-<p>{% img /images/ancestry/change_parent.png %}</p>
+<p><img src="/images/ancestry/change_parent.png"></p>
 
 <p>改变后:</p>
 
-<p>{% img /images/ancestry/after_change_parent.png %}</p>
+<p><img src="/images/ancestry/after_change_parent.png"></p>
 
 <p>先来看看ancestry的变化</p>
 
@@ -758,11 +758,11 @@ end
 
 <p>改变前:</p>
 
-<p>{% img /images/ancestry/destroy_rootify.png %}</p>
+<p><img src="/images/ancestry/destroy_rootify.png"></p>
 
 <p>改变后:</p>
 
-<p>{% img /images/ancestry/after_destroy_rootify.png %}</p>
+<p><img src="/images/ancestry/after_destroy_rootify.png"></p>
 
 <p>c被删除后,它的子(81)没有了父,就把ancestry设为NULL,它自己的子(82)的ancestry还是指向自己(81),依此类推&hellip;</p>
 
@@ -934,7 +934,7 @@ end
 
 <p>上一篇<a href="http://yinsigan.github.io/blog/2013/12/10/rails-association/">rails association</a>说明了rails的各种模型的原理和设计,这篇我们来说说rails association具体参数的使用,通过一些案例或代码来分析它们的使用场景</p>
 
-<p>{% img /images/rails_association_reference/has_many_through.png %}</p>
+<p><img src="/images/rails_association_reference/has_many_through.png"></p>
 
 <p>``` ruby
 class School &lt; ActiveRecord::Base
@@ -1582,7 +1582,7 @@ s.students &lt;&lt; Student.create(:name => &ldquo;学员&rdquo;)
 
 <h4>has_many</h4>
 
-<p>{% img /images/rails_association/has_many_and_belongs_to.png %}</p>
+<p><img src="/images/rails_association/has_many_and_belongs_to.png"></p>
 
 <!-- more -->
 
@@ -1601,7 +1601,7 @@ end
 
 <h4>has_many :through</h4>
 
-<p>{% img /images/rails_association/has_many_through_three.png %}</p>
+<p><img src="/images/rails_association/has_many_through_three.png"></p>
 
 <p>``` ruby
 class kindergarten &lt; ActiveRecord::Base
@@ -1638,7 +1638,7 @@ end
 
 <h4>has_one</h4>
 
-<p>{% img /images/rails_association/has_one_belongs_to.png %}</p>
+<p><img src="/images/rails_association/has_one_belongs_to.png"></p>
 
 <p>``` ruby
 class User &lt; ActiveRecord::Base
@@ -1654,7 +1654,7 @@ end
 
 <h4>has_one :through</h4>
 
-<p>{% img /images/rails_association/has_one_through.png %}</p>
+<p><img src="/images/rails_association/has_one_through.png"></p>
 
 <p>``` ruby
 class User &lt; ActiveRecord::Base
@@ -1680,7 +1680,7 @@ end
 
 <h4>has_many :through</h4>
 
-<p>{% img /images/rails_association/has_many_through.png %}</p>
+<p><img src="/images/rails_association/has_many_through.png"></p>
 
 <p>``` ruby
 class Staff &lt; ActiveRecord::Base
@@ -1703,7 +1703,7 @@ end
 
 <h4>has_many_and_belongs_to</h4>
 
-<p>{% img /images/rails_association/has_many_and_belongs_to.png %}</p>
+<p><img src="/images/rails_association/has_many_and_belongs_to.png"></p>
 
 <p><code>ruby
 class Role &lt; ActiveRecord::Base
@@ -1722,7 +1722,7 @@ end
 
 <p>上述都是两个表进行关联,有的不需要中间表,有的不需要,如果要实现三个表以上的关联呢,这个时候就要用到多态了,例如我们不止在文章里可以加评论,在新闻里也可以评论,在贴子里都可以</p>
 
-<p>{% img /images/rails_association/polymorphic.png %}</p>
+<p><img src="/images/rails_association/polymorphic.png"></p>
 
 <p>``` ruby
 class Followable &lt; ActiveRecord::Base
@@ -1752,7 +1752,7 @@ end
 
 <p>这个时候一个好的解决方案就是用单表继承</p>
 
-<p>{% img /images/rails_association/single_table_inheritance.png %}</p>
+<p><img src="/images/rails_association/single_table_inheritance.png"></p>
 
 <p>``` ruby
 class GrowthRecord &lt; ActiveRecord::Base
@@ -1814,7 +1814,7 @@ has_many   :children...
 <!-- more -->
 
 
-<p>{% img /images/acts_as_tree_table.png %}</p>
+<p><img src="/images/acts_as_tree_table.png"></p>
 
 <h3>分析</h3>
 

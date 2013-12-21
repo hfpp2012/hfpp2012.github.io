@@ -5,12 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>人生就是初见 - 小子的博客</title>
+  <title>acts_as_paranoid源码分析 - 小子的博客</title>
   <meta name="author" content="小子">
 
   
-  <meta name="description" content="梳妆打扮净容颜，勿勿忙忙把班上。 悄然一见是佳女，玲珑剔透傲身姿。 肌肤赛雪小蛮腰，亭亭玉立勾神心。 偷眼正看似西施，千言万语难起齿。 但愿时间永停住，佳女相伴过一生。 只恨佳女瞬离去，相思相望身影现。 永记娇颜在心中，下次相见续前缘。
-">
+  <meta name="description" content="acts_as_paranoid 它的作用就是假删除,在实际中还是会很有用的。有一天,客户说我刚才误删了一个东西要把它找回来,这个时候它就派上用场了。 其实它实际上不删除数据中的数据,只不过是隐藏起来而已,只要让用户看不到,它就等于删除了,实际上,要还原的话修改一下数据库就可以回来了 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -19,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://yinsigan.github.io/blog/2013/07/05/ren-sheng-jiu-shi-chu-jian">
+  <link rel="canonical" href="http://yinsigan.github.io/blog/2013/12/20/acts-as-paranoidyuan-ma-fen-xi">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="小子的博客" type="application/atom+xml">
@@ -78,7 +77,7 @@
   
   <header>
     
-      <h1 class="entry-title">人生就是初见</h1>
+      <h1 class="entry-title">Acts_as_paranoid源码分析</h1>
     
     
       <p class="meta">
@@ -94,26 +93,50 @@
   
 
 
-<time datetime="2013-07-05T12:52:00+08:00" pubdate data-updated="true">Jul 5<span>th</span>, 2013</time>
+<time datetime="2013-12-20T21:57:00+08:00" pubdate data-updated="true">Dec 20<span>th</span>, 2013</time>
         
       </p>
     
   </header>
 
 
-<div class="entry-content"><p>梳妆打扮净容颜，勿勿忙忙把班上。</p>
+<div class="entry-content"><ul>
+<li><a href="https://github.com/goncalossilva/acts_as_paranoid">acts_as_paranoid</a></li>
+</ul>
 
-<p>悄然一见是佳女，玲珑剔透傲身姿。</p>
 
-<p>肌肤赛雪小蛮腰，亭亭玉立勾神心。</p>
+<p>它的作用就是假删除,在实际中还是会很有用的。有一天,客户说我刚才误删了一个东西要把它找回来,这个时候它就派上用场了。</p>
 
-<p>偷眼正看似西施，千言万语难起齿。</p>
+<p>其实它实际上不删除数据中的数据,只不过是隐藏起来而已,只要让用户看不到,它就等于删除了,实际上,要还原的话修改一下数据库就可以回来了</p>
 
-<p>但愿时间永停住，佳女相伴过一生。</p>
+<p>它实现的原理很简单,只不过是用一个标志来实现隐藏数据,在数据表中加一个字段,把它的值改一下,它就删除了(隐藏),修改回来,它又出现了</p>
 
-<p>只恨佳女瞬离去，相思相望身影现。</p>
+<p>什么字段呢,acts_as_paranoid默认情况下用<strong>&ldquo;deleted_at&rdquo;</strong>,用一个参数<strong>column</strong>来指定,它可以有三种类型boolean, string, time,这三个参数用<strong>column_type</strong>参数来指定</p>
 
-<p>永记娇颜在心中，下次相见续前缘。</p>
+<p>boolean:布尔型,被删除时值为true
+string:字符串型,被删除时值为&#8221;deleted&#8221;,这个值可以用deleted_value参数来指定
+time:时间型,被删除时值为当前时间(删除操作的时间)</p>
+
+<p>以上三个类型未删除时值都为NULL(nil)。建议使用time类型</p>
+
+<p>使用举例如下:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'>  <span class="k">class</span> <span class="nc">School</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>    <span class="n">acts_as_paranoid</span> <span class="ss">:column_type</span> <span class="o">=&gt;</span> <span class="ss">:boolean</span>
+</span><span class='line'>    <span class="err">或</span>
+</span><span class='line'>    <span class="n">acts_as_paranoid</span> <span class="ss">:column</span> <span class="o">=&gt;</span> <span class="s2">&quot;is_deleted&quot;</span><span class="p">,</span> <span class="ss">:column_type</span> <span class="o">=&gt;</span> <span class="ss">:string</span><span class="p">,</span> <span class="ss">:deleted_value</span> <span class="o">=&gt;</span> <span class="s2">&quot;deleted&quot;</span>
+</span><span class='line'>    <span class="o">.</span><span class="n">.</span><span class="o">.</span>
+</span><span class='line'>  <span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
 </div>
 
 
@@ -136,12 +159,12 @@
   
 
 
-<time datetime="2013-07-05T12:52:00+08:00" pubdate data-updated="true">Jul 5<span>th</span>, 2013</time>
+<time datetime="2013-12-20T21:57:00+08:00" pubdate data-updated="true">Dec 20<span>th</span>, 2013</time>
       
 
 <span class="categories">
   
-    <a class='category' href='/blog/categories/wo-de-shi/'>我的诗</a>
+    <a class='category' href='/blog/categories/on/'>on</a>, <a class='category' href='/blog/categories/rails/'>rails</a>, <a class='category' href='/blog/categories/ruby/'>ruby</a>
   
 </span>
 
@@ -150,7 +173,7 @@
     
       <div class="sharing">
   
-  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://yinsigan.github.io/blog/2013/07/05/ren-sheng-jiu-shi-chu-jian/" data-via="" data-counturl="http://yinsigan.github.io/blog/2013/07/05/ren-sheng-jiu-shi-chu-jian/" >Tweet</a>
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://yinsigan.github.io/blog/2013/12/20/acts-as-paranoidyuan-ma-fen-xi/" data-via="" data-counturl="http://yinsigan.github.io/blog/2013/12/20/acts-as-paranoidyuan-ma-fen-xi/" >Tweet</a>
   
   
   
@@ -159,8 +182,8 @@
     
     <p class="meta">
       
+        <a class="basic-alignment left" href="/blog/2013/12/14/ancestryyuan-ma-fen-xi/" title="Previous Post: ancestry源码分析">&laquo; ancestry源码分析</a>
       
-        <a class="basic-alignment right" href="/blog/2013/07/10/wo-de-xue-xi-wang-zhan-shou-ji/" title="Next Post: 我的学习网站收集">我的学习网站收集 &raquo;</a>
       
     </p>
   </footer>
@@ -242,8 +265,8 @@
       
         
         // var disqus_developer = 1;
-        var disqus_identifier = 'http://yinsigan.github.io/blog/2013/07/05/ren-sheng-jiu-shi-chu-jian/';
-        var disqus_url = 'http://yinsigan.github.io/blog/2013/07/05/ren-sheng-jiu-shi-chu-jian/';
+        var disqus_identifier = 'http://yinsigan.github.io/blog/2013/12/20/acts-as-paranoidyuan-ma-fen-xi/';
+        var disqus_url = 'http://yinsigan.github.io/blog/2013/12/20/acts-as-paranoidyuan-ma-fen-xi/';
         var disqus_script = 'embed.js';
       
     (function () {
