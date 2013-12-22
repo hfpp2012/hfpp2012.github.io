@@ -4,7 +4,7 @@
   <title><![CDATA[Category: ruby | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-22T17:29:12+08:00</updated>
+  <updated>2013-12-22T22:31:38+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -64,6 +64,7 @@ end
 <li>activerecord/Reflection的用法</li>
 <li>自己写一个validator</li>
 <li>class_attribute的用法</li>
+<li>activerecord/relation中klass的用法</li>
 </ol>
 
 
@@ -300,6 +301,8 @@ end
 
 <p>如果不想执行两次destroy,那就用destroy!一次搞定</p>
 
+<h4>destroy 单条记录假删除</h4>
+
 <p>我们来看一下它实现的代码,它把本来的destroy方法给重写了</p>
 
 <p>``` ruby
@@ -379,6 +382,124 @@ end
 <p>现在我们知道了,原来destroy?是包在一个transaction里的</p>
 
 <p>接下来,run_callbacks :destroy是?</p>
+
+<p>关于run_callbacks可以看<a href="http://api.rubyonrails.org/classes/ActiveSupport/Callbacks.html">callback</a></p>
+
+<p>运行run_callbacks :destroy的时候如果有定义before_destroy和after_destroy的话,会运行它们</p>
+
+<p>run_callbacks :destroy里面的内容才是真正的删除操作</p>
+
+<p><code>ruby
+self.class.delete_all(Hash[[Array(self.class.primary_key), Array(self.id)].transpose]) if persisted?
+self.paranoid_value = self.class.delete_now_value
+self
+</code></p>
+
+<p>先来看下self.class.delete_all!</p>
+
+<p><code>ruby
+def delete_all(conditions = nil)
+  # update_all相比于update_attributes来说后面可以加查询条件conditions,还有update_all是类方法
+  # 如果不加条件(conditions),update_all会修改所有记录的deleted_at值
+  update_all ["#{paranoid_configuration[:column]} = ?", delete_now_value], conditions
+end
+</code></p>
+
+<p>delete_now_value它的作用就是把deleted_all改为当前时间(如果deleted_at为time类型)或True(如果delete_at为boolean类型)或一个值(如果delete_at为string类型)</p>
+
+<p>so</p>
+
+<p><code>ruby
+def delete_now_value
+  case paranoid_configuration[:column_type]
+  when "time" then Time.now
+  when "boolean" then true
+  when "string" then paranoid_configuration[:deleted_value]
+  end
+end
+</code></p>
+
+<h4>destroy! 单条记录真删除</h4>
+
+<p>实现的代码跟destroy差不多,它不改deleted_at的值,直接删除数据</p>
+
+<p>``` ruby
+def destroy!
+  with_transaction_returning_status do</p>
+
+<pre><code>run_callbacks :destroy do
+  destroy_dependent_associations!
+  # Handle composite keys, otherwise we would just use `self.class.primary_key.to_sym =&gt; self.id`.
+  self.class.delete_all!(Hash[[Array(self.class.primary_key), Array(self.id)].transpose]) if persisted?
+  self.paranoid_value = self.class.delete_now_value
+  freeze
+end
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>destroy_dependent_associations!这个跟关联删除(dependent: destroy)有关的,也说是说假如school has_many squads,删除一条school的时候会先把所有squads先删除掉,这个留待下文详述</p>
+
+<p>来看delete_all!方法</p>
+
+<p><code>ruby
+def delete_all!(conditions = nil)
+  without_paranoid_default_scope.delete_all!(conditions)
+end
+</code></p>
+
+<p>without_paranoid_default_scope是不带default_scope的scoped查询,也就是去掉那个默认的查询(不含假删除过的记录),上文有说过</p>
+
+<p>without_paranoid_default_scope.delete_all!这个delete_all!可不是类方法,而是scoped中的方法,因为without_paranoid_default_scope是一个scoped(可以看without_paranoid_default_scope的定义)</p>
+
+<p>在哪里找到delete_all!呢?</p>
+
+<p>由于scoped是定义在ActiveRecord/Relation中的,lib/acts_as_paranoid.rb有一条语句</p>
+
+<p>``` ruby</p>
+
+<h1>Override ActiveRecord::Relation&rsquo;s behavior</h1>
+
+<p>ActiveRecord::Relation.send :include, ActsAsParanoid::Relation
+```</p>
+
+<p>so</p>
+
+<p>``` ruby lib/acts_as_paranoid/relation.rb
+module ActsAsParanoid
+  module Relation</p>
+
+<pre><code>def self.included(base)
+  # 实例方法
+  base.class_eval do
+    ....
+    alias_method :orig_delete_all, :delete_all
+    def delete_all!(conditions = nil)
+      if conditions
+        # 没有条件就会去调用orig_delete_all
+        where(conditions).delete_all!
+      else
+        orig_delete_all
+      end
+    end
+    ...
+  end
+end
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>其实把那个查询条件交给where,再用orig_delete_all删除</p>
+
+<p>上面的例子前后已经出现过两次alias_method了,我们来总结一下</p>
+
+<p>在上面的例子中alias_method会把:delete_all(这个时候的delete_all是rails默认提供的那个)的代码复制一份给orig_delete_all,然后把delete_all重写一次,以后调用都会用重写过的,被重写那个(rails提供)就变成了orig_delete_all</p>
+
+<p>freeze的作用是它那个记录锁住,已经被删除了那就不能修改,虽然存到变量之后还能读取</p>
 ]]></content>
   </entry>
   
