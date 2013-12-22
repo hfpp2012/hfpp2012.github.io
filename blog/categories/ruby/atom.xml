@@ -4,7 +4,7 @@
   <title><![CDATA[Category: ruby | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-22T16:33:32+08:00</updated>
+  <updated>2013-12-22T17:29:12+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -294,12 +294,17 @@ end
 
 <h3>Real deletion(真删除)</h3>
 
-<p>实际上我们执行School.first.destroy时是假删除而已,只是把字段(deleted_at)的值改了一下</p>
+<p>实际上我们执行School.first.destroy时是假删除而已,只是把字段(deleted_at)的值改了一下,要想真正删除还是要再执行一次destroy</p>
+
+<p><img src="/images/acts_as_paranoid/destroy_record.png"></p>
+
+<p>如果不想执行两次destroy,那就用destroy!一次搞定</p>
 
 <p>我们来看一下它实现的代码,它把本来的destroy方法给重写了</p>
 
 <p>``` ruby
 def destroy
+  # 还没有被假删除的情况下
   if !deleted?</p>
 
 <pre><code>with_transaction_returning_status do
@@ -320,6 +325,60 @@ end
 <p>  end
 end
 ```</p>
+
+<p>读懂上面的代码必须先弄懂deleted?</p>
+
+<p>``` ruby</p>
+
+<h1>通过deleted_at的值来检验记录是否被删除</h1>
+
+<p>def deleted?
+  !(paranoid_value.nil? ||</p>
+
+<pre><code>(self.class.string_type_with_deleted_value? &amp;&amp; paranoid_value != self.class.delete_now_value))
+</code></pre>
+
+<p>end</p>
+
+<h1>destroyed?是rails提供的,现在的效果跟:deleted?一样</h1>
+
+<p>alias_method :destroyed?, :deleted?</p>
+
+<h1>判断一条记录是否是常归存在</h1>
+
+<p>def persisted?
+  !(new_record? || @destroyed)
+end</p>
+
+<h1>这个方法是rails提供的,destroyed?会利用到@destroyed</h1>
+
+<p>def destroyed?
+  @destroyed
+end
+```</p>
+
+<p>总而言之,deleted?是判断是不是被假删除</p>
+
+<p><a href="http://apidock.com/rails/ActiveRecord/Transactions/with_transaction_returning_status">with_transaction_returning_status</a>是ActiveRecord::Base提供的方法,作用就是运行一个transaction,然后再返回一个状态值</p>
+
+<p>``` ruby with_transaction_returning_status的源码
+def with_transaction_returning_status
+  status = nil
+  self.class.transaction do</p>
+
+<pre><code>add_to_transaction
+status = yield
+raise ActiveRecord::Rollback unless status
+</code></pre>
+
+<p>  end
+  status
+end
+```</p>
+
+<p>现在我们知道了,原来destroy?是包在一个transaction里的</p>
+
+<p>接下来,run_callbacks :destroy是?</p>
 ]]></content>
   </entry>
   
