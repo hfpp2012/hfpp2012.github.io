@@ -4,7 +4,7 @@
   <title><![CDATA[Category: ruby | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-21T20:54:13+08:00</updated>
+  <updated>2013-12-22T16:33:32+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -90,6 +90,8 @@ School.with_deleted # 找到所有数据(不管有没有假删除的)
 
 <p><img src="/images/acts_as_paranoid/delete_record.png"></p>
 
+<h4>only_deleted</h4>
+
 <p>现在我们执行School.only_deleted来看看有什么效果</p>
 
 <p><code>
@@ -171,6 +173,13 @@ School.where("deleted_at IS NULL")
 
 <p>其实要去掉只要用unscoped就可以了,但acts_as_paranoid把with_deleted,和only_deleted做成了scope(activerecord/relations)的效果</p>
 
+<p><code>ruby
+School.scoped.with_default_scope.where_values
+=&gt; ["`schools`.`deleted_at` IS NULL"]
+School.paranoid_default_scope_sql
+=&gt; "`schools`.`deleted_at` IS NULL"
+</code></p>
+
 <p>so</p>
 
 <p><code>ruby
@@ -245,7 +254,72 @@ end
 
 <p>至此only_deleted已经解释完了</p>
 
-<p>来看下with_deleted</p>
+<h4>with_deleted</h4>
+
+<p>来看下with_deleted,它就是无论有没有被假删除,都读出来</p>
+
+<p><code>ruby
+def with_deleted
+  without_paranoid_default_scope
+end
+</code></p>
+
+<p>without_paranoid_default_scope上面已经解释过</p>
+
+<h4>deleted_after_time, deleted_before_time, deleted_inside_time_window</h4>
+
+<p>deleted_after_time: 在一个时间之后假删除的记录</p>
+
+<p>deleted_before_time: 在一个时间之前假删除的记录</p>
+
+<p>deleted_inside_time_window: 在一定时间内假删除的记录</p>
+
+<p><img src="/images/acts_as_paranoid/deleted_time.png"></p>
+
+<p>实现方法也很简单</p>
+
+<p>``` ruby
+if paranoid_configuration[:column_type] == &lsquo;time&rsquo;
+  scope :deleted_inside_time_window, lambda {|time, window|</p>
+
+<pre><code>deleted_after_time((time - window)).deleted_before_time((time + window))
+</code></pre>
+
+<p>  }</p>
+
+<p>  scope :deleted_after_time, lambda  { |time| where(&ldquo;#{paranoid_column} > ?&rdquo;, time) }
+  scope :deleted_before_time, lambda { |time| where(&ldquo;#{paranoid_column} &lt; ?&rdquo;, time) }
+end
+```</p>
+
+<h3>Real deletion(真删除)</h3>
+
+<p>实际上我们执行School.first.destroy时是假删除而已,只是把字段(deleted_at)的值改了一下</p>
+
+<p>我们来看一下它实现的代码,它把本来的destroy方法给重写了</p>
+
+<p>``` ruby
+def destroy
+  if !deleted?</p>
+
+<pre><code>with_transaction_returning_status do
+  run_callbacks :destroy do
+    # Handle composite keys, otherwise we would just use `self.class.primary_key.to_sym =&gt; self.id`.
+    self.class.delete_all(Hash[[Array(self.class.primary_key), Array(self.id)].transpose]) if persisted?
+    self.paranoid_value = self.class.delete_now_value
+    self
+  end
+end
+</code></pre>
+
+<p>  else</p>
+
+<pre><code>destroy!
+</code></pre>
+
+<p>  end
+end
+```</p>
 ]]></content>
   </entry>
   

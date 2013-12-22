@@ -190,6 +190,8 @@
 
 <p><img src="/images/acts_as_paranoid/delete_record.png"></p>
 
+<h4>only_deleted</h4>
+
 <p>现在我们执行School.only_deleted来看看有什么效果</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
@@ -289,6 +291,17 @@
 
 <p>其实要去掉只要用unscoped就可以了,但acts_as_paranoid把with_deleted,和only_deleted做成了scope(activerecord/relations)的效果</p>
 
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">School</span><span class="o">.</span><span class="n">scoped</span><span class="o">.</span><span class="n">with_default_scope</span><span class="o">.</span><span class="n">where_values</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="o">[</span><span class="s2">&quot;`schools`.`deleted_at` IS NULL&quot;</span><span class="o">]</span>
+</span><span class='line'><span class="no">School</span><span class="o">.</span><span class="n">paranoid_default_scope_sql</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="s2">&quot;`schools`.`deleted_at` IS NULL&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
 <p>so</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
@@ -386,7 +399,90 @@
 
 <p>至此only_deleted已经解释完了</p>
 
-<p>来看下with_deleted</p>
+<h4>with_deleted</h4>
+
+<p>来看下with_deleted,它就是无论有没有被假删除,都读出来</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">with_deleted</span>
+</span><span class='line'>  <span class="n">without_paranoid_default_scope</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>without_paranoid_default_scope上面已经解释过</p>
+
+<h4>deleted_after_time, deleted_before_time, deleted_inside_time_window</h4>
+
+<p>deleted_after_time: 在一个时间之后假删除的记录</p>
+
+<p>deleted_before_time: 在一个时间之前假删除的记录</p>
+
+<p>deleted_inside_time_window: 在一定时间内假删除的记录</p>
+
+<p><img src="/images/acts_as_paranoid/deleted_time.png"></p>
+
+<p>实现方法也很简单</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">if</span> <span class="n">paranoid_configuration</span><span class="o">[</span><span class="ss">:column_type</span><span class="o">]</span> <span class="o">==</span> <span class="s1">&#39;time&#39;</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="ss">:deleted_inside_time_window</span><span class="p">,</span> <span class="nb">lambda</span> <span class="p">{</span><span class="o">|</span><span class="n">time</span><span class="p">,</span> <span class="n">window</span><span class="o">|</span>
+</span><span class='line'>    <span class="n">deleted_after_time</span><span class="p">((</span><span class="n">time</span> <span class="o">-</span> <span class="n">window</span><span class="p">))</span><span class="o">.</span><span class="n">deleted_before_time</span><span class="p">((</span><span class="n">time</span> <span class="o">+</span> <span class="n">window</span><span class="p">))</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">scope</span> <span class="ss">:deleted_after_time</span><span class="p">,</span> <span class="nb">lambda</span>  <span class="p">{</span> <span class="o">|</span><span class="n">time</span><span class="o">|</span> <span class="n">where</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">#{</span><span class="n">paranoid_column</span><span class="si">}</span><span class="s2"> &gt; ?&quot;</span><span class="p">,</span> <span class="n">time</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="ss">:deleted_before_time</span><span class="p">,</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="o">|</span><span class="n">time</span><span class="o">|</span> <span class="n">where</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">#{</span><span class="n">paranoid_column</span><span class="si">}</span><span class="s2"> &lt; ?&quot;</span><span class="p">,</span> <span class="n">time</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Real deletion(真删除)</h3>
+
+<p>实际上我们执行School.first.destroy时是假删除而已,只是把字段(deleted_at)的值改了一下</p>
+
+<p>我们来看一下它实现的代码,它把本来的destroy方法给重写了</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">destroy</span>
+</span><span class='line'>  <span class="k">if</span> <span class="o">!</span><span class="n">deleted?</span>
+</span><span class='line'>    <span class="n">with_transaction_returning_status</span> <span class="k">do</span>
+</span><span class='line'>      <span class="n">run_callbacks</span> <span class="ss">:destroy</span> <span class="k">do</span>
+</span><span class='line'>        <span class="c1"># Handle composite keys, otherwise we would just use `self.class.primary_key.to_sym =&gt; self.id`.</span>
+</span><span class='line'>        <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">delete_all</span><span class="p">(</span><span class="no">Hash</span><span class="o">[[</span><span class="nb">Array</span><span class="p">(</span><span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">primary_key</span><span class="p">),</span> <span class="nb">Array</span><span class="p">(</span><span class="nb">self</span><span class="o">.</span><span class="n">id</span><span class="p">)</span><span class="o">].</span><span class="n">transpose</span><span class="o">]</span><span class="p">)</span> <span class="k">if</span> <span class="n">persisted?</span>
+</span><span class='line'>        <span class="nb">self</span><span class="o">.</span><span class="n">paranoid_value</span> <span class="o">=</span> <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">delete_now_value</span>
+</span><span class='line'>        <span class="nb">self</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">else</span>
+</span><span class='line'>    <span class="n">destroy!</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
 </div>
   
   
