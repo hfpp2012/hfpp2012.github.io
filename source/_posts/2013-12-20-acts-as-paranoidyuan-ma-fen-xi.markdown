@@ -527,7 +527,7 @@ def destroy_dependent_associations!
     scope = scope.merge(association(reflection.name).association_scope)
 
     scope.each do |object|
-      # 这句才是真正的删除,假如子类没有destroy!方法呢
+      # 这句才是真正的删除
       object.destroy!
     end
   end
@@ -541,15 +541,184 @@ dependent_associations是?
 
 ``` ruby
 def dependent_associations
+  # 过滤父类中has_many dependent等于:destroy或:delete_all的association
   self.reflect_on_all_associations.select {|a| [:destroy, :delete_all].include?(a.options[:dependent]) }
 end
 ```
 
-reflect_on_all_associations是rails提供的方法
+[reflect_on_all_associations](http://api.rubyonrails.org/classes/ActiveRecord/Reflection/ClassMethods.html)是rails提供的方法
 
+其实reflect_on_all_associations就是返回model所有包含的associations(关联关系的数组),而reflect_on_association可以取得某个特定的关联关系,例如School.reflect_on_association(:squads)
 
-### Recovery 恢复
+{% img /images/acts_as_paranoid/reflect_on_association.png %}
+
+association是activerecord/associations.rb提供的
+
+``` ruby
+def association(name) #:nodoc:
+  association = association_instance_get(name)
+
+  if association.nil?
+    reflection  = self.class.reflect_on_association(name)
+    association = reflection.association_class.new(self, reflection)
+    association_instance_set(name, association)
+  end
+
+  association
+end
+```
+
+其实它内部主要也是在用reflect_on_association,它用于某个实例,找到这个实例相关联的squads,然后交给下面的代码删除
+
+#### belongs_to的参数with_deleted
+
+把一个school假删除之后,它包含的squads也被假删除了,但是执行squad.school来查找school的时候会找不到,因为它使用了default_scope,那个default_scope本来就不查假删除的数据的
+
+{% img /images/acts_as_paranoid/belongs_to_with_deleted.png %}
+
+而acts_as_paranoid提供了一个方式(:with_deleted => true)解决这个问题
+
+看下面的代码
+
+``` ruby
+class Squad < ActiveRecord::Base
+  belongs_to :deleted_school, :class_name => 'School', :foreign_key => "school_id", :with_deleted => true
+end
+```
+
+当执行squad.deleted_school就可以查到那条假删除的school数据了
+
+{% img /images/acts_as_paranoid/belongs_to_search.png %}
+
+其实那个:with_deleted => true会破掉default_scope
+
+它的源码定义在lib/acts_as_paranoid/associations.rb文件
+
+在acts_as_paranoid.rb主程序文件里引入它
+
+``` ruby
+# Extend ActiveRecord::Base with paranoid associations
+ActiveRecord::Base.send :include, ActsAsParanoid::Associations
+```
+
+``` ruby
+module ActsAsParanoid
+  module Associations
+    def self.included(base)
+      base.extend ClassMethods
+      class << base
+        alias_method_chain :belongs_to, :deleted
+      end
+    end
+
+    module ClassMethods
+      def belongs_to_with_deleted(target, options = {})
+        with_deleted = options.delete(:with_deleted)
+        result = belongs_to_without_deleted(target, options)
+
+        if with_deleted
+          result.options[:with_deleted] = with_deleted
+          unless method_defined? "#{target}_with_unscoped"
+            class_eval <<-RUBY, __FILE__, __LINE__
+              def #{target}_with_unscoped(*args)
+                association = association(:#{target})
+                return nil if association.options[:polymorphic] && association.klass.nil?
+                return #{target}_without_unscoped(*args) unless association.klass.paranoid?
+                association.klass.with_deleted.scoping { #{target}_without_unscoped(*args) }
+              end
+              alias_method_chain :#{target}, :unscoped
+            RUBY
+          end
+        end
+
+        result
+      end
+    end
+  end
+end
+```
+
+### Recovery 还原
+
+假如把一个邮件放到垃圾箱里,那个垃圾箱应该有个清空(真删除)的操作,也要有个还原的操作,现在我们来介绍这个还原的功能
 
 {% img /images/acts_as_paranoid/recover.png %}
+
+源码是这样的
+
+``` ruby
+def recover(options={})
+  # 这样组织参数很灵活
+  options = {
+    :recursive => self.class.paranoid_configuration[:recover_dependent_associations],
+    :recovery_window => self.class.paranoid_configuration[:dependent_recovery_window]
+  }.merge(options)
+
+  self.class.transaction do
+    run_callbacks :recover do
+      # 通过options[:recursive]的值来判断是否要连带还原
+      recover_dependent_associations(options[:recovery_window], options) if options[:recursive]
+
+      self.paranoid_value = nil
+      self.save
+    end
+  end
+end
+```
+
+它的主要内容是`self.paranoid_value = nil`,然后再保存(save),这样就可以还原成功
+
+它还带了两个参数,一个叫recursive,它是关于**连带还原**的,也就是说你把school还原了,顺便把属于school的squads(班级)也给还原了
+
+还有另外一个叫recovery_window,它是一个间隔时间,它的作用跟上文说过deleted_inside_time_window差不多,这个recovery_window参数是跟子类的deleted_at时间比较的
+
+而这两个参数都有默认值,而且是从paranoid_configuration这个变量读取的,也就是说在使用acts_as_paranoid就可以给它指定值了,不一定要从recover(options={})中的options传入
+
+看这个就知道了
+
+``` ruby lib/acts_as_paranoid.rb
+self.paranoid_configuration = { :column => "deleted_at", :column_type => "time", :recover_dependent_associations => true, :dependent_recovery_window => 2.minutes }
+```
+
+主要的内容在这一行```recover_dependent_associations(options[:recovery_window], options) if options[:recursive]```
+
+``` ruby
+def recover_dependent_associations(window, options)
+  self.class.dependent_associations.each do |reflection|
+    # 同样的,没有使用acts_as_paranoid的子类model跳过
+    next unless reflection.klass.paranoid?
+
+    scope = reflection.klass.only_deleted
+
+    # Merge in the association's scope
+    scope = scope.merge(association(reflection.name).association_scope)
+
+    # We can only recover by window if both parent and dependant have a
+    # paranoid column type of :time.
+    if self.class.paranoid_column_type == :time && reflection.klass.paranoid_column_type == :time
+      scope = scope.merge(reflection.klass.deleted_inside_time_window(paranoid_value, window))
+    end
+
+    scope.each do |object|
+      object.recover(options)
+    end
+  end
+end
+```
+
+这个方法的内容跟destroy_dependent_associations差不多,也是想通过association找到相关联的记录(squads),有区别是下面这几行
+
+``` ruby
+# self是自己,reflection.class是每个关联的子类model
+if self.class.paranoid_column_type == :time && reflection.klass.paranoid_column_type == :time
+  scope = scope.merge(reflection.klass.deleted_inside_time_window(paranoid_value, window))
+end
+
+scope.each do |object|
+  object.recover(options)
+end
+```
+
+首先通过判断paranoid_column_type的类型是否是time,因为只有time类型才会用到deleted_inside_time_window,然后遍历scope来执行recover
 
 
