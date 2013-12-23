@@ -4,7 +4,7 @@
   <title><![CDATA[小子的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-22T22:31:38+08:00</updated>
+  <updated>2013-12-23T14:07:37+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -636,6 +636,165 @@
 <p>在上面的例子中alias_method会把:delete_all(这个时候的delete_all是rails默认提供的那个)的代码复制一份给orig_delete_all,然后把delete_all重写一次,以后调用都会用重写过的,被重写那个(rails提供)就变成了orig_delete_all</p>
 
 <p>freeze的作用是它那个记录锁住,已经被删除了那就不能修改,虽然存到变量之后还能读取</p>
+
+<h4>delete_all 多条记录假删除</h4>
+
+<p>多条记录真删除的那个方法就lib/acts_as_paranoid/relation.rb中的delete_all!方法</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">delete_all</span><span class="p">(</span><span class="n">conditions</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1"># 判断是否有加载过acts_as_paranoid,对于没有使用这个gem的会使用rails提供的delete_all!(真删除)来删除</span>
+</span><span class='line'>  <span class="k">if</span> <span class="n">paranoid?</span>
+</span><span class='line'>    <span class="n">update_all</span><span class="p">(</span><span class="n">paranoid_deletion_attributes</span><span class="p">,</span> <span class="n">conditions</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">else</span>
+</span><span class='line'>    <span class="n">delete_all!</span><span class="p">(</span><span class="n">conditions</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 传入数组</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">destroy!</span><span class="p">(</span><span class="n">id_or_array</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">where</span><span class="p">(</span><span class="n">primary_key</span> <span class="o">=&gt;</span> <span class="n">id_or_array</span><span class="p">)</span><span class="o">.</span><span class="n">orig_delete_all</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Associations 关联关系</h3>
+
+<p>有一种情况是这样的,我们可能在school model里有这样的东西<code>has_many :squads, :dependent =&gt; :destroy</code>(班级),假如你删除了一条school,那squads怎么办呢</p>
+
+<p>这种情况下squad model分为两种可能: 1:要么没使用acts_as_paranoid 2:要么使用acts_as_paranoid</p>
+
+<p>对于没使用acts_as_paranoid的squad model那就很简单,本来该怎么着就怎么着</p>
+
+<p>对于使用acts_as_paranoid的squad model那就是<strong>连带假删除</strong></p>
+
+<h4>连带假删除</h4>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">School</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">has_many</span> <span class="ss">:squads</span><span class="p">,</span> <span class="ss">:dependent</span> <span class="o">=&gt;</span> <span class="ss">:destroy</span>
+</span><span class='line'>  <span class="n">acts_as_paranoid</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="n">squad</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">belongs_to</span> <span class="ss">:school</span>
+</span><span class='line'>  <span class="n">acts_as_paranoid</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><img src="http://yinsigan.github.io/images/acts_as_paranoid/dependent_destroy.png"></p>
+
+<p>其实关于acts_as_paranoid的假删除上面已经说过它的代码了</p>
+
+<p>就是那个destroy方法,按照rails的机制,当设置:dependent => :destroy,父类执行destroy方法,子类也是会执行自己的destroy的</p>
+
+<p>也就是squad model会执行acts_as_paranoid重写的destroy方法,因为squad model使用了acts_as_paranoid</p>
+
+<p>所以它(squad)使用了跟父类(school)同样的destroy方法,上文说过,这里就不做多解释了</p>
+
+<h4>连带真删除</h4>
+
+<p>上文说过,真删除使用的是destroy!方法,在父类(school)使用destroy!,子类(squad)并没有执行任何方法,但它又需要把属于school的所有squads(班级)全部删除</p>
+
+<p>所以在destroy!需要处理子类(把它删除掉)</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">destroy!</span>
+</span><span class='line'>  <span class="n">with_transaction_returning_status</span> <span class="k">do</span>
+</span><span class='line'>    <span class="n">run_callbacks</span> <span class="ss">:destroy</span> <span class="k">do</span>
+</span><span class='line'>      <span class="n">destroy_dependent_associations!</span>
+</span><span class='line'>      <span class="o">.</span><span class="n">.</span><span class="o">.</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>destroy_dependent_associations这个方法才是处理子类的关键</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">destroy_dependent_associations!</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">dependent_associations</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">reflection</span><span class="o">|</span>
+</span><span class='line'>    <span class="c1"># 这句也很关键,判断子类有没有使用acts_as_paranoid,</span>
+</span><span class='line'>    <span class="c1"># 没有的话就没必要进行下去,应该根本没有destroy!方法,而rails默认就会删除的</span>
+</span><span class='line'>    <span class="k">next</span> <span class="k">unless</span> <span class="n">reflection</span><span class="o">.</span><span class="n">klass</span><span class="o">.</span><span class="n">paranoid?</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">scope</span> <span class="o">=</span> <span class="n">reflection</span><span class="o">.</span><span class="n">klass</span><span class="o">.</span><span class="n">only_deleted</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># Merge in the association&#39;s scope</span>
+</span><span class='line'>    <span class="n">scope</span> <span class="o">=</span> <span class="n">scope</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">association</span><span class="p">(</span><span class="n">reflection</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">association_scope</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">scope</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">object</span><span class="o">|</span>
+</span><span class='line'>      <span class="c1"># 这句才是真正的删除,假如子类没有destroy!方法呢</span>
+</span><span class='line'>      <span class="n">object</span><span class="o">.</span><span class="n">destroy!</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>要真删除school,总得知道它有哪些子类belongs_to school吧,所以这个destroy_dependent_associations方法的前半部分都在找school究终has_many了哪些model,最后一句object.destroy!才是真正的删除</p>
+
+<p>dependent_associations是?</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">dependent_associations</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">reflect_on_all_associations</span><span class="o">.</span><span class="n">select</span> <span class="p">{</span><span class="o">|</span><span class="n">a</span><span class="o">|</span> <span class="o">[</span><span class="ss">:destroy</span><span class="p">,</span> <span class="ss">:delete_all</span><span class="o">].</span><span class="n">include?</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">options</span><span class="o">[</span><span class="ss">:dependent</span><span class="o">]</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>reflect_on_all_associations是rails提供的方法</p>
+
+<h3>Recovery 恢复</h3>
+
+<p><img src="http://yinsigan.github.io/images/acts_as_paranoid/recover.png"></p>
 ]]></content>
   </entry>
   
