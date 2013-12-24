@@ -4,7 +4,7 @@
   <title><![CDATA[小子的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-24T14:34:36+08:00</updated>
+  <updated>2013-12-24T18:07:53+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -1108,6 +1108,174 @@
 
 
 <p>首先通过判断paranoid_column_type的类型是否是time,因为只有time类型才会用到deleted_inside_time_window,然后遍历scope来执行recover</p>
+
+<h3>Validation 验证</h3>
+
+<p>这里的验证是唯一性验证,它的意思是一个字段不能存同个相同的值,例如身份证号码,是唯一的.但是一条记录被假删除之后,在用户层次,这里数据已经不复存在了(虽然数据库还保留着),所以即使有唯一性的验证,这条记录还是应该被允许重新覆盖那个唯一性的字段。但是仅仅用rails提供的uniqueness验证就不够,因为它是不管你有没有假删除的,就是不能允许有重复的值,所以acts_as_paranoid提供了自己的验证方法。</p>
+
+<p><img src="http://yinsigan.github.io/images/acts_as_paranoid/validation.png"></p>
+
+<p>自己定义一个validator是这样的</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">EmailValidator</span> <span class="o">&lt;</span> <span class="ss">ActiveModel</span><span class="p">:</span><span class="ss">:EachValidator</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">validate_each</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">unless</span> <span class="n">value</span> <span class="o">=~</span> <span class="sr">/\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\z/i</span>
+</span><span class='line'>      <span class="n">record</span><span class="o">.</span><span class="n">errors</span><span class="o">[</span><span class="n">attribute</span><span class="o">]</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">options</span><span class="o">[</span><span class="ss">:message</span><span class="o">]</span> <span class="o">||</span> <span class="s2">&quot;is not an email&quot;</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Person</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">validates</span> <span class="ss">:email</span><span class="p">,</span> <span class="ss">:presence</span> <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">,</span> <span class="ss">:email</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>必须定义一个类继承ActiveModel::EachValidator,在这个类下还有定义validate_each方法,具体的可以看<a href="http://guides.rubyonrails.org/active_record_validations.html">rails guides validation</a></p>
+
+<p>而validates_as_paranoid的源码是这样的</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">validates_as_paranoid</span>
+</span><span class='line'>  <span class="kp">include</span> <span class="ss">ActsAsParanoid</span><span class="p">:</span><span class="ss">:Validations</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>ActsAsParanoid::Validations它的源码放在lib/acts_as_paranoid/validations.rb文件</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># https://github.com/rails/rails/blob/master/activesupport/lib/active_support/core_ext/array/wrap.rb 只是对Array的扩展,把对象包裹成array返回</span>
+</span><span class='line'><span class="nb">require</span> <span class="s1">&#39;active_support/core_ext/array/wrap&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">module</span> <span class="nn">ActsAsParanoid</span>
+</span><span class='line'>  <span class="k">module</span> <span class="nn">Validations</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">included</span><span class="p">(</span><span class="n">base</span><span class="p">)</span>
+</span><span class='line'>      <span class="n">base</span><span class="o">.</span><span class="n">extend</span> <span class="no">ClassMethods</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># ActiveRecord::Validations::UniquenessValidator也是继承自ActiveModel::EachValidator</span>
+</span><span class='line'>    <span class="k">class</span> <span class="nc">UniquenessWithoutDeletedValidator</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Validations</span><span class="o">::</span><span class="no">UniquenessValidator</span>
+</span><span class='line'>      <span class="c1"># 这个validate_each方法是必须定义的</span>
+</span><span class='line'>      <span class="k">def</span> <span class="nf">validate_each</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+</span><span class='line'>        <span class="c1"># 找到记录的class</span>
+</span><span class='line'>        <span class="n">finder_class</span> <span class="o">=</span> <span class="n">find_finder_class_for</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+</span><span class='line'>        <span class="n">table</span> <span class="o">=</span> <span class="n">finder_class</span><span class="o">.</span><span class="n">arel_table</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="n">coder</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">serialized_attributes</span><span class="o">[</span><span class="n">attribute</span><span class="o">.</span><span class="n">to_s</span><span class="o">]</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="k">if</span> <span class="n">value</span> <span class="o">&amp;&amp;</span> <span class="n">coder</span>
+</span><span class='line'>          <span class="n">value</span> <span class="o">=</span> <span class="n">coder</span><span class="o">.</span><span class="n">dump</span> <span class="n">value</span>
+</span><span class='line'>        <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="n">relation</span> <span class="o">=</span> <span class="n">build_relation</span><span class="p">(</span><span class="n">finder_class</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+</span><span class='line'>        <span class="o">[</span><span class="nb">Array</span><span class="p">(</span><span class="n">finder_class</span><span class="o">.</span><span class="n">primary_key</span><span class="p">),</span> <span class="nb">Array</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="ss">:id</span><span class="p">))</span><span class="o">].</span><span class="n">transpose</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">pk_key</span><span class="p">,</span> <span class="n">pk_value</span><span class="o">|</span>
+</span><span class='line'>          <span class="n">relation</span> <span class="o">=</span> <span class="n">relation</span><span class="o">.</span><span class="n">and</span><span class="p">(</span><span class="n">table</span><span class="o">[</span><span class="n">pk_key</span><span class="o">.</span><span class="n">to_sym</span><span class="o">].</span><span class="n">not_eq</span><span class="p">(</span><span class="n">pk_value</span><span class="p">))</span>
+</span><span class='line'>        <span class="k">end</span> <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">persisted?</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="nb">Array</span><span class="o">.</span><span class="n">wrap</span><span class="p">(</span><span class="n">options</span><span class="o">[</span><span class="ss">:scope</span><span class="o">]</span><span class="p">)</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">scope_item</span><span class="o">|</span>
+</span><span class='line'>          <span class="n">scope_value</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">scope_item</span><span class="p">)</span>
+</span><span class='line'>          <span class="n">relation</span> <span class="o">=</span> <span class="n">relation</span><span class="o">.</span><span class="n">and</span><span class="p">(</span><span class="n">table</span><span class="o">[</span><span class="n">scope_item</span><span class="o">].</span><span class="n">eq</span><span class="p">(</span><span class="n">scope_value</span><span class="p">))</span>
+</span><span class='line'>        <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="c1"># Re-add ActsAsParanoid default scope conditions manually.</span>
+</span><span class='line'>        <span class="k">if</span> <span class="n">finder_class</span><span class="o">.</span><span class="n">unscoped</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">finder_class</span><span class="o">.</span><span class="n">paranoid_default_scope_sql</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">relation</span><span class="p">)</span><span class="o">.</span><span class="n">exists?</span>
+</span><span class='line'>          <span class="n">record</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">attribute</span><span class="p">,</span> <span class="ss">:taken</span><span class="p">,</span> <span class="n">options</span><span class="o">.</span><span class="n">except</span><span class="p">(</span><span class="ss">:case_sensitive</span><span class="p">,</span> <span class="ss">:scope</span><span class="p">)</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="ss">:value</span> <span class="o">=&gt;</span> <span class="n">value</span><span class="p">))</span>
+</span><span class='line'>        <span class="k">end</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'><span class="k">module</span> <span class="nn">ClassMethods</span>
+</span><span class='line'>      <span class="k">def</span> <span class="nf">validates_uniqueness_of_without_deleted</span><span class="p">(</span><span class="o">*</span><span class="n">attr_names</span><span class="p">)</span>
+</span><span class='line'>        <span class="n">validates_with</span> <span class="no">UniquenessWithoutDeletedValidator</span><span class="p">,</span> <span class="n">_merge_attributes</span><span class="p">(</span><span class="n">attr_names</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>上面的validate_each应该跟rails提供的UniquenessValidator中的<a href="http://api.rubyonrails.org/v3.2.13/classes/ActiveRecord/Validations/UniquenessValidator.html">validate_each</a>做比较</p>
+
+<p>最大的不同在于下面两个</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="o">-</span> <span class="n">relation</span> <span class="o">=</span> <span class="n">relation</span><span class="o">.</span><span class="n">and</span><span class="p">(</span><span class="n">table</span><span class="o">[</span><span class="n">finder_class</span><span class="o">.</span><span class="n">primary_key</span><span class="o">.</span><span class="n">to_sym</span><span class="o">].</span><span class="n">not_eq</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="ss">:id</span><span class="p">)))</span> <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">persisted?</span>
+</span><span class='line'><span class="o">+</span> <span class="o">[</span><span class="nb">Array</span><span class="p">(</span><span class="n">finder_class</span><span class="o">.</span><span class="n">primary_key</span><span class="p">),</span> <span class="nb">Array</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="ss">:id</span><span class="p">))</span><span class="o">].</span><span class="n">transpose</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">pk_key</span><span class="p">,</span> <span class="n">pk_value</span><span class="o">|</span>
+</span><span class='line'><span class="o">+</span>   <span class="n">relation</span> <span class="o">=</span> <span class="n">relation</span><span class="o">.</span><span class="n">and</span><span class="p">(</span><span class="n">table</span><span class="o">[</span><span class="n">pk_key</span><span class="o">.</span><span class="n">to_sym</span><span class="o">].</span><span class="n">not_eq</span><span class="p">(</span><span class="n">pk_value</span><span class="p">))</span>
+</span><span class='line'><span class="o">+</span> <span class="k">end</span> <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">persisted?</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 这里才是主要的变化</span>
+</span><span class='line'><span class="o">-</span> <span class="k">if</span> <span class="n">finder_class</span><span class="o">.</span><span class="n">unscoped</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">relation</span><span class="p">)</span><span class="o">.</span><span class="n">exists?</span>
+</span><span class='line'><span class="o">+</span> <span class="k">if</span> <span class="n">finder_class</span><span class="o">.</span><span class="n">unscoped</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">finder_class</span><span class="o">.</span><span class="n">paranoid_default_scope_sql</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">relation</span><span class="p">)</span><span class="o">.</span><span class="n">exists?</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>其实UniquenessWithoutDeletedValidator做的就是重写原生的ActiveRecord::Validations::UniquenessValidator,加上自己的改动,把唯一性验证的范围缩小(finder_class.paranoid_default_scope_sql),最后达到目的</p>
 ]]></content>
   </entry>
   

@@ -4,7 +4,7 @@
   <title><![CDATA[Category: rails | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/rails/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-24T14:34:36+08:00</updated>
+  <updated>2013-12-24T18:07:53+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -839,6 +839,121 @@ end
 ```</p>
 
 <p>首先通过判断paranoid_column_type的类型是否是time,因为只有time类型才会用到deleted_inside_time_window,然后遍历scope来执行recover</p>
+
+<h3>Validation 验证</h3>
+
+<p>这里的验证是唯一性验证,它的意思是一个字段不能存同个相同的值,例如身份证号码,是唯一的.但是一条记录被假删除之后,在用户层次,这里数据已经不复存在了(虽然数据库还保留着),所以即使有唯一性的验证,这条记录还是应该被允许重新覆盖那个唯一性的字段。但是仅仅用rails提供的uniqueness验证就不够,因为它是不管你有没有假删除的,就是不能允许有重复的值,所以acts_as_paranoid提供了自己的验证方法。</p>
+
+<p><img src="/images/acts_as_paranoid/validation.png"></p>
+
+<p>自己定义一个validator是这样的</p>
+
+<p>``` ruby
+class EmailValidator &lt; ActiveModel::EachValidator
+  def validate_each(record, attribute, value)</p>
+
+<pre><code>unless value =~ /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\z/i
+  record.errors[attribute] &lt;&lt; (options[:message] || "is not an email")
+end
+</code></pre>
+
+<p>  end
+end</p>
+
+<p>class Person &lt; ActiveRecord::Base
+  validates :email, :presence => true, :email => true
+end
+```</p>
+
+<p>必须定义一个类继承ActiveModel::EachValidator,在这个类下还有定义validate_each方法,具体的可以看<a href="http://guides.rubyonrails.org/active_record_validations.html">rails guides validation</a></p>
+
+<p>而validates_as_paranoid的源码是这样的</p>
+
+<p><code>ruby
+def validates_as_paranoid
+  include ActsAsParanoid::Validations
+end
+</code></p>
+
+<p>ActsAsParanoid::Validations它的源码放在lib/acts_as_paranoid/validations.rb文件</p>
+
+<p>``` ruby</p>
+
+<h1><a href="https://github.com/rails/rails/blob/master/activesupport/lib/active_support/core_ext/array/wrap.rb">https://github.com/rails/rails/blob/master/activesupport/lib/active_support/core_ext/array/wrap.rb</a> 只是对Array的扩展,把对象包裹成array返回</h1>
+
+<p>require &lsquo;active_support/core_ext/array/wrap&rsquo;</p>
+
+<p>module ActsAsParanoid
+  module Validations</p>
+
+<pre><code>def self.included(base)
+  base.extend ClassMethods
+end
+
+# ActiveRecord::Validations::UniquenessValidator也是继承自ActiveModel::EachValidator
+class UniquenessWithoutDeletedValidator &lt; ActiveRecord::Validations::UniquenessValidator
+  # 这个validate_each方法是必须定义的
+  def validate_each(record, attribute, value)
+    # 找到记录的class
+    finder_class = find_finder_class_for(record)
+    table = finder_class.arel_table
+
+    coder = record.class.serialized_attributes[attribute.to_s]
+
+    if value &amp;&amp; coder
+      value = coder.dump value
+    end
+
+    relation = build_relation(finder_class, table, attribute, value)
+    [Array(finder_class.primary_key), Array(record.send(:id))].transpose.each do |pk_key, pk_value|
+      relation = relation.and(table[pk_key.to_sym].not_eq(pk_value))
+    end if record.persisted?
+
+    Array.wrap(options[:scope]).each do |scope_item|
+      scope_value = record.send(scope_item)
+      relation = relation.and(table[scope_item].eq(scope_value))
+    end
+
+    # Re-add ActsAsParanoid default scope conditions manually.
+    if finder_class.unscoped.where(finder_class.paranoid_default_scope_sql).where(relation).exists?
+      record.errors.add(attribute, :taken, options.except(:case_sensitive, :scope).merge(:value =&gt; value))
+    end
+  end
+end
+</code></pre>
+
+<p>module ClassMethods</p>
+
+<pre><code>  def validates_uniqueness_of_without_deleted(*attr_names)
+    validates_with UniquenessWithoutDeletedValidator, _merge_attributes(attr_names)
+  end
+end
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>上面的validate_each应该跟rails提供的UniquenessValidator中的<a href="http://api.rubyonrails.org/v3.2.13/classes/ActiveRecord/Validations/UniquenessValidator.html">validate_each</a>做比较</p>
+
+<p>最大的不同在于下面两个</p>
+
+<p>``` ruby
+&ndash; relation = relation.and(table[finder_class.primary_key.to_sym].not_eq(record.send(:id))) if record.persisted?
++ [Array(finder_class.primary_key), Array(record.send(:id))].transpose.each do |pk_key, pk_value|
++   relation = relation.and(table[pk_key.to_sym].not_eq(pk_value))
++ end if record.persisted?</p>
+
+<h1>这里才是主要的变化</h1>
+
+<ul>
+<li>if finder_class.unscoped.where(relation).exists?</li>
+<li>if finder_class.unscoped.where(finder_class.paranoid_default_scope_sql).where(relation).exists?
+```</li>
+</ul>
+
+
+<p>其实UniquenessWithoutDeletedValidator做的就是重写原生的ActiveRecord::Validations::UniquenessValidator,加上自己的改动,把唯一性验证的范围缩小(finder_class.paranoid_default_scope_sql),最后达到目的</p>
 ]]></content>
   </entry>
   
