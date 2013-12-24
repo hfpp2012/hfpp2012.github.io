@@ -826,7 +826,7 @@ module ActsAsParanoid
         end
       end
     end
-module ClassMethods
+    module ClassMethods
       def validates_uniqueness_of_without_deleted(*attr_names)
         validates_with UniquenessWithoutDeletedValidator, _merge_attributes(attr_names)
       end
