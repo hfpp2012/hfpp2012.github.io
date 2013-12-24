@@ -240,7 +240,7 @@ end
 without_paranoid_default_scope上面已经解释过
 
 
-#### deleted_after_time, deleted_before_time, deleted_inside_time_window
+#### deleted_after_time & deleted_before_time & deleted_inside_time_window
 
 deleted_after_time: 在一个时间之后假删除的记录
 
@@ -851,3 +851,74 @@ end
 ```
 
 其实UniquenessWithoutDeletedValidator做的就是重写原生的ActiveRecord::Validations::UniquenessValidator,加上自己的改动,把唯一性验证的范围缩小(finder_class.paranoid_default_scope_sql),最后达到目的
+
+### Callback 回调方法
+
+acts_as_paranoid提供了一组回调方法, before_recover & after_after
+
+``` ruby
+class School < ActiveRecord::Base
+  acts_as_paranoid
+  before_recover :br
+  def br
+    if deleted?
+      puts 'running before recover'
+    end
+  end
+  after_recover :ar
+  def ar
+    unless deleted?
+      puts 'running after recover'
+    end
+  end
+end
+```
+
+{% img /images/acts_as_paranoid/recover_callback.png %}
+
+关于自定义callback可以看[activesupport/callbacks](http://api.rubyonrails.org/classes/ActiveSupport/Callbacks.html)
+
+现在我们来看下源码
+
+``` ruby lib/acts_as_paranoid.rb
+# Push the recover callback onto the activerecord callback list
+ActiveRecord::Callbacks::CALLBACKS.push(:before_recover, :after_recover)
+```
+
+``` ruby lib/acts_as_paranoid/core.rb
+def self.extended(base)
+  # 定义recover回调方法
+  base.define_callbacks :recover
+end
+
+# 设置before_recover这个回调方法所使用的方法
+def before_recover(method)
+  set_callback :recover, :before, method
+end
+
+# 设置after_recover这个回调方法所使用的方法
+def after_recover(method)
+  set_callback :recover, :after, method
+end
+
+def recover(options={})
+  ...
+  self.class.transaction do
+    # 这行是执行callback
+    run_callbacks :recover do
+      recover_dependent_associations(options[:recovery_window], options) if options[:recursive]
+
+      self.paranoid_value = nil
+      self.save
+    end
+  end
+end
+```
+
+总结一下,自定义一个callback,需要三个方法define_callbacks, set_callback, run_callbacks
+
+define_callbacks是定义一个回调方法的名称,例如recover,而set_callback是设置before或after回调方法使用的方法,run_callbacks是运行回调方法,会前后运行before和after回调方法
+
+## 总结
+
+学习一个gem总能获得各种各样的知识,从这个gem我们就学习到了如果自定义一个validator,自定义一个callback,掌握它们方便我们去使用它们.
