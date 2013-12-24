@@ -14,6 +14,8 @@ categories: ruby on rails
 
 其实它实际上不删除数据中的数据,只不过是隐藏起来而已,只要让用户看不到,它就等于删除了,实际上,要还原的话修改一下数据库就可以回来了
 
+<!-- more -->
+
 它实现的原理很简单,只不过是用一个标志来实现隐藏数据,在数据表中加一个字段,把它的值改一下,它就删除了(隐藏),修改回来,它又出现了
 
 它的目的就是保护数据的安全,让用户能在误操作的情况下也能恢复数据。但是缺点也很明显,由于不是真正的删除,数据库中仍然保留着那条数据,数据库会越来越庞大,垃圾的信息也是越来越多
@@ -49,6 +51,8 @@ end
 6. 自己写一个validator
 7. class_attribute的用法
 8. activerecord/relation中klass的用法
+9. alias_method_chain的用法
+10. method_defined?的用法
 
 
 ## 代码分析
@@ -607,23 +611,35 @@ module ActsAsParanoid
     def self.included(base)
       base.extend ClassMethods
       class << base
+        # 用belongs_to_with_deleted重写belongs_to
         alias_method_chain :belongs_to, :deleted
       end
     end
 
     module ClassMethods
       def belongs_to_with_deleted(target, options = {})
+        # 从options移除with_deleted的值并返回
         with_deleted = options.delete(:with_deleted)
+        # 由于返回的是result,假如with_deleted是false,将使用原生的belongs_to方法,即belongs_to_with_deleted,假如是true,也是会返回belongs_to的结果留待下面的操作
         result = belongs_to_without_deleted(target, options)
 
+        # 按照上面的例子,target是:deleted_school
+        # 会用到:deleted_school_with_unscoped代替:deleted_school
+        # 而原先的用:deleted_school_without_unscoped
         if with_deleted
+          # 增加一个option: with_deleted
           result.options[:with_deleted] = with_deleted
+          # 在我们上面的例子中,target就是:deleted_school
           unless method_defined? "#{target}_with_unscoped"
+            # 实例方法
             class_eval <<-RUBY, __FILE__, __LINE__
               def #{target}_with_unscoped(*args)
+                # 取出关联关系,包括school的记录
                 association = association(:#{target})
                 return nil if association.options[:polymorphic] && association.klass.nil?
+                # 如果school没有用paranoid,就直接用原生的belongs_to
                 return #{target}_without_unscoped(*args) unless association.klass.paranoid?
+                # 去掉default_scope,scoping跟scoped的作用差不多,不过是接一个block
                 association.klass.with_deleted.scoping { #{target}_without_unscoped(*args) }
               end
               alias_method_chain :#{target}, :unscoped
@@ -637,6 +653,21 @@ module ActsAsParanoid
   end
 end
 ```
+
+其实上面的代码就是把belongs_to方法重写了,主要是`alias_method_chain :belongs_to, :deleted`发挥作用,它的意思是会用belongs_to_with_deleted重写原来的belongs_to方法,原来那个就变成belongs_to_without_deleted方法
+
+相当于这样
+
+``` ruby
+alias_method :belongs_to_without_deleted, :belongs_to
+alias_method :belongs_to, :belongs_to_with_deleted
+```
+
+在ruby2.0之后会用[module prepend](http://dev.af83.com/2012/10/19/ruby-2-0-module-prepend.html)代替它
+
+不明白的可以看[alias-alias_method-and-alias_method_chain-compare](http://dev.iforeach.com/blogs/2011-02-15/alias-alias_method-and-alias_method_chain-compare)和[alias_method_chain](http://apidock.com/rails/Module/alias_method_chain)
+
+上述的代码总结一下,首先重写了belongs_to的代码,让它可以加个with_deleted的参数,但通过squad.deleted_school,就会通过association(:deleted_school)这个方法找所属的school(包含default_scope),然而最后一句```association.klass.with_deleted.scoping { #{target}_without_unscoped(*args) }```能够去掉default_scope,因为用了with_deleted嘛
 
 ### Recovery 还原
 
@@ -721,4 +752,102 @@ end
 
 首先通过判断paranoid_column_type的类型是否是time,因为只有time类型才会用到deleted_inside_time_window,然后遍历scope来执行recover
 
+### Validation 验证
 
+这里的验证是唯一性验证,它的意思是一个字段不能存同个相同的值,例如身份证号码,是唯一的.但是一条记录被假删除之后,在用户层次,这里数据已经不复存在了(虽然数据库还保留着),所以即使有唯一性的验证,这条记录还是应该被允许重新覆盖那个唯一性的字段。但是仅仅用rails提供的uniqueness验证就不够,因为它是不管你有没有假删除的,就是不能允许有重复的值,所以acts_as_paranoid提供了自己的验证方法。
+
+{% img /images/acts_as_paranoid/validation.png %}
+
+自己定义一个validator是这样的
+
+``` ruby
+class EmailValidator < ActiveModel::EachValidator
+  def validate_each(record, attribute, value)
+    unless value =~ /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\z/i
+      record.errors[attribute] << (options[:message] || "is not an email")
+    end
+  end
+end
+
+class Person < ActiveRecord::Base
+  validates :email, :presence => true, :email => true
+end
+```
+
+必须定义一个类继承ActiveModel::EachValidator,在这个类下还有定义validate_each方法,具体的可以看[rails guides validation](http://guides.rubyonrails.org/active_record_validations.html)
+
+而validates_as_paranoid的源码是这样的
+
+``` ruby
+def validates_as_paranoid
+  include ActsAsParanoid::Validations
+end
+```
+
+ActsAsParanoid::Validations它的源码放在lib/acts_as_paranoid/validations.rb文件
+
+``` ruby
+# https://github.com/rails/rails/blob/master/activesupport/lib/active_support/core_ext/array/wrap.rb 只是对Array的扩展,把对象包裹成array返回
+require 'active_support/core_ext/array/wrap'
+
+module ActsAsParanoid
+  module Validations
+    def self.included(base)
+      base.extend ClassMethods
+    end
+
+    # ActiveRecord::Validations::UniquenessValidator也是继承自ActiveModel::EachValidator
+    class UniquenessWithoutDeletedValidator < ActiveRecord::Validations::UniquenessValidator
+      # 这个validate_each方法是必须定义的
+      def validate_each(record, attribute, value)
+        # 找到记录的class
+        finder_class = find_finder_class_for(record)
+        table = finder_class.arel_table
+
+        coder = record.class.serialized_attributes[attribute.to_s]
+
+        if value && coder
+          value = coder.dump value
+        end
+
+        relation = build_relation(finder_class, table, attribute, value)
+        [Array(finder_class.primary_key), Array(record.send(:id))].transpose.each do |pk_key, pk_value|
+          relation = relation.and(table[pk_key.to_sym].not_eq(pk_value))
+        end if record.persisted?
+
+        Array.wrap(options[:scope]).each do |scope_item|
+          scope_value = record.send(scope_item)
+          relation = relation.and(table[scope_item].eq(scope_value))
+        end
+
+        # Re-add ActsAsParanoid default scope conditions manually.
+        if finder_class.unscoped.where(finder_class.paranoid_default_scope_sql).where(relation).exists?
+          record.errors.add(attribute, :taken, options.except(:case_sensitive, :scope).merge(:value => value))
+        end
+      end
+    end
+module ClassMethods
+      def validates_uniqueness_of_without_deleted(*attr_names)
+        validates_with UniquenessWithoutDeletedValidator, _merge_attributes(attr_names)
+      end
+    end
+  end
+end
+```
+
+上面的validate_each应该跟rails提供的UniquenessValidator中的[validate_each](http://api.rubyonrails.org/v3.2.13/classes/ActiveRecord/Validations/UniquenessValidator.html)做比较
+
+最大的不同在于下面两个
+
+``` ruby
+- relation = relation.and(table[finder_class.primary_key.to_sym].not_eq(record.send(:id))) if record.persisted?
++ [Array(finder_class.primary_key), Array(record.send(:id))].transpose.each do |pk_key, pk_value|
++   relation = relation.and(table[pk_key.to_sym].not_eq(pk_value))
++ end if record.persisted?
+
+# 这里才是主要的变化
+- if finder_class.unscoped.where(relation).exists?
++ if finder_class.unscoped.where(finder_class.paranoid_default_scope_sql).where(relation).exists?
+```
+
+其实UniquenessWithoutDeletedValidator做的就是重写原生的ActiveRecord::Validations::UniquenessValidator,加上自己的改动,把唯一性验证的范围缩小(finder_class.paranoid_default_scope_sql),最后达到目的
