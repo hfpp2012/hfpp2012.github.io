@@ -1327,7 +1327,7 @@
 </span><span class='line'>        <span class="k">end</span>
 </span><span class='line'>      <span class="k">end</span>
 </span><span class='line'>    <span class="k">end</span>
-</span><span class='line'><span class="k">module</span> <span class="nn">ClassMethods</span>
+</span><span class='line'>    <span class="k">module</span> <span class="nn">ClassMethods</span>
 </span><span class='line'>      <span class="k">def</span> <span class="nf">validates_uniqueness_of_without_deleted</span><span class="p">(</span><span class="o">*</span><span class="n">attr_names</span><span class="p">)</span>
 </span><span class='line'>        <span class="n">validates_with</span> <span class="no">UniquenessWithoutDeletedValidator</span><span class="p">,</span> <span class="n">_merge_attributes</span><span class="p">(</span><span class="n">attr_names</span><span class="p">)</span>
 </span><span class='line'>      <span class="k">end</span>

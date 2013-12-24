@@ -4,7 +4,7 @@
   <title><![CDATA[Category: rails | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/rails/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-24T23:17:52+08:00</updated>
+  <updated>2013-12-24T23:23:15+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -923,11 +923,8 @@ class UniquenessWithoutDeletedValidator &lt; ActiveRecord::Validations::Uniquene
     end
   end
 end
-</code></pre>
-
-<p>module ClassMethods</p>
-
-<pre><code>  def validates_uniqueness_of_without_deleted(*attr_names)
+module ClassMethods
+  def validates_uniqueness_of_without_deleted(*attr_names)
     validates_with UniquenessWithoutDeletedValidator, _merge_attributes(attr_names)
   end
 end
