@@ -4,7 +4,7 @@
   <title><![CDATA[小子的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-23T18:02:51+08:00</updated>
+  <updated>2013-12-24T14:34:36+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -71,6 +71,8 @@
 <li>自己写一个validator</li>
 <li>class_attribute的用法</li>
 <li>activerecord/relation中klass的用法</li>
+<li>alias_method_chain的用法</li>
+<li>method_defined?的用法</li>
 </ol>
 
 
@@ -899,28 +901,52 @@
 <span class='line-number'>32</span>
 <span class='line-number'>33</span>
 <span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
 </pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">module</span> <span class="nn">ActsAsParanoid</span>
 </span><span class='line'>  <span class="k">module</span> <span class="nn">Associations</span>
 </span><span class='line'>    <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">included</span><span class="p">(</span><span class="n">base</span><span class="p">)</span>
 </span><span class='line'>      <span class="n">base</span><span class="o">.</span><span class="n">extend</span> <span class="no">ClassMethods</span>
 </span><span class='line'>      <span class="k">class</span> <span class="o">&lt;&lt;</span> <span class="n">base</span>
+</span><span class='line'>        <span class="c1"># 用belongs_to_with_deleted重写belongs_to</span>
 </span><span class='line'>        <span class="n">alias_method_chain</span> <span class="ss">:belongs_to</span><span class="p">,</span> <span class="ss">:deleted</span>
 </span><span class='line'>      <span class="k">end</span>
 </span><span class='line'>    <span class="k">end</span>
 </span><span class='line'>
 </span><span class='line'>    <span class="k">module</span> <span class="nn">ClassMethods</span>
 </span><span class='line'>      <span class="k">def</span> <span class="nf">belongs_to_with_deleted</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">options</span> <span class="o">=</span> <span class="p">{})</span>
+</span><span class='line'>        <span class="c1"># 从options移除with_deleted的值并返回</span>
 </span><span class='line'>        <span class="n">with_deleted</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="ss">:with_deleted</span><span class="p">)</span>
+</span><span class='line'>        <span class="c1"># 由于返回的是result,假如with_deleted是false,将使用原生的belongs_to方法,即belongs_to_with_deleted,假如是true,也是会返回belongs_to的结果留待下面的操作</span>
 </span><span class='line'>        <span class="n">result</span> <span class="o">=</span> <span class="n">belongs_to_without_deleted</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
 </span><span class='line'>
+</span><span class='line'>        <span class="c1"># 按照上面的例子,target是:deleted_school</span>
+</span><span class='line'>        <span class="c1"># 会用到:deleted_school_with_unscoped代替:deleted_school</span>
+</span><span class='line'>        <span class="c1"># 而原先的用:deleted_school_without_unscoped</span>
 </span><span class='line'>        <span class="k">if</span> <span class="n">with_deleted</span>
+</span><span class='line'>          <span class="c1"># 增加一个option: with_deleted</span>
 </span><span class='line'>          <span class="n">result</span><span class="o">.</span><span class="n">options</span><span class="o">[</span><span class="ss">:with_deleted</span><span class="o">]</span> <span class="o">=</span> <span class="n">with_deleted</span>
+</span><span class='line'>          <span class="c1"># 在我们上面的例子中,target就是:deleted_school</span>
 </span><span class='line'>          <span class="k">unless</span> <span class="nb">method_defined?</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">target</span><span class="si">}</span><span class="s2">_with_unscoped&quot;</span>
+</span><span class='line'>            <span class="c1"># 实例方法</span>
 </span><span class='line'>            <span class="nb">class_eval</span> <span class="o">&lt;&lt;-</span><span class="no">RUBY</span><span class="p">,</span> <span class="bp">__FILE__</span><span class="p">,</span> <span class="bp">__LINE__</span>
 </span><span class='line'><span class="sh">              def #{target}_with_unscoped(*args)</span>
+</span><span class='line'><span class="sh">                # 取出关联关系,包括school的记录</span>
 </span><span class='line'><span class="sh">                association = association(:#{target})</span>
 </span><span class='line'><span class="sh">                return nil if association.options[:polymorphic] &amp;&amp; association.klass.nil?</span>
+</span><span class='line'><span class="sh">                # 如果school没有用paranoid,就直接用原生的belongs_to</span>
 </span><span class='line'><span class="sh">                return #{target}_without_unscoped(*args) unless association.klass.paranoid?</span>
+</span><span class='line'><span class="sh">                # 去掉default_scope,scoping跟scoped的作用差不多,不过是接一个block</span>
 </span><span class='line'><span class="sh">                association.klass.with_deleted.scoping { #{target}_without_unscoped(*args) }</span>
 </span><span class='line'><span class="sh">              end</span>
 </span><span class='line'><span class="sh">              alias_method_chain :#{target}, :unscoped</span>
@@ -935,6 +961,23 @@
 </span><span class='line'><span class="k">end</span>
 </span></code></pre></td></tr></table></div></figure>
 
+
+<p>其实上面的代码就是把belongs_to方法重写了,主要是<code>alias_method_chain :belongs_to, :deleted</code>发挥作用,它的意思是会用belongs_to_with_deleted重写原来的belongs_to方法,原来那个就变成belongs_to_without_deleted方法</p>
+
+<p>相当于这样</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">alias_method</span> <span class="ss">:belongs_to_without_deleted</span><span class="p">,</span> <span class="ss">:belongs_to</span>
+</span><span class='line'><span class="n">alias_method</span> <span class="ss">:belongs_to</span><span class="p">,</span> <span class="ss">:belongs_to_with_deleted</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>在ruby2.0之后会用<a href="http://dev.af83.com/2012/10/19/ruby-2-0-module-prepend.html">module prepend</a>代替它</p>
+
+<p>不明白的可以看<a href="http://dev.iforeach.com/blogs/2011-02-15/alias-alias_method-and-alias_method_chain-compare">alias-alias_method-and-alias_method_chain-compare</a>和<a href="http://apidock.com/rails/Module/alias_method_chain">alias_method_chain</a></p>
+
+<p>上述的代码总结一下,首先重写了belongs_to的代码,让它可以加个with_deleted的参数,但通过squad.deleted_school,就会通过association(:deleted_school)这个方法找所属的school(包含default_scope),然而最后一句<code>association.klass.with_deleted.scoping { #{target}_without_unscoped(*args) }</code>能够去掉default_scope,因为用了with_deleted嘛</p>
 
 <h3>Recovery 还原</h3>
 

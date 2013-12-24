@@ -4,7 +4,7 @@
   <title><![CDATA[Category: ruby | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-23T18:02:51+08:00</updated>
+  <updated>2013-12-24T14:34:36+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -65,6 +65,8 @@ end
 <li>自己写一个validator</li>
 <li>class_attribute的用法</li>
 <li>activerecord/relation中klass的用法</li>
+<li>alias_method_chain的用法</li>
+<li>method_defined?的用法</li>
 </ol>
 
 
@@ -684,23 +686,35 @@ module ActsAsParanoid
 <pre><code>def self.included(base)
   base.extend ClassMethods
   class &lt;&lt; base
+    # 用belongs_to_with_deleted重写belongs_to
     alias_method_chain :belongs_to, :deleted
   end
 end
 
 module ClassMethods
   def belongs_to_with_deleted(target, options = {})
+    # 从options移除with_deleted的值并返回
     with_deleted = options.delete(:with_deleted)
+    # 由于返回的是result,假如with_deleted是false,将使用原生的belongs_to方法,即belongs_to_with_deleted,假如是true,也是会返回belongs_to的结果留待下面的操作
     result = belongs_to_without_deleted(target, options)
 
+    # 按照上面的例子,target是:deleted_school
+    # 会用到:deleted_school_with_unscoped代替:deleted_school
+    # 而原先的用:deleted_school_without_unscoped
     if with_deleted
+      # 增加一个option: with_deleted
       result.options[:with_deleted] = with_deleted
+      # 在我们上面的例子中,target就是:deleted_school
       unless method_defined? "#{target}_with_unscoped"
+        # 实例方法
         class_eval &lt;&lt;-RUBY, __FILE__, __LINE__
           def #{target}_with_unscoped(*args)
+            # 取出关联关系,包括school的记录
             association = association(:#{target})
             return nil if association.options[:polymorphic] &amp;&amp; association.klass.nil?
+            # 如果school没有用paranoid,就直接用原生的belongs_to
             return #{target}_without_unscoped(*args) unless association.klass.paranoid?
+            # 去掉default_scope,scoping跟scoped的作用差不多,不过是接一个block
             association.klass.with_deleted.scoping { #{target}_without_unscoped(*args) }
           end
           alias_method_chain :#{target}, :unscoped
@@ -716,6 +730,21 @@ end
 <p>  end
 end
 ```</p>
+
+<p>其实上面的代码就是把belongs_to方法重写了,主要是<code>alias_method_chain :belongs_to, :deleted</code>发挥作用,它的意思是会用belongs_to_with_deleted重写原来的belongs_to方法,原来那个就变成belongs_to_without_deleted方法</p>
+
+<p>相当于这样</p>
+
+<p><code>ruby
+alias_method :belongs_to_without_deleted, :belongs_to
+alias_method :belongs_to, :belongs_to_with_deleted
+</code></p>
+
+<p>在ruby2.0之后会用<a href="http://dev.af83.com/2012/10/19/ruby-2-0-module-prepend.html">module prepend</a>代替它</p>
+
+<p>不明白的可以看<a href="http://dev.iforeach.com/blogs/2011-02-15/alias-alias_method-and-alias_method_chain-compare">alias-alias_method-and-alias_method_chain-compare</a>和<a href="http://apidock.com/rails/Module/alias_method_chain">alias_method_chain</a></p>
+
+<p>上述的代码总结一下,首先重写了belongs_to的代码,让它可以加个with_deleted的参数,但通过squad.deleted_school,就会通过association(:deleted_school)这个方法找所属的school(包含default_scope),然而最后一句<code>association.klass.with_deleted.scoping { #{target}_without_unscoped(*args) }</code>能够去掉default_scope,因为用了with_deleted嘛</p>
 
 <h3>Recovery 还原</h3>
 
