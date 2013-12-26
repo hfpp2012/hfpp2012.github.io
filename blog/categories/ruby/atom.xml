@@ -4,7 +4,7 @@
   <title><![CDATA[Category: ruby | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-26T22:06:16+08:00</updated>
+  <updated>2013-12-26T22:46:35+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -90,7 +90,7 @@ say_hello.call(&lsquo;xiaozi&rsquo;)</p>
 <p>I&rsquo;m xiaozi
 ```</p>
 
-<p>用了关键字Proc.new来创建一个block赋给一个变量,再用call来调用的</p>
+<p>用了关键字Proc.new来创建一个block对象,然后赋给一个变量,最后用call来调用的</p>
 
 <p>原来block还可以取个名字的哦</p>
 
@@ -111,16 +111,62 @@ say_hello.call(&lsquo;xiaozi&rsquo;)</p>
 <p>``` ruby
 def awesome_print(&amp;the_proc)
   the_proc
-end</p>
-
-<p>p = awesome_print { |name| &ldquo;I&rsquo;m #{name}&rdquo; }
-p.class # => Proc
-p.call(&lsquo;xiaozi&rsquo;)</p>
+end
+my_proc = awesome_print { |name| &ldquo;I&rsquo;m #{name}&rdquo; }
+my_proc.class # => Proc
+my_proc.call(&lsquo;xiaozi&rsquo;)</p>
 
 <h1>=></h1>
 
 <p>I&rsquo;m xiaozi
 ```</p>
+
+<p>``` ruby
+def awesome_print
+  puts &ldquo;I&rsquo;m #{yield}&rdquo;
+end
+my_proc = proc { &ldquo;xiaozi&rdquo; }
+awesome_print(&amp;my_proc)</p>
+
+<h1>=></h1>
+
+<p>I&rsquo;m xiaozi
+```</p>
+
+<h2>proc vs lambda</h2>
+
+<ol>
+<li>return</li>
+</ol>
+
+
+<p>``` ruby
+def awesome_print(the_proc)
+  the_proc.call
+end
+my_proc = lambda { puts &ldquo;I&rsquo;m xiaozi&rdquo; }
+awesome_print(my_proc)</p>
+
+<h1>=></h1>
+
+<p>I&rsquo;m xiaozi
+```</p>
+
+<p>``` ruby
+def another_awesome_print
+  my_proc = Proc.new { return &ldquo;I&rsquo;m xiaozi&rdquo; }
+  result = my_proc.call
+  return result + &lsquo;hello&rsquo;  # unreachable code!
+end</p>
+
+<h1>=></h1>
+
+<p>I&rsquo;m xiaozi
+```</p>
+
+<h2>DSL</h2>
+
+<h2>&ndash;></h2>
 ]]></content>
   </entry>
   

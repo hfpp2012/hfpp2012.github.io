@@ -224,7 +224,7 @@ I&#39;m xiaozi &hellip;">
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>用了关键字Proc.new来创建一个block赋给一个变量,再用call来调用的</p>
+<p>用了关键字Proc.new来创建一个block对象,然后赋给一个变量,最后用call来调用的</p>
 
 <p>原来block还可以取个名字的哦</p>
 
@@ -256,14 +256,12 @@ I&#39;m xiaozi &hellip;">
 <span class='line-number'>7</span>
 <span class='line-number'>8</span>
 <span class='line-number'>9</span>
-<span class='line-number'>10</span>
 </pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">awesome_print</span><span class="p">(</span><span class="o">&amp;</span><span class="n">the_proc</span><span class="p">)</span>
 </span><span class='line'>  <span class="n">the_proc</span>
 </span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="nb">p</span> <span class="o">=</span> <span class="n">awesome_print</span> <span class="p">{</span> <span class="o">|</span><span class="nb">name</span><span class="o">|</span> <span class="s2">&quot;I&#39;m </span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="s2">&quot;</span> <span class="p">}</span>
-</span><span class='line'><span class="nb">p</span><span class="o">.</span><span class="n">class</span> <span class="c1"># =&gt; Proc</span>
-</span><span class='line'><span class="nb">p</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="s1">&#39;xiaozi&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="n">my_proc</span> <span class="o">=</span> <span class="n">awesome_print</span> <span class="p">{</span> <span class="o">|</span><span class="nb">name</span><span class="o">|</span> <span class="s2">&quot;I&#39;m </span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="s2">&quot;</span> <span class="p">}</span>
+</span><span class='line'><span class="n">my_proc</span><span class="o">.</span><span class="n">class</span> <span class="c1"># =&gt; Proc</span>
+</span><span class='line'><span class="n">my_proc</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="s1">&#39;xiaozi&#39;</span><span class="p">)</span>
 </span><span class='line'>
 </span><span class='line'><span class="c1"># =&gt;</span>
 </span><span class='line'><span class="n">I</span><span class="err">&#39;</span><span class="n">m</span> <span class="n">xiaozi</span>
@@ -271,6 +269,76 @@ I&#39;m xiaozi &hellip;">
 
 
 
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">awesome_print</span>
+</span><span class='line'>  <span class="nb">puts</span> <span class="s2">&quot;I&#39;m </span><span class="si">#{</span><span class="k">yield</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'><span class="n">my_proc</span> <span class="o">=</span> <span class="nb">proc</span> <span class="p">{</span> <span class="s2">&quot;xiaozi&quot;</span> <span class="p">}</span>
+</span><span class='line'><span class="n">awesome_print</span><span class="p">(</span><span class="o">&amp;</span><span class="n">my_proc</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># =&gt;</span>
+</span><span class='line'><span class="n">I</span><span class="err">&#39;</span><span class="n">m</span> <span class="n">xiaozi</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>proc vs lambda</h2>
+
+<ol>
+<li>return</li>
+</ol>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">awesome_print</span><span class="p">(</span><span class="n">the_proc</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">the_proc</span><span class="o">.</span><span class="n">call</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'><span class="n">my_proc</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="nb">puts</span> <span class="s2">&quot;I&#39;m xiaozi&quot;</span> <span class="p">}</span>
+</span><span class='line'><span class="n">awesome_print</span><span class="p">(</span><span class="n">my_proc</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># =&gt;</span>
+</span><span class='line'><span class="n">I</span><span class="err">&#39;</span><span class="n">m</span> <span class="n">xiaozi</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">another_awesome_print</span>
+</span><span class='line'>  <span class="n">my_proc</span> <span class="o">=</span> <span class="no">Proc</span><span class="o">.</span><span class="n">new</span> <span class="p">{</span> <span class="k">return</span> <span class="s2">&quot;I&#39;m xiaozi&quot;</span> <span class="p">}</span>
+</span><span class='line'>  <span class="n">result</span> <span class="o">=</span> <span class="n">my_proc</span><span class="o">.</span><span class="n">call</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">result</span> <span class="o">+</span> <span class="s1">&#39;hello&#39;</span>  <span class="c1"># unreachable code!</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># =&gt;</span>
+</span><span class='line'><span class="n">I</span><span class="err">&#39;</span><span class="n">m</span> <span class="n">xiaozi</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>DSL</h2>
+
+<h2>&ndash;></h2>
 </div>
 
 
