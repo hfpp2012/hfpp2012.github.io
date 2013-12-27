@@ -13,6 +13,7 @@
     text-shadow: lighten($base02, 2) 0 -1px;
   } @else {
     background: $base02 $noise-bg !important;
+    background: #ffffcc !important;
     border-right: 1px solid darken($base03, 2) !important;
     @include box-shadow(lighten($base02, 2) -1px 0 inset);
     text-shadow: darken($base02, 10) 0 -1px;
