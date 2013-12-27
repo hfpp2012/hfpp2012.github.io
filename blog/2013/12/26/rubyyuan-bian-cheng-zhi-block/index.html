@@ -190,6 +190,25 @@ I&#39;m xiaozi &hellip;">
 
 <p>总结一下yield,它就是块的占位符,awesome_print把参数值&#8217;xiaozi&#8217;传给<code>do ... end</code>块中的name参数,yield占的坑让给了<code>do ... end</code>块,并执行,name参数的值&#8217;xiaozi&#8217;传给<code>yield name</code>中的name参数</p>
 
+<p>这样也行</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">awesome_print</span>
+</span><span class='line'>  <span class="k">yield</span> <span class="s2">&quot;xiaozi&quot;</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'><span class="n">awesome_print</span> <span class="p">{</span> <span class="o">|</span><span class="nb">name</span><span class="o">|</span> <span class="nb">puts</span> <span class="s2">&quot;I&#39;m </span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="s2">&quot;</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># =&gt;</span>
+</span><span class='line'><span class="n">I</span><span class="err">&#39;</span><span class="n">m</span> <span class="n">xiaozi</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
 <p>很简单吧!</p>
 
 <p>如何判断一个方法传过来block了?</p>
@@ -658,29 +677,21 @@ I&#39;m xiaozi &hellip;">
 <span class='line-number'>18</span>
 <span class='line-number'>19</span>
 <span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
 </pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="p">(</span><span class="mi">1</span><span class="o">.</span><span class="n">.</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">inject</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:+</span><span class="p">)</span>
 </span><span class='line'><span class="p">(</span><span class="mi">1</span><span class="o">.</span><span class="n">.</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">inject</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:+</span><span class="o">.</span><span class="n">to_proc</span><span class="p">)</span>
 </span><span class='line'>
 </span><span class='line'><span class="c1"># can be expressed as</span>
-</span><span class='line'>
 </span><span class='line'><span class="p">(</span><span class="mi">1</span><span class="o">.</span><span class="n">.</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">inject</span><span class="p">(</span> <span class="o">&amp;</span><span class="nb">proc</span><span class="p">{</span> <span class="o">|</span><span class="n">obj</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="o">|</span> <span class="n">obj</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="ss">:+</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="p">}</span> <span class="p">)</span>
 </span><span class='line'>
 </span><span class='line'><span class="c1"># which &amp; will covert into</span>
-</span><span class='line'>
 </span><span class='line'><span class="p">(</span><span class="mi">1</span><span class="o">.</span><span class="n">.</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">inject</span><span class="p">(</span> <span class="o">|</span><span class="n">obj</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="o">|</span> <span class="n">obj</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="ss">:+</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="p">}</span> <span class="p">)</span>
 </span><span class='line'>
 </span><span class='line'><span class="c1"># which we can convert to</span>
-</span><span class='line'>
 </span><span class='line'><span class="p">(</span><span class="mi">1</span><span class="o">.</span><span class="n">.</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">inject</span> <span class="k">do</span> <span class="o">|</span><span class="n">obj</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="o">|</span>
 </span><span class='line'>  <span class="n">obj</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="ss">:+</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
 </span><span class='line'><span class="k">end</span>
 </span><span class='line'>
 </span><span class='line'><span class="c1"># and then we can just rename our parameters to something more friendly</span>
-</span><span class='line'>
 </span><span class='line'><span class="p">(</span><span class="mi">1</span><span class="o">.</span><span class="n">.</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">inject</span> <span class="k">do</span> <span class="o">|</span><span class="n">result</span><span class="p">,</span> <span class="n">element</span><span class="o">|</span>
 </span><span class='line'>  <span class="n">result</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="ss">:+</span><span class="p">,</span> <span class="n">element</span><span class="p">)</span>
 </span><span class='line'><span class="k">end</span>
@@ -730,6 +741,8 @@ I&#39;m xiaozi &hellip;">
 
 <h4>return语句</h4>
 
+<p>当使用return时,Proc会中途退出,而lambda不会</p>
+
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
@@ -738,39 +751,38 @@ I&#39;m xiaozi &hellip;">
 <span class='line-number'>6</span>
 <span class='line-number'>7</span>
 <span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">awesome_print</span><span class="p">(</span><span class="n">the_proc</span><span class="p">)</span>
-</span><span class='line'>  <span class="n">the_proc</span><span class="o">.</span><span class="n">call</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">awesome_print</span>
+</span><span class='line'>  <span class="n">my_proc</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="k">return</span> <span class="s2">&quot;I&#39;m xiaozi&quot;</span> <span class="p">}</span>
+</span><span class='line'>  <span class="n">result</span> <span class="o">=</span> <span class="n">my_proc</span><span class="o">.</span><span class="n">call</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">result</span> <span class="o">+</span> <span class="s1">&#39; hello&#39;</span>  <span class="c1"># unreachable code!</span>
 </span><span class='line'><span class="k">end</span>
-</span><span class='line'><span class="n">my_proc</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="nb">puts</span> <span class="s2">&quot;I&#39;m xiaozi&quot;</span> <span class="p">}</span>
-</span><span class='line'><span class="n">awesome_print</span><span class="p">(</span><span class="n">my_proc</span><span class="p">)</span>
-</span><span class='line'>
+</span><span class='line'><span class="n">awesome_print</span>
 </span><span class='line'><span class="c1"># =&gt;</span>
-</span><span class='line'><span class="n">I</span><span class="err">&#39;</span><span class="n">m</span> <span class="n">xiaozi</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">another_awesome_print</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="s2">&quot;I&#39;m xiaozihello&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">awesome_print</span>
 </span><span class='line'>  <span class="n">my_proc</span> <span class="o">=</span> <span class="no">Proc</span><span class="o">.</span><span class="n">new</span> <span class="p">{</span> <span class="k">return</span> <span class="s2">&quot;I&#39;m xiaozi&quot;</span> <span class="p">}</span>
 </span><span class='line'>  <span class="n">result</span> <span class="o">=</span> <span class="n">my_proc</span><span class="o">.</span><span class="n">call</span>
-</span><span class='line'>  <span class="k">return</span> <span class="n">result</span> <span class="o">+</span> <span class="s1">&#39;hello&#39;</span>  <span class="c1"># unreachable code!</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">result</span> <span class="o">+</span> <span class="s1">&#39; hello&#39;</span>  <span class="c1"># unreachable code!</span>
 </span><span class='line'><span class="k">end</span>
-</span><span class='line'>
+</span><span class='line'><span class="n">awesome_print</span>
 </span><span class='line'><span class="c1"># =&gt;</span>
 </span><span class='line'><span class="n">I</span><span class="err">&#39;</span><span class="n">m</span> <span class="n">xiaozi</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
 <h4>参数检查</h4>
+
+<p>lambda会检查参数列表,而Proc不会检查</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
