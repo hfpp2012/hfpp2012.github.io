@@ -4,7 +4,7 @@
   <title><![CDATA[小子的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-27T10:40:32+08:00</updated>
+  <updated>2013-12-27T10:43:31+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -260,7 +260,9 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>看来block和block对象的区别在于&amp;,block对象取&amp;之后才在形式上跟block一样</p>
+<p>Proc也是跟lambda一样的,不信?你去试试</p>
+
+<p>总结一下,block跟&amp;是一对的,block对象(lambda或proc)取&amp;才跟&amp;是一对的,block和block对象的区别在于&amp;,block对象取&amp;之后才在形式上跟block一样</p>
 
 <h3>proc vs lambda return语句</h3>
 
