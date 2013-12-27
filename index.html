@@ -153,7 +153,7 @@ I&#39;m xiaozi &hellip;">
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>也就是说任何方法你都可以给它传一个block,但是要使用yield去执行这个block</p>
+<p>也就是说任何方法你都可以给它传一个block,而且必须是最后一个参数,但是要使用yield去执行这个block</p>
 
 <p>另外,<code>awesome_print { puts 'I'm xiaozi }</code>太难看了,那就</p>
 
@@ -392,6 +392,31 @@ I&#39;m xiaozi &hellip;">
 <p>Proc也是跟lambda一样的,不信?你去试试</p>
 
 <p>总结一下,block跟&amp;是一对的,block对象(lambda或Proc)取&amp;才跟&amp;是一对的,block和block对象的区别在于&amp;,block对象取&amp;之后才在形式上跟block一样</p>
+
+<h2>传多个block对象</h2>
+
+<p>一个block对象作为参数不够,怎么办</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">awesome_print</span><span class="p">(</span><span class="n">who</span><span class="p">,</span> <span class="n">where</span><span class="p">)</span>
+</span><span class='line'>  <span class="s2">&quot;</span><span class="si">#{</span><span class="n">who</span><span class="o">.</span><span class="n">call</span><span class="si">}</span><span class="s2"> live in </span><span class="si">#{</span><span class="n">where</span><span class="o">.</span><span class="n">call</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'><span class="n">who</span> <span class="o">=</span> <span class="o">-&gt;</span> <span class="p">{</span> <span class="s2">&quot;xiaozi&quot;</span> <span class="p">}</span>
+</span><span class='line'><span class="n">where</span> <span class="o">=</span> <span class="o">-&gt;</span> <span class="p">{</span><span class="s1">&#39;shenzhen&#39;</span><span class="p">}</span>
+</span><span class='line'><span class="n">awesome_print</span><span class="p">(</span><span class="n">who</span><span class="p">,</span> <span class="n">where</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># =&gt;</span>
+</span><span class='line'><span class="s2">&quot;xiaozi live in shenzhen&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
 
 <h3>Proc vs lambda的不同之处</h3>
 
