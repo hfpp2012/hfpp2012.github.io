@@ -113,6 +113,11 @@
 
 <p>它在实现是就是利用两个多态，一个叫followable(被follow者), 一个叫followable(跟随者),把每个对象的类名字符串和id存进数据库实现关联,其他代码就实现了关于两者的查询代码, 下面是两者的关系</p>
 
+<!-- more -->
+
+
+
+
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 </pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">has_many</span> <span class="ss">:followings</span><span class="p">,</span> <span class="ss">:as</span> <span class="o">=&gt;</span> <span class="ss">:followable</span><span class="p">,</span> <span class="ss">:dependent</span> <span class="o">=&gt;</span> <span class="ss">:destroy</span><span class="p">,</span> <span class="ss">:class_name</span> <span class="o">=&gt;</span> <span class="s1">&#39;Follow&#39;</span>
@@ -148,9 +153,6 @@
 <h3>接下来就来分晰啦</h3>
 
 <h4>源码目录结构功能介绍</h4>
-
-<!-- more -->
-
 
 <ul>
 <li>lib/acts_as_follower.rb: 主文件,主要定义了ActsAsFollower这个model(每个gem都会做差不多的事),还包括一些autoload语句，做的事主要是require你的所用到的rb文件啦</li>

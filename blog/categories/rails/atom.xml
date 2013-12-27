@@ -4,7 +4,7 @@
   <title><![CDATA[Category: rails | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/rails/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-27T21:08:43+08:00</updated>
+  <updated>2013-12-27T21:34:20+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -1501,14 +1501,14 @@ end
 
 <p>这个gem的版本是1.3.0,关于新版的变化可以看文章的最后部分</p>
 
+<!-- more -->
+
+
 <h3>架构</h3>
 
 <p><strong>数据库表</strong></p>
 
 <p><img src="/images/ancestry/table.png"></p>
-
-<!-- more -->
-
 
 <p><img src="/images/ancestry/table_content.png"></p>
 
@@ -2368,6 +2368,9 @@ end
 
 <p><img src="/images/rails_association_reference/has_many_through.png"></p>
 
+<!-- more -->
+
+
 <p>``` ruby
 class School &lt; ActiveRecord::Base
   has_many :squads
@@ -2389,9 +2392,6 @@ end
 <ul>
 <li>association(force_reload = false)强制reload查数据库</li>
 </ul>
-
-
-<!-- more -->
 
 
 <p>``` ruby
@@ -2996,6 +2996,9 @@ s.students &lt;&lt; Student.create(:name => &ldquo;学员&rdquo;)
 
 <p>通过关键字(belongs_to, has_many等)把两个<strong>model</strong>(模型)关联起来,下面以我的开发经验和一些源码来解说每个模型关联</p>
 
+<!-- more -->
+
+
 <p>所有关键字如下:</p>
 
 <ul>
@@ -3015,9 +3018,6 @@ s.students &lt;&lt; Student.create(:name => &ldquo;学员&rdquo;)
 <h4>has_many</h4>
 
 <p><img src="/images/rails_association/has_many_and_belongs_to.png"></p>
-
-<!-- more -->
-
 
 <p>``` ruby
 class Comment &lt; ActiveRecord::Base

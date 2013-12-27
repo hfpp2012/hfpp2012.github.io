@@ -4,7 +4,7 @@
   <title><![CDATA[Category: on | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/on/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-27T21:08:43+08:00</updated>
+  <updated>2013-12-27T21:34:20+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -1057,14 +1057,14 @@ end
 
 <p>这个gem的版本是1.3.0,关于新版的变化可以看文章的最后部分</p>
 
+<!-- more -->
+
+
 <h3>架构</h3>
 
 <p><strong>数据库表</strong></p>
 
 <p><img src="/images/ancestry/table.png"></p>
-
-<!-- more -->
-
 
 <p><img src="/images/ancestry/table_content.png"></p>
 
@@ -1924,6 +1924,9 @@ end
 
 <p><img src="/images/rails_association_reference/has_many_through.png"></p>
 
+<!-- more -->
+
+
 <p>``` ruby
 class School &lt; ActiveRecord::Base
   has_many :squads
@@ -1945,9 +1948,6 @@ end
 <ul>
 <li>association(force_reload = false)强制reload查数据库</li>
 </ul>
-
-
-<!-- more -->
 
 
 <p>``` ruby
@@ -2552,6 +2552,9 @@ s.students &lt;&lt; Student.create(:name => &ldquo;学员&rdquo;)
 
 <p>通过关键字(belongs_to, has_many等)把两个<strong>model</strong>(模型)关联起来,下面以我的开发经验和一些源码来解说每个模型关联</p>
 
+<!-- more -->
+
+
 <p>所有关键字如下:</p>
 
 <ul>
@@ -2571,9 +2574,6 @@ s.students &lt;&lt; Student.create(:name => &ldquo;学员&rdquo;)
 <h4>has_many</h4>
 
 <p><img src="/images/rails_association/has_many_and_belongs_to.png"></p>
-
-<!-- more -->
-
 
 <p>``` ruby
 class Comment &lt; ActiveRecord::Base
@@ -2777,6 +2777,9 @@ end
 
 <p>这个gem是用来实现树型结构的,例如一个分类(category),下面还有子分类,这个时候就可以用它了,还有,你回复了一个贴子,别人再来回复你，这个时候也可以用它。一个菜单之下还有子菜单，子菜单之下又可以有子菜单,子菜单之下有菜单项，它可以实现一种树型结构的菜单。它的原理也很简单,在模型中是实现了一个自关联,假如在一个comment(评论)model中,定义一个children(孩子),再定义一个parent(父), :class_name都是'Comment'。那他们怎么实现关联的,也就是说孩子要知道父亲是谁,父亲要知道它有哪些孩子,它在数据存储中是通过一个字段来关联的,在这个gem中这个字段叫<strong>parent_id</strong>假如我们创建一个根(root), <code>root = Comment.create</code>, 这个时候<strong>root</strong>*的parent_id是null,它是一个根,<code>children = root.children.create</code>,这个<strong>children</strong>是<strong>root</strong>的一个孩子,那<strong>children</strong>的<strong>parent_id</strong>就是<strong>root</strong>的<strong>id</strong></p>
 
+<!-- more -->
+
+
 <p>```
   菜单
    |<em> 系统设置
@@ -2798,9 +2801,6 @@ has_many   :children...
 </code></p>
 
 <p>数据表是这样存储的</p>
-
-<!-- more -->
-
 
 <p><img src="/images/acts_as_tree_table.png"></p>
 

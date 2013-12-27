@@ -240,12 +240,6 @@ I&#39;m xiaozi &hellip;">
 
 <p>这个gem的版本是1.3.0,关于新版的变化可以看文章的最后部分</p>
 
-<h3>架构</h3>
-
-<p><strong>数据库表</strong></p>
-
-<p><img src="/images/ancestry/table.png"></p>
-
 </div>
   
   
@@ -290,42 +284,6 @@ I&#39;m xiaozi &hellip;">
 <p>上一篇<a href="http://yinsigan.github.io/blog/2013/12/10/rails-association/">rails association</a>说明了rails的各种模型的原理和设计,这篇我们来说说rails association具体参数的使用,通过一些案例或代码来分析它们的使用场景</p>
 
 <p><img src="/images/rails_association_reference/has_many_through.png"></p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">School</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
-</span><span class='line'>  <span class="n">has_many</span> <span class="ss">:squads</span>
-</span><span class='line'>  <span class="n">has_many</span> <span class="ss">:students</span><span class="p">,</span> <span class="ss">:through</span> <span class="o">=&gt;</span> <span class="ss">:squads</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">class</span> <span class="nc">Squad</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
-</span><span class='line'>  <span class="n">belongs_to</span> <span class="ss">:school</span>
-</span><span class='line'>  <span class="n">has_many</span> <span class="ss">:students</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">class</span> <span class="nc">Student</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
-</span><span class='line'>  <span class="n">belongs_to</span> <span class="ss">:squad</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h3>Association(关联关系的使用)</h3>
-
-<ul>
-<li>association(force_reload = false)强制reload查数据库</li>
-</ul>
-
 
 </div>
   
@@ -378,26 +336,6 @@ I&#39;m xiaozi &hellip;">
 
 <p>通过关键字(belongs_to, has_many等)把两个<strong>model</strong>(模型)关联起来,下面以我的开发经验和一些源码来解说每个模型关联</p>
 
-<p>所有关键字如下:</p>
-
-<ul>
-<li>belongs_to</li>
-<li>has_one</li>
-<li>has_many</li>
-<li>has_many :through</li>
-<li>has_one :through</li>
-<li>has_and_belongs_to_many</li>
-</ul>
-
-
-<h3>一对多</h3>
-
-<p>通过<strong>has_many</strong>或<strong>has_many :through</strong>或自关联来定义,一个<strong>modelA</strong>有很多<strong>modelB</strong>,那些<strong>modelB</strong>都属于<strong>modelA</strong>例如一篇文章有很多评论, 一个班级有很多学员</p>
-
-<h4>has_many</h4>
-
-<p><img src="/images/rails_association/has_many_and_belongs_to.png"></p>
-
 </div>
   
   
@@ -445,33 +383,6 @@ I&#39;m xiaozi &hellip;">
 <h3>这个gem是干什么的?原理是什么?</h3>
 
 <p>这个gem是用来实现树型结构的,例如一个分类(category),下面还有子分类,这个时候就可以用它了,还有,你回复了一个贴子,别人再来回复你，这个时候也可以用它。一个菜单之下还有子菜单，子菜单之下又可以有子菜单,子菜单之下有菜单项，它可以实现一种树型结构的菜单。它的原理也很简单,在模型中是实现了一个自关联,假如在一个comment(评论)model中,定义一个children(孩子),再定义一个parent(父), :class_name都是&#8217;Comment&#8217;。那他们怎么实现关联的,也就是说孩子要知道父亲是谁,父亲要知道它有哪些孩子,它在数据存储中是通过一个字段来关联的,在这个gem中这个字段叫<strong>parent_id</strong>假如我们创建一个根(root), <code>root = Comment.create</code>, 这个时候<strong>root</strong>*的parent_id是null,它是一个根,<code>children = root.children.create</code>,这个<strong>children</strong>是<strong>root</strong>的一个孩子,那<strong>children</strong>的<strong>parent_id</strong>就是<strong>root</strong>的<strong>id</strong></p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>  菜单
-</span><span class='line'>   |_ 系统设置
-</span><span class='line'>   |    |_ 模版设置
-</span><span class='line'>   |    |_ 表格设置
-</span><span class='line'>   |_ 人员管理
-</span><span class='line'>        |_ 教职工管理
-</span><span class='line'>        |_ 学员管理</span></code></pre></td></tr></table></div></figure>
-
-
-<p>children和parent的关系是这样实现的</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">belongs_to</span> <span class="ss">:parent</span><span class="o">.</span><span class="n">.</span><span class="o">.</span>
-</span><span class='line'><span class="n">has_many</span>   <span class="ss">:children</span><span class="o">.</span><span class="n">.</span><span class="o">.</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>数据表是这样存储的</p>
 
 </div>
   
@@ -524,42 +435,6 @@ I&#39;m xiaozi &hellip;">
 
 <p>它在实现是就是利用两个多态，一个叫followable(被follow者), 一个叫followable(跟随者),把每个对象的类名字符串和id存进数据库实现关联,其他代码就实现了关于两者的查询代码, 下面是两者的关系</p>
 
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">has_many</span> <span class="ss">:followings</span><span class="p">,</span> <span class="ss">:as</span> <span class="o">=&gt;</span> <span class="ss">:followable</span><span class="p">,</span> <span class="ss">:dependent</span> <span class="o">=&gt;</span> <span class="ss">:destroy</span><span class="p">,</span> <span class="ss">:class_name</span> <span class="o">=&gt;</span> <span class="s1">&#39;Follow&#39;</span>
-</span><span class='line'><span class="n">has_many</span> <span class="ss">:follows</span><span class="p">,</span> <span class="ss">:as</span> <span class="o">=&gt;</span> <span class="ss">:follower</span><span class="p">,</span> <span class="ss">:dependent</span> <span class="o">=&gt;</span> <span class="ss">:destroy</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-
-
-<figure class='code'><figcaption><span>follow.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">belongs_to</span> <span class="ss">:followable</span><span class="p">,</span> <span class="ss">:polymorphic</span> <span class="o">=&gt;</span> <span class="kp">true</span>
-</span><span class='line'><span class="n">belongs_to</span> <span class="ss">:follower</span><span class="p">,</span>   <span class="ss">:polymorphic</span> <span class="o">=&gt;</span> <span class="kp">true</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<hr />
-
-<h3>来看一下它的数据结构</h3>
-
-<p>目录树结构</p>
-
-<p><img src="/images/acts_as_follower_file_tree.png"></p>
-
-<p>结构库表结构</p>
-
-<p><img src="/images/acts_as_follower_table_tree.png"></p>
-
-<p>主要有五个字段,分别是<strong>blocked</strong>, <strong>followable_id</strong>, <strong>followable_type</strong>, <strong>follower_id</strong>, <strong>follower_type</strong>, 主要是分为两个多态(<strong>follower</strong>, <strong>followerable</strong>), 例如一个用户订阅了一本书, <strong>followerable</strong>可以存<strong>Book</strong>和它的<strong>id</strong>, 而<strong>follower</strong>这个多态存<strong>User</strong>和它的<strong>id</strong></p>
-
-<hr />
-
-<h3>接下来就来分晰啦</h3>
-
-<h4>源码目录结构功能介绍</h4>
-
 </div>
   
   
@@ -610,77 +485,6 @@ I&#39;m xiaozi &hellip;">
 
 <p>它使用也很简单,只要在model里写上<code>acts_as_commentable</code>,就可以使用评论了,其实<code>acts_as_commentable</code>在实现上就等于
 <code>has_many :comments, :as =&gt; :commentable</code>, comment这个model是一个简单的多态,它在数据表中的存储是这样的。</p>
-
-<p><img src="/images/acts_as_comment_table.png"></p>
-
-<p>其实最主要的就是两个字段commentable_id, commentable_type,一个简单的多态</p>
-
-<p>由于<code>has_many :comments</code>那就可以进行很多操作，例如创建一条评论</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">Post</span><span class="o">.</span><span class="n">first</span><span class="o">.</span><span class="n">comments</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="ss">:title</span> <span class="o">=&gt;</span> <span class="s2">&quot;First comment.&quot;</span><span class="p">,</span> <span class="ss">:comment</span> <span class="o">=&gt;</span> <span class="s2">&quot;This is the first comment.&quot;</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>经过这样的操作之后,在数据库中就会产生如下如果</p>
-
-<p><img src="/images/acts_as_comment_table_result.png"></p>
-
-<p>而这个存储方式是由rails自动处理的,更多的rails关系模型可查看<a href="http://guides.rubyonrails.org/association_basics.html">rails guides</a></p>
-
-<h4>分析</h4>
-
-<p>源码目录下如下</p>
-
-<p><img src="/images/acts_as_commentable_file_tree.png"></p>
-
-<p>这一步会生成一个rails migration文件和一个叫comment.rb的rails model文件</p>
-
-<p>原理很简单,会在数据库中生成一个叫comments的表
-它的字段包括title, comment, commentable_type, commentable_id, user_id等</p>
-
-<p>而生成这两个模版文件的源码如下:</p>
-
-<figure class='code'><figcaption><span>lib/generators/comment/comment_generator.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;rails/generators/migration&#39;</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">class</span> <span class="nc">CommentGenerator</span> <span class="o">&lt;</span> <span class="ss">Rails</span><span class="p">:</span><span class="ss">:Generators</span><span class="o">::</span><span class="no">Base</span>
-</span><span class='line'>  <span class="kp">include</span> <span class="ss">Rails</span><span class="p">:</span><span class="ss">:Generators</span><span class="o">::</span><span class="no">Migration</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">source_root</span>
-</span><span class='line'>    <span class="vi">@_acts_as_commentable_source_root</span> <span class="o">||=</span> <span class="no">File</span><span class="o">.</span><span class="n">expand_path</span><span class="p">(</span><span class="s2">&quot;../templates&quot;</span><span class="p">,</span> <span class="bp">__FILE__</span><span class="p">)</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">next_migration_number</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-</span><span class='line'>    <span class="no">Time</span><span class="o">.</span><span class="n">now</span><span class="o">.</span><span class="n">utc</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y%m%d%H%M%S&quot;</span><span class="p">)</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="k">def</span> <span class="nf">create_model_file</span>
-</span><span class='line'>    <span class="n">template</span> <span class="s2">&quot;comment.rb&quot;</span><span class="p">,</span> <span class="s2">&quot;app/models/comment.rb&quot;</span>
-</span><span class='line'>    <span class="n">migration_template</span> <span class="s2">&quot;create_comments.rb&quot;</span><span class="p">,</span> <span class="s2">&quot;db/migrate/create_comments.rb&quot;</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>这是使用rails generation功能实现的</p>
 
 </div>
   

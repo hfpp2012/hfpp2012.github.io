@@ -112,6 +112,9 @@
 <p>它使用也很简单,只要在model里写上<code>acts_as_commentable</code>,就可以使用评论了,其实<code>acts_as_commentable</code>在实现上就等于
 <code>has_many :comments, :as =&gt; :commentable</code>, comment这个model是一个简单的多态,它在数据表中的存储是这样的。</p>
 
+<!-- more -->
+
+
 <p><img src="/images/acts_as_comment_table.png"></p>
 
 <p>其实最主要的就是两个字段commentable_id, commentable_type,一个简单的多态</p>
@@ -182,9 +185,6 @@
 
 
 <p>这是使用rails generation功能实现的</p>
-
-<!-- more -->
-
 
 <p>还可以查看其他gem的实现方式</p>
 
