@@ -4,7 +4,7 @@
   <title><![CDATA[Category: metaprogramming | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/metaprogramming/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-26T22:46:35+08:00</updated>
+  <updated>2013-12-27T10:24:59+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -77,6 +77,8 @@ end
 
 <p>明白了吗,就是用block_given?</p>
 
+<p>在这里,<code>{ ... }</code>或<code>do ... end</code>跟yield就是成对存在的,传了block,执行时就要用yield</p>
+
 <h2>proc</h2>
 
 <p>它和block有什么不同呢</p>
@@ -94,6 +96,8 @@ say_hello.call(&lsquo;xiaozi&rsquo;)</p>
 
 <p>原来block还可以取个名字的哦</p>
 
+<p>很明显,用Proc.new创建的block对象,要由call来执行和调用</p>
+
 <h2>lambda</h2>
 
 <p>``` ruby
@@ -106,39 +110,94 @@ say_hello.call(&lsquo;xiaozi&rsquo;)</p>
 <p>I&rsquo;m xiaozi
 ```</p>
 
-<h2>&amp;</h2>
+<p>跟proc差不多,lambda也创建一个block对象,而且它的类还是Proc</p>
+
+<p>很明显,用lambda创建的block对象,要由call来执行和调用</p>
+
+<h2>block vs lambda vs proc</h2>
+
+<p>lambda跟proc在形式上还比较相似,但它们跟<code>do ... end</code>或<code>{ ... }</code>这种形式相差好多</p>
+
+<p>不信?来看下</p>
+
+<h3>&amp; 块和块对象</h3>
 
 <p>``` ruby
 def awesome_print(&amp;the_proc)
   the_proc
 end
-my_proc = awesome_print { |name| &ldquo;I&rsquo;m #{name}&rdquo; }
+my_proc = awesome_print { &ldquo;I&rsquo;m xiaozi&rdquo; }
 my_proc.class # => Proc
-my_proc.call(&lsquo;xiaozi&rsquo;)</p>
+my_proc.call</p>
 
 <h1>=></h1>
 
 <p>I&rsquo;m xiaozi
 ```</p>
+
+<p>&amp;这个符号会不会很熟悉呢,对,C语言就有,意思是取地址</p>
+
+<p>难道这里的block跟地址有关系?</p>
+
+<p>在这里&amp;the_proc表示接收的参数的值要是一个<code>do ... end</code>或<code>{ ... }</code>这样的块,而不是由Proc.new或lambda创建的块对象</p>
+
+<p>注意区分<strong>块</strong>和<strong>块对象</strong></p>
+
+<p>假如把<code>{ .. }</code>换成lambda</p>
 
 <p>``` ruby
-def awesome_print
-  puts &ldquo;I&rsquo;m #{yield}&rdquo;
+def awesome_print(&amp;the_proc)
+  the_proc
 end
-my_proc = proc { &ldquo;xiaozi&rdquo; }
-awesome_print(&amp;my_proc)</p>
+my_proc = lambda { &ldquo;I&rsquo;m xiaozi&rdquo; }
+awesome_print(my_proc)</p>
+
+<h1>=></h1>
+
+<p>ArgumentError: wrong number of arguments (1 for 0)
+```</p>
+
+<p>出错了吧,看来<code>{ ... }</code>这样的块和lambda这样的块对象并不一样啊</p>
+
+<p>那就改一下</p>
+
+<p>``` ruby
+def awesome_print(&amp;the_proc)
+  the_proc
+end</p>
+
+<p>my_proc = lambda {  &ldquo;I&rsquo;m xiaozi&rdquo; }</p>
+
+<h1>注意这行</h1>
+
+<p>awesome_print(&amp;my_proc).call</p>
 
 <h1>=></h1>
 
 <p>I&rsquo;m xiaozi
 ```</p>
 
-<h2>proc vs lambda</h2>
+<p>或者这样也行</p>
 
-<ol>
-<li>return</li>
-</ol>
+<p>``` ruby</p>
 
+<h1>注意这行</h1>
+
+<p>def awesome_print(the_proc)
+  the_proc
+end</p>
+
+<p>my_proc = lambda {  &ldquo;I&rsquo;m xiaozi&rdquo; }
+awesome_print(my_proc).call</p>
+
+<h1>=></h1>
+
+<p>I&rsquo;m xiaozi
+```</p>
+
+<p>看来block和block对象的区别在于&amp;,block对象取&amp;之后才在形式上跟block一样</p>
+
+<h3>proc vs lambda return语句</h3>
 
 <p>``` ruby
 def awesome_print(the_proc)
