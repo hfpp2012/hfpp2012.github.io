@@ -517,6 +517,7 @@ I&#39;m xiaozi &hellip;">
 <span class='line-number'>11</span>
 <span class='line-number'>12</span>
 <span class='line-number'>13</span>
+<span class='line-number'>14</span>
 </pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Topic</span>
 </span><span class='line'>  <span class="k">def</span> <span class="nf">title</span>
 </span><span class='line'>    <span class="s2">&quot;I&#39;m xiaozi&quot;</span>
@@ -526,7 +527,8 @@ I&#39;m xiaozi &hellip;">
 </span><span class='line'>    <span class="k">yield</span> <span class="nb">self</span>
 </span><span class='line'>  <span class="k">end</span>
 </span><span class='line'><span class="k">end</span>
-</span><span class='line'><span class="no">Topic</span><span class="o">.</span><span class="n">new</span><span class="o">.</span><span class="n">get_title</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:title</span><span class="p">)</span>
+</span><span class='line'><span class="n">t</span> <span class="o">=</span> <span class="no">Topic</span><span class="o">.</span><span class="n">new</span>
+</span><span class='line'><span class="n">t</span><span class="o">.</span><span class="n">get_title</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:title</span><span class="p">)</span>
 </span><span class='line'>
 </span><span class='line'><span class="c1"># =&gt;</span>
 </span><span class='line'><span class="s2">&quot;I&#39;m xiaozi&quot;</span>
@@ -566,9 +568,54 @@ I&#39;m xiaozi &hellip;">
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>明白了吗,其实很简单,就是把借get_title的手去执行t的title方法</p>
+<p>其实很简单,就是把借get_title的手去执行t的title方法</p>
 
-<p>[:a, :b, :c].map(&amp;:to_s)也是这个道理啦</p>
+<p>来验证下to_proc方法</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Topic</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">title</span>
+</span><span class='line'>    <span class="s2">&quot;I&#39;m xiaozi&quot;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">get_title</span>
+</span><span class='line'>    <span class="k">yield</span> <span class="nb">self</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'><span class="n">t</span> <span class="o">=</span> <span class="no">Topic</span><span class="o">.</span><span class="n">new</span>
+</span><span class='line'><span class="n">t</span><span class="o">.</span><span class="n">get_title</span><span class="p">(</span> <span class="o">&amp;</span> <span class="nb">proc</span><span class="p">{</span> <span class="o">|</span><span class="n">obj</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="o">|</span> <span class="n">obj</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="ss">:title</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="p">}</span> <span class="p">)</span>
+</span><span class='line'><span class="c1"># 再简单一点</span>
+</span><span class='line'><span class="n">t</span><span class="o">.</span><span class="n">get_title</span><span class="p">(</span> <span class="o">&amp;</span> <span class="nb">proc</span><span class="p">{</span> <span class="o">|</span><span class="n">obj</span><span class="o">|</span> <span class="n">obj</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="ss">:title</span><span class="p">)</span> <span class="p">}</span> <span class="p">)</span>
+</span><span class='line'><span class="c1"># 还可以这样,因为&amp;proc的形式跟{}是一样的</span>
+</span><span class='line'><span class="n">t</span><span class="o">.</span><span class="n">get_title</span><span class="p">{</span> <span class="o">|</span><span class="n">obj</span><span class="o">|</span> <span class="n">obj</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="ss">:title</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'><span class="c1"># 干脆这样</span>
+</span><span class='line'><span class="n">t</span><span class="o">.</span><span class="n">get_title</span><span class="p">{</span> <span class="o">|</span><span class="n">obj</span><span class="o">|</span> <span class="n">obj</span><span class="o">.</span><span class="n">title</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># =&gt;</span>
+</span><span class='line'><span class="s2">&quot;I&#39;m xiaozi&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>现在明白了吧,其实[:a, :b, :c].map(&amp;:to_s)也是这个道理啦</p>
 
 <h3>block &amp; lambda &amp; Proc的class</h3>
 

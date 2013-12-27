@@ -4,7 +4,7 @@
   <title><![CDATA[Category: metaprogramming | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/metaprogramming/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-27T13:43:29+08:00</updated>
+  <updated>2013-12-27T13:55:36+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -322,7 +322,8 @@ class Topic
 
 <p>  end
 end
-Topic.new.get_title(&amp;:title)</p>
+t = Topic.new
+t.get_title(&amp;:title)</p>
 
 <h1>=></h1>
 
@@ -355,9 +356,47 @@ t.get_title(&lsquo;xiaozi&rsquo;, &amp;:title)</p>
 <p>&ldquo;I&rsquo;m xiaozi&rdquo;
 ```</p>
 
-<p>明白了吗,其实很简单,就是把借get_title的手去执行t的title方法</p>
+<p>其实很简单,就是把借get_title的手去执行t的title方法</p>
 
-<p>[:a, :b, :c].map(&amp;:to_s)也是这个道理啦</p>
+<p>来验证下to_proc方法</p>
+
+<p>``` ruby
+class Topic
+  def title</p>
+
+<pre><code>"I'm xiaozi"
+</code></pre>
+
+<p>  end</p>
+
+<p>  def get_title</p>
+
+<pre><code>yield self
+</code></pre>
+
+<p>  end
+end
+t = Topic.new
+t.get_title( &amp; proc{ |obj, <em>args| obj.send(:title, </em>args) } )</p>
+
+<h1>再简单一点</h1>
+
+<p>t.get_title( &amp; proc{ |obj| obj.send(:title) } )</p>
+
+<h1>还可以这样,因为&amp;proc的形式跟{}是一样的</h1>
+
+<p>t.get_title{ |obj| obj.send(:title) }</p>
+
+<h1>干脆这样</h1>
+
+<p>t.get_title{ |obj| obj.title }</p>
+
+<h1>=></h1>
+
+<p>&ldquo;I&rsquo;m xiaozi&rdquo;
+```</p>
+
+<p>现在明白了吧,其实[:a, :b, :c].map(&amp;:to_s)也是这个道理啦</p>
 
 <h3>block &amp; lambda &amp; Proc的class</h3>
 
