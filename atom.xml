@@ -4,7 +4,7 @@
   <title><![CDATA[小子的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-27T13:55:36+08:00</updated>
+  <updated>2013-12-27T14:35:43+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -167,7 +167,28 @@
 
 <p>推荐用这种方法</p>
 
-<h2>传多个block对象</h2>
+<h3>return yield</h3>
+
+<p>yield能作为返回值出现</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">awesome_print</span>
+</span><span class='line'>  <span class="nb">puts</span> <span class="k">yield</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'><span class="n">awesome_print</span> <span class="p">{</span> <span class="s2">&quot;I&#39;m xiaozi&quot;</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># =&gt;</span>
+</span><span class='line'><span class="n">I</span><span class="err">&#39;</span><span class="n">m</span> <span class="n">xiaozi</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>传多个block对象</h3>
 
 <p>一个block对象作为参数不够,怎么办</p>
 
@@ -356,7 +377,7 @@
 
 <h3>Symbol’s To Proc</h3>
 
-<p>你肯定用过类似这样的方法吧<code>[1, 2, 3].inject(&amp;:+)</code>或者<code>[:a, :b, :c].map(&amp;:to_s)</code>等</p>
+<p>你肯定用过类似这样的方法吧<code>(1..10).inject(&amp;:+)</code>或者<code>[:a, :b, :c].map(&amp;:to_s)</code>等</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -506,7 +527,58 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>现在明白了吧,其实[:a, :b, :c].map(&amp;:to_s)也是这个道理啦</p>
+<p>现在明白了吧,其实(1..10).inject(&amp;:+)也是这个道理啦</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="p">(</span><span class="mi">1</span><span class="o">.</span><span class="n">.</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">inject</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:+</span><span class="p">)</span>
+</span><span class='line'><span class="p">(</span><span class="mi">1</span><span class="o">.</span><span class="n">.</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">inject</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:+</span><span class="o">.</span><span class="n">to_proc</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># can be expressed as</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="mi">1</span><span class="o">.</span><span class="n">.</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">inject</span><span class="p">(</span> <span class="o">&amp;</span><span class="nb">proc</span><span class="p">{</span> <span class="o">|</span><span class="n">obj</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="o">|</span> <span class="n">obj</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="ss">:+</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="p">}</span> <span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># which &amp; will covert into</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="mi">1</span><span class="o">.</span><span class="n">.</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">inject</span><span class="p">(</span> <span class="o">|</span><span class="n">obj</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="o">|</span> <span class="n">obj</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="ss">:+</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="p">}</span> <span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># which we can convert to</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="mi">1</span><span class="o">.</span><span class="n">.</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">inject</span> <span class="k">do</span> <span class="o">|</span><span class="n">obj</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="o">|</span>
+</span><span class='line'>  <span class="n">obj</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="ss">:+</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># and then we can just rename our parameters to something more friendly</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="mi">1</span><span class="o">.</span><span class="n">.</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">inject</span> <span class="k">do</span> <span class="o">|</span><span class="n">result</span><span class="p">,</span> <span class="n">element</span><span class="o">|</span>
+</span><span class='line'>  <span class="n">result</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="ss">:+</span><span class="p">,</span> <span class="n">element</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># =&gt; 55</span>
+</span></code></pre></td></tr></table></div></figure>
+
 
 <h3>block &amp; lambda &amp; Proc的class</h3>
 

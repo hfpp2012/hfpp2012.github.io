@@ -4,7 +4,7 @@
   <title><![CDATA[Category: rails | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/rails/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-27T13:55:36+08:00</updated>
+  <updated>2013-12-27T14:35:43+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -132,7 +132,22 @@ say_hello.call(&lsquo;xiaozi&rsquo;)</p>
 
 <p>推荐用这种方法</p>
 
-<h2>传多个block对象</h2>
+<h3>return yield</h3>
+
+<p>yield能作为返回值出现</p>
+
+<p>``` ruby
+def awesome_print
+  puts yield
+end
+awesome_print { &ldquo;I&rsquo;m xiaozi&rdquo; }</p>
+
+<h1>=></h1>
+
+<p>I&rsquo;m xiaozi
+```</p>
+
+<h3>传多个block对象</h3>
 
 <p>一个block对象作为参数不够,怎么办</p>
 
@@ -272,7 +287,7 @@ end</p>
 
 <h3>Symbol’s To Proc</h3>
 
-<p>你肯定用过类似这样的方法吧<code>[1, 2, 3].inject(&amp;:+)</code>或者<code>[:a, :b, :c].map(&amp;:to_s)</code>等</p>
+<p>你肯定用过类似这样的方法吧<code>(1..10).inject(&amp;:+)</code>或者<code>[:a, :b, :c].map(&amp;:to_s)</code>等</p>
 
 <p>``` ruby
 [:a, :b, :c].map(&amp;:to_s)</p>
@@ -396,7 +411,35 @@ t.get_title( &amp; proc{ |obj, <em>args| obj.send(:title, </em>args) } )</p>
 <p>&ldquo;I&rsquo;m xiaozi&rdquo;
 ```</p>
 
-<p>现在明白了吧,其实[:a, :b, :c].map(&amp;:to_s)也是这个道理啦</p>
+<p>现在明白了吧,其实(1..10).inject(&amp;:+)也是这个道理啦</p>
+
+<p>``` ruby
+(1..10).inject(&amp;:+)
+(1..10).inject(&amp;:+.to_proc)</p>
+
+<h1>can be expressed as</h1>
+
+<p>(1..10).inject( &amp;proc{ |obj, <em>args| obj.send(:+, </em>args) } )</p>
+
+<h1>which &amp; will covert into</h1>
+
+<p>(1..10).inject( |obj, <em>args| obj.send(:+, </em>args) } )</p>
+
+<h1>which we can convert to</h1>
+
+<p>(1..10).inject do |obj, <em>args|
+  obj.send(:+, </em>args)
+end</p>
+
+<h1>and then we can just rename our parameters to something more friendly</h1>
+
+<p>(1..10).inject do |result, element|
+  result.send(:+, element)
+end</p>
+
+<h1>=> 55</h1>
+
+<p>```</p>
 
 <h3>block &amp; lambda &amp; Proc的class</h3>
 
