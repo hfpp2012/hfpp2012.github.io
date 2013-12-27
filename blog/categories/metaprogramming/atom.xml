@@ -4,7 +4,7 @@
   <title><![CDATA[Category: metaprogramming | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/metaprogramming/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-27T11:30:00+08:00</updated>
+  <updated>2013-12-27T12:04:23+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -96,7 +96,7 @@ say_hello.call(&lsquo;xiaozi&rsquo;)</p>
 
 <p>原来Proc.new创建的block对象还可以赋给一个变量</p>
 
-<p>很明显,用Proc.new创建的block对象,要由call来执行和调用</p>
+<p>在这里,用Proc.new创建的block对象,要由call来执行和调用</p>
 
 <h2>lambda</h2>
 
@@ -112,13 +112,7 @@ say_hello.call(&lsquo;xiaozi&rsquo;)</p>
 
 <p>跟Proc差不多,lambda也创建一个block对象,而且它的类还是Proc</p>
 
-<p>很明显,用lambda创建的block对象,要由call来执行和调用</p>
-
-<h2>block vs lambda vs Proc</h2>
-
-<p>lambda跟Proc在形式上还比较相似,但它们跟<code>do ... end</code>或<code>{ ... }</code>这种形式相差好多</p>
-
-<p>不信?来看下</p>
+<p>在这里,用lambda创建的block对象,要由call来执行和调用</p>
 
 <h2>&ndash;></h2>
 
@@ -156,6 +150,12 @@ awesome_print(who, where)</p>
 ```</p>
 
 <p>列好队,用block对象传过去就行了</p>
+
+<h2>block vs lambda vs Proc</h2>
+
+<p>lambda跟Proc在形式上还比较相似,但它们跟<code>do ... end</code>或<code>{ ... }</code>这种形式相差好多</p>
+
+<p>不信?来看下</p>
 
 <h3>&amp; 区别块和块对象</h3>
 
@@ -198,17 +198,19 @@ awesome_print(my_proc)</p>
 
 <p>出错了吧,看来lambda这样的块对象和&amp;不是一对的</p>
 
-<p>那给lambda生成的block对象前加个&amp;(类似于C语言的取地址)</p>
+<p>那给lambda前面加个&amp;(类似于C语言的取地址)</p>
 
 <p>``` ruby
 def awesome_print(&amp;the_proc)
   the_proc
-end
-my_proc = lambda {  &ldquo;I&rsquo;m xiaozi&rdquo; }</p>
+end</p>
 
-<h1>注意这行</h1>
+<p>awesome_print(&amp;lambda { puts &ldquo;I&rsquo;m xiaozi&rdquo; }).call</p>
 
-<p>awesome_print(&amp;my_proc).call</p>
+<h1>or</h1>
+
+<p>my_proc = lambda {  &ldquo;I&rsquo;m xiaozi&rdquo; }
+awesome_print(&amp;my_proc).call</p>
 
 <h1>=></h1>
 
@@ -221,7 +223,7 @@ my_proc = lambda {  &ldquo;I&rsquo;m xiaozi&rdquo; }</p>
 
 <p>``` ruby</p>
 
-<h1>注意这行</h1>
+<h1>注意这行&amp;the_proc 变成了 the_proc</h1>
 
 <p>def awesome_print(the_proc)
   the_proc
@@ -238,12 +240,68 @@ awesome_print(my_proc).call</p>
 
 <p>总结一下,block跟&amp;是一对的,block对象(lambda或Proc)取&amp;才跟&amp;是一对的,block和block对象的区别在于&amp;,block对象取&amp;之后才在形式上跟block一样</p>
 
+<h3>&amp; yield call相互转化</h3>
+
+<p>上面说过块block给方法后用yield来执行和调用,但是如果block传给&amp;的参数变量,又可以用call来执行,到底怎么回事</p>
+
+<p>``` ruby</p>
+
+<h1>yield &amp; block</h1>
+
+<p>def awesome_print
+  yield
+end
+awesome_print { &ldquo;I&rsquo;m xiaozi&rdquo; }</p>
+
+<p>def awesome_print(code)
+  code.call
+end
+awesome_print lambda { &ldquo;I&rsquo;m xiaozi&rdquo; }
+```</p>
+
+<p>这两种方法上面都说过了,但是<code>lambda { "I'm xiaozi" }</code>不给call执行,要给yield执行,可以吗</p>
+
+<p>``` ruby
+def awesome_print
+  yield
+end</p>
+
+<p>awesome_print(&amp;lambda { &ldquo;I&rsquo;m xiaozi&rdquo;} )
+```</p>
+
+<p>这样都行!它们有一个相同的联系点?</p>
+
+<h3>block &amp; lambda &amp; Proc的class</h3>
+
+<p>Proc自不必说,它的class就是Proc,本来就是用Proc.new创建的嘛</p>
+
+<p>来看下block和lambda</p>
+
+<p>``` ruby
+def awesome_print(&amp;code)
+  code.class
+end
+awesome_print { &ldquo;I&rsquo;m xiaozi&rdquo; }</p>
+
+<h1>=></h1>
+
+<p>Proc</p>
+
+<p>def awesome_print(code)
+  code.class
+end
+awesome_print &ndash;> { &ldquo;I&rsquo;m xiaozi&rdquo; }</p>
+
+<h1>=></h1>
+
+<p>Proc
+```</p>
+
+<p>原来三者的class是一样的</p>
+
 <h3>Proc vs lambda的不同之处</h3>
 
-<ol>
-<li>return语句</li>
-</ol>
-
+<h4>return语句</h4>
 
 <p>``` ruby
 def awesome_print(the_proc)
@@ -269,10 +327,7 @@ end</p>
 <p>I&rsquo;m xiaozi
 ```</p>
 
-<ol>
-<li>参数检查</li>
-</ol>
-
+<h4>参数检查</h4>
 
 <p>``` ruby
 def awesome_print(statu)

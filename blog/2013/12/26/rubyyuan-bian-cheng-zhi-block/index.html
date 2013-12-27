@@ -230,7 +230,7 @@ I&#39;m xiaozi &hellip;">
 
 <p>原来Proc.new创建的block对象还可以赋给一个变量</p>
 
-<p>很明显,用Proc.new创建的block对象,要由call来执行和调用</p>
+<p>在这里,用Proc.new创建的block对象,要由call来执行和调用</p>
 
 <h2>lambda</h2>
 
@@ -251,13 +251,7 @@ I&#39;m xiaozi &hellip;">
 
 <p>跟Proc差不多,lambda也创建一个block对象,而且它的类还是Proc</p>
 
-<p>很明显,用lambda创建的block对象,要由call来执行和调用</p>
-
-<h2>block vs lambda vs Proc</h2>
-
-<p>lambda跟Proc在形式上还比较相似,但它们跟<code>do ... end</code>或<code>{ ... }</code>这种形式相差好多</p>
-
-<p>不信?来看下</p>
+<p>在这里,用lambda创建的block对象,要由call来执行和调用</p>
 
 <h2>&ndash;></h2>
 
@@ -308,6 +302,12 @@ I&#39;m xiaozi &hellip;">
 
 
 <p>列好队,用block对象传过去就行了</p>
+
+<h2>block vs lambda vs Proc</h2>
+
+<p>lambda跟Proc在形式上还比较相似,但它们跟<code>do ... end</code>或<code>{ ... }</code>这种形式相差好多</p>
+
+<p>不信?来看下</p>
 
 <h3>&amp; 区别块和块对象</h3>
 
@@ -365,7 +365,7 @@ I&#39;m xiaozi &hellip;">
 
 <p>出错了吧,看来lambda这样的块对象和&amp;不是一对的</p>
 
-<p>那给lambda生成的block对象前加个&amp;(类似于C语言的取地址)</p>
+<p>那给lambda前面加个&amp;(类似于C语言的取地址)</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -376,11 +376,15 @@ I&#39;m xiaozi &hellip;">
 <span class='line-number'>7</span>
 <span class='line-number'>8</span>
 <span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
 </pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">awesome_print</span><span class="p">(</span><span class="o">&amp;</span><span class="n">the_proc</span><span class="p">)</span>
 </span><span class='line'>  <span class="n">the_proc</span>
 </span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">awesome_print</span><span class="p">(</span><span class="o">&amp;</span><span class="nb">lambda</span> <span class="p">{</span> <span class="nb">puts</span> <span class="s2">&quot;I&#39;m xiaozi&quot;</span> <span class="p">})</span><span class="o">.</span><span class="n">call</span>
+</span><span class='line'><span class="c1"># or</span>
 </span><span class='line'><span class="n">my_proc</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="p">{</span>  <span class="s2">&quot;I&#39;m xiaozi&quot;</span> <span class="p">}</span>
-</span><span class='line'><span class="c1"># 注意这行</span>
 </span><span class='line'><span class="n">awesome_print</span><span class="p">(</span><span class="o">&amp;</span><span class="n">my_proc</span><span class="p">)</span><span class="o">.</span><span class="n">call</span>
 </span><span class='line'>
 </span><span class='line'><span class="c1"># =&gt;</span>
@@ -401,7 +405,7 @@ I&#39;m xiaozi &hellip;">
 <span class='line-number'>7</span>
 <span class='line-number'>8</span>
 <span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># 注意这行</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># 注意这行&amp;the_proc 变成了 the_proc</span>
 </span><span class='line'><span class="k">def</span> <span class="nf">awesome_print</span><span class="p">(</span><span class="n">the_proc</span><span class="p">)</span>
 </span><span class='line'>  <span class="n">the_proc</span>
 </span><span class='line'><span class="k">end</span>
@@ -417,12 +421,90 @@ I&#39;m xiaozi &hellip;">
 
 <p>总结一下,block跟&amp;是一对的,block对象(lambda或Proc)取&amp;才跟&amp;是一对的,block和block对象的区别在于&amp;,block对象取&amp;之后才在形式上跟block一样</p>
 
+<h3>&amp; yield call相互转化</h3>
+
+<p>上面说过块block给方法后用yield来执行和调用,但是如果block传给&amp;的参数变量,又可以用call来执行,到底怎么回事</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># yield &amp; block</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">awesome_print</span>
+</span><span class='line'>  <span class="k">yield</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'><span class="n">awesome_print</span> <span class="p">{</span> <span class="s2">&quot;I&#39;m xiaozi&quot;</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">awesome_print</span><span class="p">(</span><span class="n">code</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">code</span><span class="o">.</span><span class="n">call</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'><span class="n">awesome_print</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="s2">&quot;I&#39;m xiaozi&quot;</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这两种方法上面都说过了,但是<code>lambda { "I'm xiaozi" }</code>不给call执行,要给yield执行,可以吗</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">awesome_print</span>
+</span><span class='line'>  <span class="k">yield</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">awesome_print</span><span class="p">(</span><span class="o">&amp;</span><span class="nb">lambda</span> <span class="p">{</span> <span class="s2">&quot;I&#39;m xiaozi&quot;</span><span class="p">}</span> <span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这样都行!它们有一个相同的联系点?</p>
+
+<h3>block &amp; lambda &amp; Proc的class</h3>
+
+<p>Proc自不必说,它的class就是Proc,本来就是用Proc.new创建的嘛</p>
+
+<p>来看下block和lambda</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">awesome_print</span><span class="p">(</span><span class="o">&amp;</span><span class="n">code</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">code</span><span class="o">.</span><span class="n">class</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'><span class="n">awesome_print</span> <span class="p">{</span> <span class="s2">&quot;I&#39;m xiaozi&quot;</span> <span class="p">}</span>
+</span><span class='line'><span class="c1"># =&gt;</span>
+</span><span class='line'><span class="no">Proc</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">awesome_print</span><span class="p">(</span><span class="n">code</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">code</span><span class="o">.</span><span class="n">class</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'><span class="n">awesome_print</span> <span class="o">-&gt;</span> <span class="p">{</span> <span class="s2">&quot;I&#39;m xiaozi&quot;</span> <span class="p">}</span>
+</span><span class='line'><span class="c1"># =&gt;</span>
+</span><span class='line'><span class="no">Proc</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>原来三者的class是一样的</p>
+
 <h3>Proc vs lambda的不同之处</h3>
 
-<ol>
-<li>return语句</li>
-</ol>
-
+<h4>return语句</h4>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -464,10 +546,7 @@ I&#39;m xiaozi &hellip;">
 </span></code></pre></td></tr></table></div></figure>
 
 
-<ol>
-<li>参数检查</li>
-</ol>
-
+<h4>参数检查</h4>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
