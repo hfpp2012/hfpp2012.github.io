@@ -4,7 +4,7 @@
   <title><![CDATA[Category: metaprogramming | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/metaprogramming/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-27T12:04:23+08:00</updated>
+  <updated>2013-12-27T13:43:29+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -203,9 +203,8 @@ awesome_print(my_proc)</p>
 <p>``` ruby
 def awesome_print(&amp;the_proc)
   the_proc
-end</p>
-
-<p>awesome_print(&amp;lambda { puts &ldquo;I&rsquo;m xiaozi&rdquo; }).call</p>
+end
+awesome_print(&amp;lambda { puts &ldquo;I&rsquo;m xiaozi&rdquo; }).call</p>
 
 <h1>or</h1>
 
@@ -270,6 +269,95 @@ end</p>
 ```</p>
 
 <p>这样都行!它们有一个相同的联系点?</p>
+
+<h3>Symbol’s To Proc</h3>
+
+<p>你肯定用过类似这样的方法吧<code>[1, 2, 3].inject(&amp;:+)</code>或者<code>[:a, :b, :c].map(&amp;:to_s)</code>等</p>
+
+<p>``` ruby
+[:a, :b, :c].map(&amp;:to_s)</p>
+
+<h1>=></h1>
+
+<p>[&ldquo;a&rdquo;, &ldquo;b&rdquo;, &ldquo;c&rdquo;]
+```</p>
+
+<p>好神奇,怎么做到的?</p>
+
+<p>&amp;:to_s能够作为参数值传递,其中:to_s是一个symbol,&amp;:to_s会将to_s转成一个proc对象,结果相当于:to_s.to_proc</p>
+
+<p>任何symbol都有to_proc方法</p>
+
+<p>``` ruby
+class Symbol
+  def to_proc</p>
+
+<pre><code>proc { |obj, *args| obj.send(self, *args) }
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>self就是symbol本身,也就是方法(method)</p>
+
+<p>第一个参数是接收symbol方法的对象
+第二个参数是传递给symbol方法的参数列表</p>
+
+<p>怎么用它呢</p>
+
+<p>``` ruby
+class Topic
+  def title</p>
+
+<pre><code>"I'm xiaozi"
+</code></pre>
+
+<p>  end</p>
+
+<p>  def get_title</p>
+
+<pre><code>yield self
+</code></pre>
+
+<p>  end
+end
+Topic.new.get_title(&amp;:title)</p>
+
+<h1>=></h1>
+
+<p>&ldquo;I&rsquo;m xiaozi&rdquo;
+```</p>
+
+<p>如果要使用第二个参数呢</p>
+
+<p>``` ruby
+class Topic
+  def title(name)</p>
+
+<pre><code>"I'm #{name}"
+</code></pre>
+
+<p>  end</p>
+
+<p>  def get_title(name)</p>
+
+<pre><code>yield self, name
+</code></pre>
+
+<p>  end
+end
+t = Topic.new
+t.get_title(&lsquo;xiaozi&rsquo;, &amp;:title)</p>
+
+<h1>=></h1>
+
+<p>&ldquo;I&rsquo;m xiaozi&rdquo;
+```</p>
+
+<p>明白了吗,其实很简单,就是把借get_title的手去执行t的title方法</p>
+
+<p>[:a, :b, :c].map(&amp;:to_s)也是这个道理啦</p>
 
 <h3>block &amp; lambda &amp; Proc的class</h3>
 

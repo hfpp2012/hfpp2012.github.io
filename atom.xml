@@ -4,7 +4,7 @@
   <title><![CDATA[小子的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-27T12:04:23+08:00</updated>
+  <updated>2013-12-27T13:43:29+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -268,11 +268,9 @@
 <span class='line-number'>8</span>
 <span class='line-number'>9</span>
 <span class='line-number'>10</span>
-<span class='line-number'>11</span>
 </pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">awesome_print</span><span class="p">(</span><span class="o">&amp;</span><span class="n">the_proc</span><span class="p">)</span>
 </span><span class='line'>  <span class="n">the_proc</span>
 </span><span class='line'><span class="k">end</span>
-</span><span class='line'>
 </span><span class='line'><span class="n">awesome_print</span><span class="p">(</span><span class="o">&amp;</span><span class="nb">lambda</span> <span class="p">{</span> <span class="nb">puts</span> <span class="s2">&quot;I&#39;m xiaozi&quot;</span> <span class="p">})</span><span class="o">.</span><span class="n">call</span>
 </span><span class='line'><span class="c1"># or</span>
 </span><span class='line'><span class="n">my_proc</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="p">{</span>  <span class="s2">&quot;I&#39;m xiaozi&quot;</span> <span class="p">}</span>
@@ -355,6 +353,113 @@
 
 
 <p>这样都行!它们有一个相同的联系点?</p>
+
+<h3>Symbol’s To Proc</h3>
+
+<p>你肯定用过类似这样的方法吧<code>[1, 2, 3].inject(&amp;:+)</code>或者<code>[:a, :b, :c].map(&amp;:to_s)</code>等</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="o">[</span><span class="ss">:a</span><span class="p">,</span> <span class="ss">:b</span><span class="p">,</span> <span class="ss">:c</span><span class="o">].</span><span class="n">map</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:to_s</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># =&gt;</span>
+</span><span class='line'><span class="o">[</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>好神奇,怎么做到的?</p>
+
+<p>&amp;:to_s能够作为参数值传递,其中:to_s是一个symbol,&amp;:to_s会将to_s转成一个proc对象,结果相当于:to_s.to_proc</p>
+
+<p>任何symbol都有to_proc方法</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Symbol</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">to_proc</span>
+</span><span class='line'>    <span class="nb">proc</span> <span class="p">{</span> <span class="o">|</span><span class="n">obj</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="o">|</span> <span class="n">obj</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="nb">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>self就是symbol本身,也就是方法(method)</p>
+
+<p>第一个参数是接收symbol方法的对象
+第二个参数是传递给symbol方法的参数列表</p>
+
+<p>怎么用它呢</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Topic</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">title</span>
+</span><span class='line'>    <span class="s2">&quot;I&#39;m xiaozi&quot;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">get_title</span>
+</span><span class='line'>    <span class="k">yield</span> <span class="nb">self</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'><span class="no">Topic</span><span class="o">.</span><span class="n">new</span><span class="o">.</span><span class="n">get_title</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:title</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># =&gt;</span>
+</span><span class='line'><span class="s2">&quot;I&#39;m xiaozi&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>如果要使用第二个参数呢</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Topic</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">title</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
+</span><span class='line'>    <span class="s2">&quot;I&#39;m </span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">get_title</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">yield</span> <span class="nb">self</span><span class="p">,</span> <span class="nb">name</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'><span class="n">t</span> <span class="o">=</span> <span class="no">Topic</span><span class="o">.</span><span class="n">new</span>
+</span><span class='line'><span class="n">t</span><span class="o">.</span><span class="n">get_title</span><span class="p">(</span><span class="s1">&#39;xiaozi&#39;</span><span class="p">,</span> <span class="o">&amp;</span><span class="ss">:title</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># =&gt;</span>
+</span><span class='line'><span class="s2">&quot;I&#39;m xiaozi&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>明白了吗,其实很简单,就是把借get_title的手去执行t的title方法</p>
+
+<p>[:a, :b, :c].map(&amp;:to_s)也是这个道理啦</p>
 
 <h3>block &amp; lambda &amp; Proc的class</h3>
 
