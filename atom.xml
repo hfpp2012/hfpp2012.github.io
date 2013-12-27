@@ -4,7 +4,7 @@
   <title><![CDATA[小子的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-27T17:38:48+08:00</updated>
+  <updated>2013-12-27T18:01:12+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -596,43 +596,6 @@
 </span><span class='line'><span class="c1"># =&gt; 55</span>
 </span></code></pre></td></tr></table></div></figure>
 
-
-<h3>block &amp; lambda &amp; Proc的class</h3>
-
-<p>Proc自不必说,它的class就是Proc,本来就是用Proc.new创建的嘛</p>
-
-<p>来看下block和lambda</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">awesome_print</span><span class="p">(</span><span class="o">&amp;</span><span class="n">code</span><span class="p">)</span>
-</span><span class='line'>  <span class="n">code</span><span class="o">.</span><span class="n">class</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'><span class="n">awesome_print</span> <span class="p">{</span> <span class="s2">&quot;I&#39;m xiaozi&quot;</span> <span class="p">}</span>
-</span><span class='line'><span class="c1"># =&gt;</span>
-</span><span class='line'><span class="no">Proc</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">def</span> <span class="nf">awesome_print</span><span class="p">(</span><span class="n">code</span><span class="p">)</span>
-</span><span class='line'>  <span class="n">code</span><span class="o">.</span><span class="n">class</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'><span class="n">awesome_print</span> <span class="o">-&gt;</span> <span class="p">{</span> <span class="s2">&quot;I&#39;m xiaozi&quot;</span> <span class="p">}</span>
-</span><span class='line'><span class="c1"># =&gt;</span>
-</span><span class='line'><span class="no">Proc</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>原来三者的class是一样的</p>
 
 <h3>Proc vs lambda的不同之处</h3>
 
