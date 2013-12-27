@@ -4,7 +4,7 @@
   <title><![CDATA[Category: ruby | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-27T15:49:52+08:00</updated>
+  <updated>2013-12-27T15:52:19+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -333,8 +333,8 @@ end
 
 <p>self就是symbol本身,也就是方法(method)</p>
 
-<p>第一个参数是接收symbol方法的对象
-第二个参数是传递给symbol方法的参数列表</p>
+<p>第一个参数obj是接收symbol方法的对象
+第二个参数*args是传递给symbol方法的参数列表</p>
 
 <p>怎么用它呢</p>
 
