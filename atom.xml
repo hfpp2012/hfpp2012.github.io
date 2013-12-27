@@ -4,7 +4,7 @@
   <title><![CDATA[小子的博客]]></title>
   <link href="http://yinsigan.github.io/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-27T15:47:33+08:00</updated>
+  <updated>2013-12-27T15:49:52+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -44,6 +44,11 @@
 <p>也就是说任何方法你都可以给它传一个block,而且必须是最后一个参数,但是要使用yield去执行这个block</p>
 
 <p>另外,<code>awesome_print { puts 'I'm xiaozi }</code>太难看了,那就</p>
+
+<!-- more -->
+
+
+
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
