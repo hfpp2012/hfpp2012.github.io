@@ -15,6 +15,8 @@ categories: ruby on rails
 
 通过关键字(belongs_to, has_many等)把两个**model**(模型)关联起来,下面以我的开发经验和一些源码来解说每个模型关联
 
+<!-- more -->
+
 所有关键字如下:
 
 + belongs_to
@@ -31,8 +33,6 @@ categories: ruby on rails
 #### has_many
 
 {% img /images/rails_association/has_many_and_belongs_to.png %}
-
-<!-- more -->
 
 ``` ruby
 class Comment < ActiveRecord::Base

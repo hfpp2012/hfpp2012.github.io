@@ -15,6 +15,8 @@ categories: ruby on rails
 
 它在实现是就是利用两个多态，一个叫followable(被follow者), 一个叫followable(跟随者),把每个对象的类名字符串和id存进数据库实现关联,其他代码就实现了关于两者的查询代码, 下面是两者的关系
 
+<!-- more -->
+
 ``` ruby
 has_many :followings, :as => :followable, :dependent => :destroy, :class_name => 'Follow'
 has_many :follows, :as => :follower, :dependent => :destroy
@@ -46,7 +48,6 @@ belongs_to :follower,   :polymorphic => true
 
 #### 源码目录结构功能介绍
 
-<!-- more -->
 + lib/acts_as_follower.rb: 主文件,主要定义了ActsAsFollower这个model(每个gem都会做差不多的事),还包括一些autoload语句，做的事主要是require你的所用到的rb文件啦
 
 ``` ruby lib/acts_as_follower

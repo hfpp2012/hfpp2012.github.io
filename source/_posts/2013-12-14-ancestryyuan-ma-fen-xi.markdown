@@ -14,13 +14,13 @@ categories: ruby on rails
 
 这个gem的版本是1.3.0,关于新版的变化可以看文章的最后部分
 
+<!-- more -->
+
 ### 架构
 
 **数据库表**
 
 {% img /images/ancestry/table.png %}
-
-<!-- more -->
 
 {% img /images/ancestry/table_content.png %}
 

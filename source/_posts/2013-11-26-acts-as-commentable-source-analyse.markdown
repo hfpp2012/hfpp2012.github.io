@@ -15,6 +15,8 @@ categories: ruby on rails
 它使用也很简单,只要在model里写上`acts_as_commentable`,就可以使用评论了,其实`acts_as_commentable`在实现上就等于
 `has_many :comments, :as => :commentable`, comment这个model是一个简单的多态,它在数据表中的存储是这样的。
 
+<!-- more -->
+
 {% img /images/acts_as_comment_table.png %}
 
 其实最主要的就是两个字段commentable_id, commentable_type,一个简单的多态
@@ -69,7 +71,6 @@ end
 
 这是使用rails generation功能实现的
 
-<!-- more -->
 
 还可以查看其他gem的实现方式
 

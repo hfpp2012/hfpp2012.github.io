@@ -12,6 +12,8 @@ categories: ruby on rails
 
 {% img /images/rails_association_reference/has_many_through.png %}
 
+<!-- more -->
+
 ``` ruby
 class School < ActiveRecord::Base
   has_many :squads
@@ -31,8 +33,6 @@ end
 ### Association(关联关系的使用)
 
 + association(force_reload = false)强制reload查数据库
-
-<!-- more -->
 
 ``` ruby
 s = Squad.first

@@ -12,6 +12,8 @@ categories: ruby on rails
 
 这个gem是用来实现树型结构的,例如一个分类(category),下面还有子分类,这个时候就可以用它了,还有,你回复了一个贴子,别人再来回复你，这个时候也可以用它。一个菜单之下还有子菜单，子菜单之下又可以有子菜单,子菜单之下有菜单项，它可以实现一种树型结构的菜单。它的原理也很简单,在模型中是实现了一个自关联,假如在一个comment(评论)model中,定义一个children(孩子),再定义一个parent(父), :class_name都是'Comment'。那他们怎么实现关联的,也就是说孩子要知道父亲是谁,父亲要知道它有哪些孩子,它在数据存储中是通过一个字段来关联的,在这个gem中这个字段叫**parent_id**假如我们创建一个根(root), `root = Comment.create`, 这个时候**root***的parent_id是null,它是一个根,`children = root.children.create`,这个**children**是**root**的一个孩子,那**children**的**parent_id**就是**root**的**id**
 
+<!-- more -->
+
 ```
   菜单
    |_ 系统设置
@@ -31,7 +33,6 @@ has_many   :children...
 
 数据表是这样存储的
 
-<!-- more -->
 
 {% img /images/acts_as_tree_table.png %}
 
