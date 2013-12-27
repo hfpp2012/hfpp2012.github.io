@@ -391,30 +391,6 @@ end
 # => 55
 ```
 
-### block & lambda & Proc的class
-
-Proc自不必说,它的class就是Proc,本来就是用Proc.new创建的嘛
-
-来看下block和lambda
-
-``` ruby
-def awesome_print(&code)
-  code.class
-end
-awesome_print { "I'm xiaozi" }
-# =>
-Proc
-
-def awesome_print(code)
-  code.class
-end
-awesome_print -> { "I'm xiaozi" }
-# =>
-Proc
-```
-
-原来三者的class是一样的
-
 ### Proc vs lambda的不同之处
 
 #### return语句
