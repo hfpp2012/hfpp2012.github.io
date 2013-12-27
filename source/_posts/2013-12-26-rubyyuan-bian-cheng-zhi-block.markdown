@@ -144,7 +144,7 @@ I'm xiaozi
 
 ### 传多个block对象
 
-一个block对象作为参数不够,怎么办
+只有一个block对象作为参数不够,怎么办
 
 ``` ruby
 def awesome_print(who, where)
@@ -162,12 +162,11 @@ awesome_print(who, where)
 
 ## block vs lambda vs Proc
 
-lambda跟Proc在形式上还比较相似,但它们跟```do ... end```或```{ ... }```这种形式相差好多
-
-不信?来看下
-
+来看下它们之间的区别
 
 ### &
+
+&的作用是把block转成proc
 
 ``` ruby
 def awesome_print(&the_proc)
@@ -181,25 +180,13 @@ my_proc.call
 I'm xiaozi
 ```
 
-``` ruby
-def awesome_print(&the_proc)
-  the_proc
-end
-my_proc = lambda { "I'm xiaozi" }
-awesome_print(my_proc)
-
-# =>
-ArgumentError: wrong number of arguments (1 for 0)
-```
+or
 
 ``` ruby
 def awesome_print(&the_proc)
   the_proc
 end
 awesome_print(&lambda { puts "I'm xiaozi" }).call
-# or
-my_proc = lambda {  "I'm xiaozi" }
-awesome_print(&my_proc).call
 
 # =>
 I'm xiaozi
@@ -232,8 +219,6 @@ end
 awesome_print(&lambda { "I'm xiaozi"} )
 ```
 
-这样都行!它们有一个相同的联系点?
-
 ### Symbol’s To Proc
 
 你肯定用过类似这样的方法吧```(1..10).inject(&:+)```或者```[:a, :b, :c].map(&:to_s)```等
@@ -247,7 +232,7 @@ awesome_print(&lambda { "I'm xiaozi"} )
 
 好神奇,怎么做到的?
 
-&:to_s能够作为参数值传递,其中:to_s是一个symbol,&:to_s会将to_s转成一个proc对象,结果相当于:to_s.to_proc
+&:to_s能够作为参数值传递,其中:to_s是一个symbol,&:to_s会将to_s转成一个proc,结果相当于:to_s.to_proc
 
 任何symbol都有to_proc方法
 
@@ -320,7 +305,7 @@ t = Topic.new
 t.get_title( & proc{ |obj, *args| obj.send(:title, *args) } )
 # 再简单一点
 t.get_title( & proc{ |obj| obj.send(:title) } )
-# 还可以这样,因为&proc的形式跟{}是一样的
+# 还可以这样
 t.get_title{ |obj| obj.send(:title) }
 # 干脆这样
 t.get_title{ |obj| obj.title }
