@@ -4,7 +4,7 @@
   <title><![CDATA[Category: rails | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/rails/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-27T18:12:48+08:00</updated>
+  <updated>2013-12-27T20:13:31+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -165,7 +165,7 @@ awesome_print { &ldquo;I&rsquo;m xiaozi&rdquo; }</p>
 
 <h3>传多个block对象</h3>
 
-<p>一个block对象作为参数不够,怎么办</p>
+<p>只有一个block对象作为参数不够,怎么办</p>
 
 <p>``` ruby
 def awesome_print(who, where)
@@ -184,11 +184,11 @@ awesome_print(who, where)</p>
 
 <h2>block vs lambda vs Proc</h2>
 
-<p>lambda跟Proc在形式上还比较相似,但它们跟<code>do ... end</code>或<code>{ ... }</code>这种形式相差好多</p>
-
-<p>不信?来看下</p>
+<p>来看下它们之间的区别</p>
 
 <h3>&amp;</h3>
+
+<p>&amp;的作用是把block转成proc</p>
 
 <p>``` ruby
 def awesome_print(&amp;the_proc)
@@ -203,28 +203,13 @@ my_proc.call</p>
 <p>I&rsquo;m xiaozi
 ```</p>
 
-<p>``` ruby
-def awesome_print(&amp;the_proc)
-  the_proc
-end
-my_proc = lambda { &ldquo;I&rsquo;m xiaozi&rdquo; }
-awesome_print(my_proc)</p>
-
-<h1>=></h1>
-
-<p>ArgumentError: wrong number of arguments (1 for 0)
-```</p>
+<p>or</p>
 
 <p>``` ruby
 def awesome_print(&amp;the_proc)
   the_proc
 end
 awesome_print(&amp;lambda { puts &ldquo;I&rsquo;m xiaozi&rdquo; }).call</p>
-
-<h1>or</h1>
-
-<p>my_proc = lambda {  &ldquo;I&rsquo;m xiaozi&rdquo; }
-awesome_print(&amp;my_proc).call</p>
 
 <h1>=></h1>
 
@@ -260,8 +245,6 @@ end</p>
 <p>awesome_print(&amp;lambda { &ldquo;I&rsquo;m xiaozi&rdquo;} )
 ```</p>
 
-<p>这样都行!它们有一个相同的联系点?</p>
-
 <h3>Symbol’s To Proc</h3>
 
 <p>你肯定用过类似这样的方法吧<code>(1..10).inject(&amp;:+)</code>或者<code>[:a, :b, :c].map(&amp;:to_s)</code>等</p>
@@ -276,7 +259,7 @@ end</p>
 
 <p>好神奇,怎么做到的?</p>
 
-<p>&amp;:to_s能够作为参数值传递,其中:to_s是一个symbol,&amp;:to_s会将to_s转成一个proc对象,结果相当于:to_s.to_proc</p>
+<p>&amp;:to_s能够作为参数值传递,其中:to_s是一个symbol,&amp;:to_s会将to_s转成一个proc,结果相当于:to_s.to_proc</p>
 
 <p>任何symbol都有to_proc方法</p>
 
@@ -375,7 +358,7 @@ t.get_title( &amp; proc{ |obj, <em>args| obj.send(:title, </em>args) } )</p>
 
 <p>t.get_title( &amp; proc{ |obj| obj.send(:title) } )</p>
 
-<h1>还可以这样,因为&amp;proc的形式跟{}是一样的</h1>
+<h1>还可以这样</h1>
 
 <p>t.get_title{ |obj| obj.send(:title) }</p>
 
