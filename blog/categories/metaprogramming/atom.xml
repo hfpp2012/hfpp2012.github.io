@@ -4,7 +4,7 @@
   <title><![CDATA[Category: metaprogramming | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/metaprogramming/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-27T11:27:50+08:00</updated>
+  <updated>2013-12-27T11:30:00+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -138,6 +138,25 @@ say_hello.call(&lsquo;xiaozi&rsquo;)</p>
 
 <p>推荐用这种方法</p>
 
+<h2>传多个block对象</h2>
+
+<p>一个block对象作为参数不够,怎么办</p>
+
+<p>``` ruby
+def awesome_print(who, where)
+  &ldquo;#{who.call} live in #{where.call}&rdquo;
+end
+who = &ndash;> { &ldquo;xiaozi&rdquo; }
+where = &ndash;> {&lsquo;shenzhen&rsquo;}
+awesome_print(who, where)</p>
+
+<h1>=></h1>
+
+<p>&ldquo;xiaozi live in shenzhen&rdquo;
+```</p>
+
+<p>列好队,用block对象传过去就行了</p>
+
 <h3>&amp; 区别块和块对象</h3>
 
 <p>``` ruby
@@ -218,23 +237,6 @@ awesome_print(my_proc).call</p>
 <p>Proc也是跟lambda一样的,不信?你去试试</p>
 
 <p>总结一下,block跟&amp;是一对的,block对象(lambda或Proc)取&amp;才跟&amp;是一对的,block和block对象的区别在于&amp;,block对象取&amp;之后才在形式上跟block一样</p>
-
-<h2>传多个block对象</h2>
-
-<p>一个block对象作为参数不够,怎么办</p>
-
-<p>``` ruby
-def awesome_print(who, where)
-  &ldquo;#{who.call} live in #{where.call}&rdquo;
-end
-who = &ndash;> { &ldquo;xiaozi&rdquo; }
-where = &ndash;> {&lsquo;shenzhen&rsquo;}
-awesome_print(who, where)</p>
-
-<h1>=></h1>
-
-<p>&ldquo;xiaozi live in shenzhen&rdquo;
-```</p>
 
 <h3>Proc vs lambda的不同之处</h3>
 
