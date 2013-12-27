@@ -4,7 +4,7 @@
   <title><![CDATA[Category: metaprogramming | 小子的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/metaprogramming/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2013-12-27T10:24:59+08:00</updated>
+  <updated>2013-12-27T10:40:32+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[小子]]></name>
@@ -143,6 +143,8 @@ my_proc.call</p>
 
 <p>注意区分<strong>块</strong>和<strong>块对象</strong></p>
 
+<p>很明显<code>do ... end</code>或<code>{ ... }</code>这样的块跟&amp;是一对的</p>
+
 <p>假如把<code>{ .. }</code>换成lambda</p>
 
 <p>``` ruby
@@ -157,9 +159,11 @@ awesome_print(my_proc)</p>
 <p>ArgumentError: wrong number of arguments (1 for 0)
 ```</p>
 
-<p>出错了吧,看来<code>{ ... }</code>这样的块和lambda这样的块对象并不一样啊</p>
+<p>出错了吧,看来lambda这样的块对象和&amp;不是一对的</p>
 
-<p>那就改一下</p>
+<p>那给lambda加个&amp;(类似于C语言的取地址)</p>
+
+<p>好的</p>
 
 <p>``` ruby
 def awesome_print(&amp;the_proc)
@@ -176,6 +180,8 @@ end</p>
 
 <p>I&rsquo;m xiaozi
 ```</p>
+
+<p>果然把lambda前加个&amp;就行</p>
 
 <p>或者这样也行</p>
 
