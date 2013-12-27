@@ -49,6 +49,18 @@ I'm xiaozi
 
 总结一下yield,它就是块的占位符,awesome_print把参数值'xiaozi'传给```do ... end```块中的name参数,yield占的坑让给了```do ... end```块,并执行,name参数的值'xiaozi'传给```yield name```中的name参数
 
+这样也行
+
+``` ruby
+def awesome_print
+  yield "xiaozi"
+end
+awesome_print { |name| puts "I'm #{name}" }
+
+# =>
+I'm xiaozi
+```
+
 很简单吧!
 
 如何判断一个方法传过来block了?
@@ -114,7 +126,21 @@ I'm xiaozi
 
 推荐用这种方法
 
-## 传多个block对象
+### return yield
+
+yield能作为返回值出现
+
+``` ruby
+def awesome_print
+  puts yield
+end
+awesome_print { "I'm xiaozi" }
+
+# =>
+I'm xiaozi
+```
+
+### 传多个block对象
 
 一个block对象作为参数不够,怎么办
 
@@ -344,25 +370,21 @@ t.get_title{ |obj| obj.title }
 (1..10).inject(&:+.to_proc)
 
 # can be expressed as
-
 (1..10).inject( &proc{ |obj, *args| obj.send(:+, *args) } ) 
 
 # which & will covert into
-
 (1..10).inject( |obj, *args| obj.send(:+, *args) } ) 
 
 # which we can convert to
-
 (1..10).inject do |obj, *args| 
   obj.send(:+, *args) 
 end
 
 # and then we can just rename our parameters to something more friendly
-
 (1..10).inject do |result, element| 
   result.send(:+, element) 
 end
- 
+
 # => 55
 ```
 
@@ -394,29 +416,31 @@ Proc
 
 #### return语句
 
+当使用return时,Proc会中途退出,而lambda不会
+
 ``` ruby
-def awesome_print(the_proc)
-  the_proc.call
+def awesome_print
+  my_proc = lambda { return "I'm xiaozi" }
+  result = my_proc.call
+  return result + ' hello'  # unreachable code!
 end
-my_proc = lambda { puts "I'm xiaozi" }
-awesome_print(my_proc)
-
+awesome_print
 # =>
-I'm xiaozi
-```
+=> "I'm xiaozihello"
 
-``` ruby
-def another_awesome_print
+def awesome_print
   my_proc = Proc.new { return "I'm xiaozi" }
   result = my_proc.call
-  return result + 'hello'  # unreachable code!
+  return result + ' hello'  # unreachable code!
 end
-
+awesome_print
 # =>
 I'm xiaozi
 ```
 
 #### 参数检查
+
+lambda会检查参数列表,而Proc不会检查
 
 ``` ruby
 def awesome_print(statu)
