@@ -337,7 +337,7 @@ I&#39;m xiaozi &hellip;">
 
 <p>不信?来看下</p>
 
-<h3>&amp; 区别块和块对象</h3>
+<h3>&amp;</h3>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -360,17 +360,7 @@ I&#39;m xiaozi &hellip;">
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>&amp;这个符号会不会很熟悉呢,对,C语言就有,意思是取地址</p>
 
-<p>难道这里的block跟地址有关系?</p>
-
-<p>在这里&amp;the_proc表示接收的参数的值要是一个<code>do ... end</code>或<code>{ ... }</code>这样的块,而不是由Proc.new或lambda创建的块对象</p>
-
-<p>注意区分<strong>块</strong>和<strong>块对象</strong></p>
-
-<p>很明显<code>do ... end</code>或<code>{ ... }</code>这样的块跟&amp;是一对的</p>
-
-<p>假如把<code>{ .. }</code>换成lambda</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -391,9 +381,7 @@ I&#39;m xiaozi &hellip;">
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>出错了吧,看来lambda这样的块对象和&amp;不是一对的</p>
 
-<p>那给lambda前面加个&amp;(类似于C语言的取地址)</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -417,36 +405,6 @@ I&#39;m xiaozi &hellip;">
 </span><span class='line'><span class="n">I</span><span class="err">&#39;</span><span class="n">m</span> <span class="n">xiaozi</span>
 </span></code></pre></td></tr></table></div></figure>
 
-
-<p>果然把lambda前加个&amp;就行</p>
-
-<p>或者这样也行</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># 注意这行&amp;the_proc 变成了 the_proc</span>
-</span><span class='line'><span class="k">def</span> <span class="nf">awesome_print</span><span class="p">(</span><span class="n">the_proc</span><span class="p">)</span>
-</span><span class='line'>  <span class="n">the_proc</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'><span class="n">my_proc</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="p">{</span>  <span class="s2">&quot;I&#39;m xiaozi&quot;</span> <span class="p">}</span>
-</span><span class='line'><span class="n">awesome_print</span><span class="p">(</span><span class="n">my_proc</span><span class="p">)</span><span class="o">.</span><span class="n">call</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1"># =&gt;</span>
-</span><span class='line'><span class="n">I</span><span class="err">&#39;</span><span class="n">m</span> <span class="n">xiaozi</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Proc也是跟lambda一样的,不信?你去试试</p>
-
-<p>总结一下,block跟&amp;是一对的,block对象(lambda或Proc)取&amp;才跟&amp;是一对的,block和block对象的区别在于&amp;,block对象取&amp;之后才在形式上跟block一样,
-&amp;是把block转成了block对象</p>
 
 <h3>&amp; yield call相互转化</h3>
 
