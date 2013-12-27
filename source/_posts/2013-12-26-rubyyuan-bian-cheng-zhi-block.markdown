@@ -167,7 +167,7 @@ lambda跟Proc在形式上还比较相似,但它们跟```do ... end```或```{ ...
 不信?来看下
 
 
-### & 区别块和块对象
+### &
 
 ``` ruby
 def awesome_print(&the_proc)
@@ -181,18 +181,6 @@ my_proc.call
 I'm xiaozi
 ```
 
-&这个符号会不会很熟悉呢,对,C语言就有,意思是取地址
-
-难道这里的block跟地址有关系?
-
-在这里&the_proc表示接收的参数的值要是一个```do ... end```或```{ ... }```这样的块,而不是由Proc.new或lambda创建的块对象
-
-注意区分**块**和**块对象**
-
-很明显```do ... end```或```{ ... }```这样的块跟&是一对的
-
-假如把```{ .. }```换成lambda
-
 ``` ruby
 def awesome_print(&the_proc)
   the_proc
@@ -203,10 +191,6 @@ awesome_print(my_proc)
 # =>
 ArgumentError: wrong number of arguments (1 for 0)
 ```
-
-出错了吧,看来lambda这样的块对象和&不是一对的
-
-那给lambda前面加个&(类似于C语言的取地址)
 
 ``` ruby
 def awesome_print(&the_proc)
@@ -220,27 +204,6 @@ awesome_print(&my_proc).call
 # =>
 I'm xiaozi
 ```
-
-果然把lambda前加个&就行
-
-或者这样也行
-
-``` ruby
-# 注意这行&the_proc 变成了 the_proc
-def awesome_print(the_proc)
-  the_proc
-end
-my_proc = lambda {  "I'm xiaozi" }
-awesome_print(my_proc).call
-
-# =>
-I'm xiaozi
-```
-
-Proc也是跟lambda一样的,不信?你去试试
-
-总结一下,block跟&是一对的,block对象(lambda或Proc)取&才跟&是一对的,block和block对象的区别在于&,block对象取&之后才在形式上跟block一样,
-&是把block转成了block对象
 
 ### & yield call相互转化
 
