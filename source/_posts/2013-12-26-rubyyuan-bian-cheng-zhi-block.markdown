@@ -25,6 +25,8 @@ I'm xiaozi
 
 另外,```awesome_print { puts 'I'm xiaozi }```太难看了,那就
 
+<!-- more -->
+
 ``` ruby
 awesome_print do
   puts "I'm xiaozi"
@@ -237,7 +239,8 @@ I'm xiaozi
 
 Proc也是跟lambda一样的,不信?你去试试
 
-总结一下,block跟&是一对的,block对象(lambda或Proc)取&才跟&是一对的,block和block对象的区别在于&,block对象取&之后才在形式上跟block一样
+总结一下,block跟&是一对的,block对象(lambda或Proc)取&才跟&是一对的,block和block对象的区别在于&,block对象取&之后才在形式上跟block一样,
+&是把block转成了block对象
 
 ### & yield call相互转化
 
@@ -295,8 +298,8 @@ end
 
 self就是symbol本身,也就是方法(method)
 
-第一个参数是接收symbol方法的对象
-第二个参数是传递给symbol方法的参数列表
+第一个参数obj是接收symbol方法的对象
+第二个参数*args是传递给symbol方法的参数列表
 
 怎么用它呢
 
@@ -457,12 +460,3 @@ awesome_print(lambda{|who, where, other| "#{who} live in #{where} #{other.class}
 # =>
 ArgumentError: wrong number of arguments (0 for 3)
 ```
-
-
-
-## DSL
-
-
-
-
-
