@@ -29,7 +29,7 @@ figure.code, .gist-file, pre {
 }
 
 .gist .highlight, figure.code .highlight {
-  @include selection(#FFCC00, $text-shadow: $base03 0 1px);
+  @include selection(#FDFD98, $text-shadow: $base03 0 1px);
 }
 html .gist .gist-file {
   margin-bottom: 1.8em;

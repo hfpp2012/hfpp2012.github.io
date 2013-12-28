@@ -19,6 +19,7 @@ categories:
 + [ruby参考手册](http://www.kuqin.com/rubycndocument/man/index.html)
 + [吕成鹏的ruby笔记](http://www.chengpeng.me/)
 + [rails guides 中文版](http://guides.ruby-china.org/)
++ [rubymonk](https://rubymonk.com/)
 
 ## 视频
 + [railscasts](http://railscasts.com/)
