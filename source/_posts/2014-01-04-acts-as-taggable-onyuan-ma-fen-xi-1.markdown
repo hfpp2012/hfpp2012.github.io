@@ -10,6 +10,7 @@ categories: ruby on rails
 
 代码结构
 
+<!-- more -->
 ```
 lib
 ├── acts_as_taggable_on
