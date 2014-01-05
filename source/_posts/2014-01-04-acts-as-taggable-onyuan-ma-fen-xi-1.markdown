@@ -23,7 +23,7 @@ lib
 │   │   ├── ownership.rb
 │   │   └── related.rb 找有相关tag对象
 │   ├── taggable.rb   可以打标签的对象
-│   ├── tagger.rb
+│   ├── tagger.rb     tag的拥有者
 │   ├── tagging.rb    存标签的关系
 │   ├── tag_list.rb   对标签的生成,添加,删除等
 │   ├── tag.rb  存标签的内容
@@ -136,3 +136,5 @@ force_parameterize: tag被参数化存储
 strict_case_match: 查找的时候强制大小写敏感
 
 delimiter: tag的分隔符
+
+看下一节[Acts-as-taggable-on源码分析(二)](/blog/2014/01/04/acts-as-taggable-onyuan-ma-fen-xi-2/)
