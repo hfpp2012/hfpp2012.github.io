@@ -174,3 +174,5 @@ end
 ```
 
 很清晰的关系
+
+下一节[Acts-as-taggable-on源码分析(三)](/blog/2014/01/06/acts-as-taggable-onyuan-ma-fen-xi-3/)

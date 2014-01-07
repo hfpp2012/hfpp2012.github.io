@@ -49,8 +49,6 @@ end
 I'm xiaozi
 ```
 
-总结一下yield,它就是块的占位符,awesome_print把参数值'xiaozi'传给```do ... end```块中的name参数,yield占的坑让给了```do ... end```块,并执行,name参数的值'xiaozi'传给```yield name```中的name参数
-
 这样也行
 
 ``` ruby
@@ -75,8 +73,6 @@ end
 ```
 
 明白了吗,就是用block_given?
-
-在这里,```{ ... }```或```do ... end```跟yield就是成对存在的,传了block,执行时就要用yield
 
 ## Proc
 
@@ -166,7 +162,7 @@ awesome_print(who, where)
 
 ### &
 
-&的作用是把block转成proc
+&的作用是把proc实例转成block
 
 ``` ruby
 def awesome_print(&the_proc)
@@ -232,7 +228,7 @@ awesome_print(&lambda { "I'm xiaozi"} )
 
 好神奇,怎么做到的?
 
-&:to_s能够作为参数值传递,其中:to_s是一个symbol,&:to_s会将to_s转成一个proc,结果相当于:to_s.to_proc
+&:to_s能够作为参数值传递,其中:to_s是一个symbol,&:to_s会将proc实例转成一个block
 
 任何symbol都有to_proc方法
 
@@ -384,3 +380,25 @@ awesome_print(lambda{|who, where, other| "#{who} live in #{where} #{other.class}
 # =>
 ArgumentError: wrong number of arguments (0 for 3)
 ```
+
+总而言之,在ruby中,block有形,它有时候是这样
+
+``` ruby
+do |...|
+ ...
+end
+```
+
+或者这样
+
+``` ruby
+{|...| ...}
+```
+
+甚至可以这样
+
+``` ruby
+&:to_s
+```
+
+但是它无体，无体的意思就是说block无法单独存在，必须挂在方法后 面，并且你没有办法直接把它存到变量里，也没有办法直接将它作为参数传递给方法，所以当你想存储，传递 block时，你可以使用proc对象了，
