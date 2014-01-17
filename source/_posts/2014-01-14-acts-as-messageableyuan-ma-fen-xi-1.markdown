@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "acts-as-messageable源码分析(一)"
+title: "acts-as-messageable源码分析"
 date: 2014-01-14 11:05
 comments: true
 categories: ruby on rails
