@@ -59,11 +59,11 @@ app/views/home/index.html.erb app/views/home/hello.html.erb app/views/say/hello.
 
 效果是这样的
 
-{% img /images/breadcrumbs_on_rails/root_path.png %}
+{% img /images/bor/root_path.png %}
 
-{% img /images/breadcrumbs_on_rails/home_index_path.png %}
+{% img /images/bor/home_index_path.png %}
 
-{% img /images/breadcrumbs_on_rails/home_hello_path.png %}
+{% img /images/bor/home_hello_path.png %}
 
 源码文件
 
