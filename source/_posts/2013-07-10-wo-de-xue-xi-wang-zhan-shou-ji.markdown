@@ -104,6 +104,7 @@ categories:
 + [开源的cms](http://www.opensourcerails.com/)
 + [imax.im](https://github.com/huacnlee/imax.im)
 + [haoqicat.com source code](https://github.com/happypeter/onestep)
++ [rails-blog](https://github.com/francistm/rails-blog)一个简单的blog
 
 ## css框架
 + [前端框架集合](http://usablica.github.io/front-end-frameworks/compare.html)
