@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "tabs_on_rails源妈分析"
+title: "tabs_on_rails源码分析"
 date: 2014-01-18 14:38
 comments: true
 categories: ruby on rails
