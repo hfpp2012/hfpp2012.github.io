@@ -1,9 +1,9 @@
 ---
 layout: post
-title: "wmware虚拟机中的ubuntu访问主机的Windows 7中的文件"
+title: "vmware虚拟机中的ubuntu访问主机的Windows 7中的文件"
 date: 2014-09-10 14:45
 comments: true
-categories: 
+categories:
 ---
 
 ### 1.查看windows 7的ip是多少
