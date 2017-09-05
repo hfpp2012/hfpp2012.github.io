@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: ubuntu | 随风的博客]]></title>
+  <link href="http://yinsigan.github.io/blog/categories/ubuntu/atom.xml" rel="self"/>
+  <link href="http://yinsigan.github.io/"/>
+  <updated>2017-09-05T18:11:22+08:00</updated>
+  <id>http://yinsigan.github.io/</id>
+  <author>
+    <name><![CDATA[随风]]></name>
+    <email><![CDATA[ganweiliang886@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[ubuntu下安装Linux Apache MySQL PHP dbninja]]></title>
+    <link href="http://yinsigan.github.io/blog/2014/01/05/ubuntuxia-an-zhuang-linux-apache-mysql-php-dbninja/"/>
+    <updated>2014-01-05T14:06:00+08:00</updated>
+    <id>http://yinsigan.github.io/blog/2014/01/05/ubuntuxia-an-zhuang-linux-apache-mysql-php-dbninja</id>
+    <content type="html"><![CDATA[<h3>About dbninja</h3>
+
+<p><a href="http://www.dbninja.com/">dbninja</a>是用基于web的一个开源免费的mysql数据库管理工具,有点类似于phpmyadmin,它的界面也是很美,功能很强大,安装很简单,我一般用来管理在rails下的mysql数据库,很方便</p>
+
+<!-- more -->
+
+
+<p><img src="/images/dbninja.png"></p>
+
+<h3>Set Up</h3>
+
+<p>使用它必须安装php,在ubuntu下我们用apt-get直接安装apache+php+mysql</p>
+
+<p>我的环境是ubuntu 13.04</p>
+
+<h3>Step One &mdash; Install MySQL</h3>
+
+<p><code>bash
+sudo apt-get install mysql-server
+</code></p>
+
+<p>这样就可以了,它会把mysql-client这种包也装上的,还有一些其他依赖的包</p>
+
+<h3>Step two &mdash; Install Apache</h3>
+
+<p><code>bash
+sudo apt-get install apache2
+</code></p>
+
+<p>装完后,下次开机apache会自动启动的,如果要重启</p>
+
+<p><code>bash
+sudo /etc/init.d/apache2 restart
+</code></p>
+
+<h3>Step three &mdash; Install PHP</h3>
+
+<p><code>bash
+sudo apt-get install php5 libapache2-mod-php5 php5-mysql
+</code></p>
+
+<h3>Step four &mdash; Install dbninja</h3>
+
+<p>apache默认放项目的目录在/var/www</p>
+
+<p>只要把下载的dbninja解压放在/var/www下即可</p>
+
+<p>然后</p>
+
+<p><code>bash
+sudo chmod 777 -R dbninja
+</code></p>
+
+<p>这样在浏览器输入localhost/dbninja就可以访问了</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[ubuntu 软件推荐与安装]]></title>
+    <link href="http://yinsigan.github.io/blog/2014/01/03/ubuntu-ruan-jian-tui-jian-yu-an-zhuang/"/>
+    <updated>2014-01-03T20:14:00+08:00</updated>
+    <id>http://yinsigan.github.io/blog/2014/01/03/ubuntu-ruan-jian-tui-jian-yu-an-zhuang</id>
+    <content type="html"><![CDATA[<p>可能有人觉得linux下的软件不够多,或者没有windows那么好用,但我要告诉你,linux的软件多得吓人,游戏也多得吓人,不信你往下看就知道了,在这里我们不比windows和linux这两个操作系统,也不找linux下的软件来代替windows,我介绍几个我认为很漂亮又很有用的软件</p>
+
+<p>我的环境是ubuntu 13.04</p>
+
+<h3>输入法fcitx</h3>
+
+<p>其他输入法我没怎么用过,我只用它,它对我来说足够了,而且安装设置都很简单</p>
+
+<!-- more -->
+
+
+<p><code>bash
+sudo apt-get install fcitx-table-all fcitx
+</code></p>
+
+<p>在ubuntu dash那里输入input,进入input method configuration(输入法配置)</p>
+
+<p><img src="/images/ubuntu_softwares/unity-dash-sample.png"></p>
+
+<p><img src="/images/ubuntu_softwares/fcitx_config.png"></p>
+
+<p>重启之后按ctrl+shift就能用了</p>
+
+<h3>听歌神器DMusic深度音乐播放器</h3>
+
+<p>这款深度音乐播放器很好用,界面也美,能装百度,豆瓣插件,功能强大,又有歌词显示,超级美的一个软件</p>
+
+<p><code>bash
+sudo add-apt-repository ppa:noobslab/deepin-sc
+sudo apt-get update
+sudo apt-get install deepin-music-player
+</code></p>
+
+<p><img src="/images/ubuntu_softwares/dmusic.png"></p>
+
+<p>插件设置如下</p>
+
+<p><img src="/images/ubuntu_softwares/dmusic_plugins.png"></p>
+
+<p>默认是没有百度音乐插件的,要自己安装</p>
+
+<p><code>bash
+sudo apt-get install cython libwebkitgtk-dev git
+git clone https://github.com/sumary/pyjavascriptcore.git
+cd pyjavascriptcore
+sudo python setup.py install
+git clone https://github.com/sumary/dmusic-plugin-baidumusic.git
+cd dmusic-plugin-baidumusic
+cp -r baidumusic ~/.local/share/deepin-music-player/plugins/
+</code></p>
+
+<p>启动它在ubuntu dash里输入DM就能找到了,或者在终端里运行deepin-music-player也可以</p>
+
+<h3>视频软件DPlayer深度影音播放器</h3>
+
+<p>用这款视频软件因为我是喜欢上面那款深度音乐播放器,相信这款视频软件也很优秀</p>
+
+<p><code>bash
+sudo add-apt-repository ppa:noobslab/deepin-sc
+sudo apt-get update
+sudo apt-get install deepin-media-player
+</code></p>
+
+<p><img src="/images/ubuntu_softwares/dplayer.png"></p>
+
+<p>ubuntu dash里输入DP或终端里运行deepin-media-player就能用了</p>
+
+<h3>聊天工具qq2012</h3>
+
+<p>这款是用wine运行的,我使用这么久基本上不会出现什么问题</p>
+
+<p><a href="http://test.packages.linuxdeepin.com/deepin/pool/non-free/d/deepinwine-qqintl/">狠点这里下载</a></p>
+
+<p>注意是下载那个叫wine-qqintl_0.1.3-2_i386.deb的文件,下载后双击安装就可以了</p>
+
+<p><img src="/images/ubuntu_softwares/qq.png"></p>
+
+<p>要使用的话在ubuntu dash里输入wine就能找到它了</p>
+
+<h3>办公软件wps for linux</h3>
+
+<p>必须是它了,没错的!表格处理,word档处理,ppt全靠它了</p>
+
+<p><a href="http://community.wps.cn/download/">狠点这里下载吧</a></p>
+
+<p>直接安装就行了</p>
+
+<p><img src="/images/ubuntu_softwares/wps_ppt.png"></p>
+
+<h3>截图软件shutter</h3>
+
+<p>这个软件可以选择全屏或者区域截图,功能强大还支持编辑功能</p>
+
+<p><code>bash
+sudo apt-get install shutter
+</code></p>
+
+<p><img src="/images/ubuntu_softwares/shutter.png"></p>
+
+<p>可编辑功能如下</p>
+
+<p><img src="/images/ubuntu_softwares/shutter_edit.png"></p>
+
+<h3>todo软件nitro</h3>
+
+<p>程序员可能会喜欢这种todo软件,这款软件真的设计得很漂亮</p>
+
+<p><code>bash
+sudo add-apt-repository ppa:cooperjona/nitrotasks
+sudo apt-get update
+sudo apt-get install nitrotasks
+</code></p>
+
+<p><img src="/images/ubuntu_softwares/nitro.png"></p>
+
+<h3>定制工具ubuntu-tweak</h3>
+
+<p>这款神器可以用来修改ubuntu的一些配置,可以清一些无用的垃圾，基至可以装软件</p>
+
+<p>而且它是国人开发的,值得骄傲</p>
+
+<p><code>bash
+sudo apt-get install ubuntu-tweak
+</code></p>
+
+<p><img src="/images/ubuntu_softwares/ubuntu-tweak.png"></p>
+
+<p>最喜欢的还是那个janitor的功能,一下子就把浏览器缓存清得干干净净,还把一些下载的无用deb包也顺便清了,大快人心啊</p>
+
+<p><img src="/images/ubuntu_softwares/ubuntu-tweak-clean.png"></p>
+
+<h3>轻量级的软件中心App Grid</h3>
+
+<p>里面有大把软件游戏,自己慢慢找吧</p>
+
+<p><code>bash
+sudo add-apt-repository ppa:appgrid/stable
+sudo apt-get update
+sudo apt-get install appgrid
+</code></p>
+
+<p><img src="/images/ubuntu_softwares/appgrid.png"></p>
+
+<h3>好用的包安装器GDebi</h3>
+
+<p>用它来安装下载的deb包最合适不过了,它会先给你检验这个包能不能包装的</p>
+
+<p><code>bash
+sudo apt-get install  gdebi
+</code></p>
+
+<p><img src="/images/ubuntu_softwares/gdebi.png"></p>
+
+<h3>下载管理器uget</h3>
+
+<p>一个图形化的wget,可暂停之后再下载,支持队列,批量下载等,界面也很酷</p>
+
+<p><code>bash
+sudo apt-get install uget
+</code></p>
+
+<p><img src="/images/ubuntu_softwares/uget.png"></p>
+]]></content>
+  </entry>
+  
+</feed>

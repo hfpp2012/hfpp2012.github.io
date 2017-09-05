@@ -1,0 +1,903 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>rails-settings源码分析 - 随风的博客</title>
+  <meta name="author" content="随风">
+
+  
+  <meta name="description" content="rails-settings 1. 数据库结构 var: string 键 value: text 值,存的是hash target_id: integer 多态的id target_type: string 多态的类 2. 源码文件结构 1
+2
+3
+4
+5
+6
+7
+8
+lib
+├── rails &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://yinsigan.github.io/blog/2014/02/08/rails-settingsyuan-ma-fen-xi">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="随风的博客" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/libs/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-46093029-1', 'yinsigan.github.io');
+  ga('send', 'pageview');
+
+</script>
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">随风的博客</a></h1>
+  
+    <h2>人生若如初见</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:yinsigan.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Rails-settings源码分析</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-02-08T09:34:00+08:00" pubdate data-updated="true">Feb 8<span>th</span>, 2014</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p><a href="https://github.com/ledermann/rails-settings">rails-settings</a></p>
+
+<h3>1. 数据库结构</h3>
+
+<p>var: string 键</p>
+
+<p>value: text 值,存的是hash</p>
+
+<p>target_id: integer  多态的id</p>
+
+<p>target_type: string 多态的类</p>
+
+<h3>2. 源码文件结构</h3>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>lib
+</span><span class='line'>├── rails-settings
+</span><span class='line'>│   ├── base.rb 定义了settings和settings=方法
+</span><span class='line'>│   ├── configuration.rb 操作has_settings的symbol列表和定义了default_settings
+</span><span class='line'>│   ├── scopes.rb  一些查询方法
+</span><span class='line'>│   ├── setting_object.rb 操作settings表
+</span><span class='line'>│   └── version.rb
+</span><span class='line'>└── rails-settings.rb</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<!-- more -->
+
+
+<h3>3. has_settings</h3>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span><span class="o">.</span><span class="n">class_eval</span> <span class="k">do</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">has_settings</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+</span><span class='line'>    <span class="ss">RailsSettings</span><span class="p">:</span><span class="ss">:Configuration</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="o">.</span><span class="n">unshift</span><span class="p">(</span><span class="nb">self</span><span class="p">),</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kp">include</span> <span class="ss">RailsSettings</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>    <span class="kp">extend</span> <span class="ss">RailsSettings</span><span class="p">:</span><span class="ss">:Scopes</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>也就是说任何model有has_settings这个方法</p>
+
+<p>现在来看下它是如何使用的</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">User</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">has_settings</span> <span class="ss">:dashboard</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这是has_settings最简单的使用方法了</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">u</span> <span class="o">=</span> <span class="no">User</span><span class="o">.</span><span class="n">first</span>
+</span><span class='line'><span class="n">u</span><span class="o">.</span><span class="n">settings</span><span class="p">(</span><span class="ss">:dashboard</span><span class="p">)</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="no">SELECT</span> <span class="sb">`settings`</span><span class="o">.</span><span class="n">*</span> <span class="no">FROM</span> <span class="sb">`settings`</span> <span class="no">WHERE</span> <span class="sb">`settings`</span><span class="o">.</span><span class="n">`target_id</span><span class="sb">` = 1 AND `</span><span class="n">settings</span><span class="sb">`.`</span><span class="n">target_type</span><span class="sb">` = &#39;User&#39;</span>
+</span><span class='line'><span class="sb">   #&lt;RailsSettings::SettingObject id: nil, var: &quot;dashboard&quot;, value: {}, target_id: 1, target_type: &quot;User&quot;, created_at: nil, updated_at: nil&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>有两个关键的方法是has_settings和settings方法</p>
+
+<p>由<code>include RailsSettings::Base</code>我们先来看lib/rails-settings/base.rb这个文件的内容</p>
+
+<h3>4. settings和settings=方法</h3>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">module</span> <span class="nn">RailsSettings</span>
+</span><span class='line'>  <span class="k">module</span> <span class="nn">Base</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">included</span><span class="p">(</span><span class="n">base</span><span class="p">)</span>
+</span><span class='line'>      <span class="n">base</span><span class="o">.</span><span class="n">class_eval</span> <span class="k">do</span>
+</span><span class='line'>        <span class="n">has_many</span> <span class="ss">:setting_objects</span><span class="p">,</span>
+</span><span class='line'>                 <span class="c1"># settings表中的target_id和target_type</span>
+</span><span class='line'>                 <span class="ss">:as</span>         <span class="o">=&gt;</span> <span class="ss">:target</span><span class="p">,</span>
+</span><span class='line'>                 <span class="ss">:autosave</span>   <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">,</span>
+</span><span class='line'>                 <span class="ss">:dependent</span>  <span class="o">=&gt;</span> <span class="ss">:delete_all</span><span class="p">,</span>
+</span><span class='line'>                 <span class="c1"># 类的名字我们可以自定义</span>
+</span><span class='line'>                 <span class="ss">:class_name</span> <span class="o">=&gt;</span> <span class="nb">self</span><span class="o">.</span><span class="n">setting_object_class_name</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="c1"># 返回值</span>
+</span><span class='line'>        <span class="k">def</span> <span class="nf">settings</span><span class="p">(</span><span class="n">var</span><span class="p">)</span>
+</span><span class='line'>          <span class="c1"># 必须存一个symbol</span>
+</span><span class='line'>          <span class="k">raise</span> <span class="no">ArgumentError</span> <span class="k">unless</span> <span class="n">var</span><span class="o">.</span><span class="n">is_a?</span><span class="p">(</span><span class="no">Symbol</span><span class="p">)</span>
+</span><span class='line'>          <span class="c1"># 而且key是必须存在的</span>
+</span><span class='line'>          <span class="k">raise</span> <span class="no">ArgumentError</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;Unknown key: </span><span class="si">#{</span><span class="n">var</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">unless</span> <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">default_settings</span><span class="o">[</span><span class="n">var</span><span class="o">]</span>
+</span><span class='line'>
+</span><span class='line'>          <span class="k">if</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:VERSION</span><span class="o">::</span><span class="no">MAJOR</span> <span class="o">&lt;</span> <span class="mi">4</span>
+</span><span class='line'>            <span class="n">setting_objects</span><span class="o">.</span><span class="n">detect</span> <span class="p">{</span> <span class="o">|</span><span class="n">s</span><span class="o">|</span> <span class="n">s</span><span class="o">.</span><span class="n">var</span> <span class="o">==</span> <span class="n">var</span><span class="o">.</span><span class="n">to_s</span> <span class="p">}</span> <span class="o">||</span> <span class="n">setting_objects</span><span class="o">.</span><span class="n">build</span><span class="p">({</span> <span class="ss">:var</span> <span class="o">=&gt;</span> <span class="n">var</span><span class="o">.</span><span class="n">to_s</span> <span class="p">},</span> <span class="ss">:without_protection</span> <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">)</span>
+</span><span class='line'>          <span class="k">else</span>
+</span><span class='line'>            <span class="n">setting_objects</span><span class="o">.</span><span class="n">detect</span> <span class="p">{</span> <span class="o">|</span><span class="n">s</span><span class="o">|</span> <span class="n">s</span><span class="o">.</span><span class="n">var</span> <span class="o">==</span> <span class="n">var</span><span class="o">.</span><span class="n">to_s</span> <span class="p">}</span> <span class="o">||</span> <span class="n">setting_objects</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="ss">:var</span> <span class="o">=&gt;</span> <span class="n">var</span><span class="o">.</span><span class="n">to_s</span><span class="p">,</span> <span class="ss">:target</span> <span class="o">=&gt;</span> <span class="nb">self</span><span class="p">)</span>
+</span><span class='line'>          <span class="k">end</span>
+</span><span class='line'>        <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="k">def</span> <span class="nf">settings</span><span class="o">=</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+</span><span class='line'>          <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">nil?</span>
+</span><span class='line'>            <span class="n">setting_objects</span><span class="o">.</span><span class="n">each</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:mark_for_destruction</span><span class="p">)</span>
+</span><span class='line'>          <span class="k">else</span>
+</span><span class='line'>            <span class="k">raise</span> <span class="no">ArgumentError</span>
+</span><span class='line'>          <span class="k">end</span>
+</span><span class='line'>        <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="c1"># 判断值的存在性</span>
+</span><span class='line'>        <span class="k">def</span> <span class="nf">settings?</span><span class="p">(</span><span class="n">var</span><span class="o">=</span><span class="kp">nil</span><span class="p">)</span>
+</span><span class='line'>          <span class="k">if</span> <span class="n">var</span><span class="o">.</span><span class="n">nil?</span>
+</span><span class='line'>            <span class="n">setting_objects</span><span class="o">.</span><span class="n">any?</span> <span class="p">{</span> <span class="o">|</span><span class="n">setting_object</span><span class="o">|</span> <span class="o">!</span><span class="n">setting_object</span><span class="o">.</span><span class="n">marked_for_destruction?</span> <span class="o">&amp;&amp;</span> <span class="n">setting_object</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">present?</span> <span class="p">}</span>
+</span><span class='line'>          <span class="k">else</span>
+</span><span class='line'>            <span class="n">settings</span><span class="p">(</span><span class="n">var</span><span class="p">)</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">present?</span>
+</span><span class='line'>          <span class="k">end</span>
+</span><span class='line'>        <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="c1"># 返回成hash</span>
+</span><span class='line'>        <span class="k">def</span> <span class="nf">to_settings_hash</span>
+</span><span class='line'>          <span class="n">settings_hash</span> <span class="o">=</span> <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">default_settings</span>
+</span><span class='line'>          <span class="n">settings_hash</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">var</span><span class="p">,</span> <span class="n">vals</span><span class="o">|</span>
+</span><span class='line'>            <span class="n">settings_hash</span><span class="o">[</span><span class="n">var</span><span class="o">]</span> <span class="o">=</span> <span class="n">settings_hash</span><span class="o">[</span><span class="n">var</span><span class="o">].</span><span class="n">merge</span><span class="p">(</span><span class="n">settings</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">to_sym</span><span class="p">)</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+</span><span class='line'>          <span class="k">end</span>
+</span><span class='line'>          <span class="n">settings_hash</span>
+</span><span class='line'>        <span class="k">end</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>上面的代码(has_many :setting_objects)现在还不明白具体的含义,因为我们不知道setting_objects这个是什么东西</p>
+
+<p>我们来看下lib/rails-settings/setting_objects.rb这个文件的内容</p>
+
+<h3>5. setting_objects和settings表</h3>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
+<span class='line-number'>81</span>
+<span class='line-number'>82</span>
+<span class='line-number'>83</span>
+<span class='line-number'>84</span>
+<span class='line-number'>85</span>
+<span class='line-number'>86</span>
+<span class='line-number'>87</span>
+<span class='line-number'>88</span>
+<span class='line-number'>89</span>
+<span class='line-number'>90</span>
+<span class='line-number'>91</span>
+<span class='line-number'>92</span>
+<span class='line-number'>93</span>
+<span class='line-number'>94</span>
+<span class='line-number'>95</span>
+<span class='line-number'>96</span>
+<span class='line-number'>97</span>
+<span class='line-number'>98</span>
+<span class='line-number'>99</span>
+<span class='line-number'>100</span>
+<span class='line-number'>101</span>
+<span class='line-number'>102</span>
+<span class='line-number'>103</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">module</span> <span class="nn">RailsSettings</span>
+</span><span class='line'>  <span class="k">class</span> <span class="nc">SettingObject</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>    <span class="c1"># 定义了表名</span>
+</span><span class='line'>    <span class="nb">self</span><span class="o">.</span><span class="n">table_name</span> <span class="o">=</span> <span class="s1">&#39;settings&#39;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># 多态</span>
+</span><span class='line'>    <span class="n">belongs_to</span> <span class="ss">:target</span><span class="p">,</span> <span class="ss">:polymorphic</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">validates_presence_of</span> <span class="ss">:var</span><span class="p">,</span> <span class="ss">:value</span><span class="p">,</span> <span class="ss">:target_type</span>
+</span><span class='line'>    <span class="n">validate</span> <span class="k">do</span>
+</span><span class='line'>      <span class="k">unless</span> <span class="n">_target_class</span><span class="o">.</span><span class="n">default_settings</span><span class="o">[</span><span class="n">var</span><span class="o">.</span><span class="n">to_sym</span><span class="o">]</span>
+</span><span class='line'>        <span class="n">errors</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="ss">:var</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">var</span><span class="si">}</span><span class="s2"> is not defined!&quot;</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">serialize</span> <span class="ss">:value</span><span class="p">,</span> <span class="no">Hash</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># attr_protected can not be here used because it touches the database which is not connected yet.</span>
+</span><span class='line'>    <span class="c1"># So allow no attributes and override &lt;tt&gt;#sanitize_for_mass_assignment&lt;/tt&gt;</span>
+</span><span class='line'>    <span class="k">if</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:VERSION</span><span class="o">::</span><span class="no">MAJOR</span> <span class="o">&lt;</span> <span class="mi">4</span>
+</span><span class='line'>      <span class="n">attr_accessible</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="no">REGEX_SETTER</span> <span class="o">=</span> <span class="sr">/\A([a-z]\w+)=\Z/i</span>
+</span><span class='line'>    <span class="no">REGEX_GETTER</span> <span class="o">=</span> <span class="sr">/\A([a-z]\w+)\Z/i</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">respond_to?</span><span class="p">(</span><span class="n">method_name</span><span class="p">,</span> <span class="n">include_priv</span><span class="o">=</span><span class="kp">false</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">super</span> <span class="o">||</span> <span class="n">method_name</span><span class="o">.</span><span class="n">to_s</span> <span class="o">=~</span> <span class="no">REGEX_SETTER</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># 当执行u.settings(:dashboard).theme时会用到</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">method_missing</span><span class="p">(</span><span class="n">method_name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">if</span> <span class="nb">block_given?</span>
+</span><span class='line'>        <span class="k">super</span>
+</span><span class='line'>      <span class="k">else</span>
+</span><span class='line'>        <span class="c1"># 当执行.var时</span>
+</span><span class='line'>        <span class="k">if</span> <span class="n">attribute_names</span><span class="o">.</span><span class="n">include?</span><span class="p">(</span><span class="n">method_name</span><span class="o">.</span><span class="n">to_s</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">,</span><span class="s1">&#39;&#39;</span><span class="p">))</span>
+</span><span class='line'>          <span class="k">super</span>
+</span><span class='line'>        <span class="k">elsif</span> <span class="n">method_name</span><span class="o">.</span><span class="n">to_s</span> <span class="o">=~</span> <span class="no">REGEX_SETTER</span> <span class="o">&amp;&amp;</span> <span class="n">args</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span>
+</span><span class='line'>          <span class="err">＃</span> <span class="err">当有给值的时候</span>
+</span><span class='line'>          <span class="n">_set_value</span><span class="p">(</span><span class="vg">$1</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">first</span><span class="p">)</span>
+</span><span class='line'>        <span class="k">elsif</span> <span class="n">method_name</span><span class="o">.</span><span class="n">to_s</span> <span class="o">=~</span> <span class="no">REGEX_GETTER</span> <span class="o">&amp;&amp;</span> <span class="n">args</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span>
+</span><span class='line'>          <span class="c1"># 当没有值的时候就取值</span>
+</span><span class='line'>          <span class="n">_get_value</span><span class="p">(</span><span class="vg">$1</span><span class="p">)</span>
+</span><span class='line'>        <span class="k">else</span>
+</span><span class='line'>          <span class="k">super</span>
+</span><span class='line'>        <span class="k">end</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kp">protected</span>
+</span><span class='line'>    <span class="k">if</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:VERSION</span><span class="o">::</span><span class="no">MAJOR</span> <span class="o">&lt;</span> <span class="mi">4</span>
+</span><span class='line'>      <span class="c1"># Simulate attr_protected by removing all regular attributes</span>
+</span><span class='line'>      <span class="k">def</span> <span class="nf">sanitize_for_mass_assignment</span><span class="p">(</span><span class="n">attributes</span><span class="p">,</span> <span class="n">role</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">)</span>
+</span><span class='line'>        <span class="n">attributes</span><span class="o">.</span><span class="n">except</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;var&#39;</span><span class="p">,</span> <span class="s1">&#39;value&#39;</span><span class="p">,</span> <span class="s1">&#39;target_id&#39;</span><span class="p">,</span> <span class="s1">&#39;target_type&#39;</span><span class="p">,</span> <span class="s1">&#39;created_at&#39;</span><span class="p">,</span> <span class="s1">&#39;updated_at&#39;</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kp">private</span>
+</span><span class='line'>    <span class="c1"># 取值</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">_get_value</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">if</span> <span class="n">value</span><span class="o">[</span><span class="nb">name</span><span class="o">].</span><span class="n">nil?</span>
+</span><span class='line'>        <span class="c1"># _target_class为使用has_settings的model</span>
+</span><span class='line'>        <span class="n">_target_class</span><span class="o">.</span><span class="n">default_settings</span><span class="o">[</span><span class="n">var</span><span class="o">.</span><span class="n">to_sym</span><span class="o">][</span><span class="nb">name</span><span class="o">]</span>
+</span><span class='line'>      <span class="k">else</span>
+</span><span class='line'>        <span class="c1"># 直接从数据库取</span>
+</span><span class='line'>        <span class="n">value</span><span class="o">[</span><span class="nb">name</span><span class="o">]</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># 设置值</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">_set_value</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">if</span> <span class="n">value</span><span class="o">[</span><span class="nb">name</span><span class="o">]</span> <span class="o">!=</span> <span class="n">v</span>
+</span><span class='line'>        <span class="n">value_will_change!</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="c1"># 如果value是nil就把值删除掉</span>
+</span><span class='line'>        <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">nil?</span>
+</span><span class='line'>          <span class="n">value</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
+</span><span class='line'>        <span class="k">else</span>
+</span><span class='line'>          <span class="c1"># 设置值</span>
+</span><span class='line'>          <span class="n">value</span><span class="o">[</span><span class="nb">name</span><span class="o">]</span> <span class="o">=</span> <span class="n">v</span>
+</span><span class='line'>        <span class="k">end</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">_target_class</span>
+</span><span class='line'>      <span class="n">target_type</span><span class="o">.</span><span class="n">constantize</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># Patch ActiveRecord to save serialized attributes only if they are changed</span>
+</span><span class='line'>    <span class="k">if</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:VERSION</span><span class="o">::</span><span class="no">MAJOR</span> <span class="o">&lt;</span> <span class="mi">4</span>
+</span><span class='line'>      <span class="c1"># https://github.com/rails/rails/blob/3-2-stable/activerecord/lib/active_record/attribute_methods/dirty.rb#L70</span>
+</span><span class='line'>      <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="o">*</span><span class="p">)</span>
+</span><span class='line'>        <span class="k">super</span><span class="p">(</span><span class="n">changed</span><span class="p">)</span> <span class="k">if</span> <span class="n">changed?</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">else</span>
+</span><span class='line'>      <span class="c1"># https://github.com/rails/rails/blob/4-0-stable/activerecord/lib/active_record/attribute_methods/dirty.rb#L73</span>
+</span><span class='line'>      <span class="k">def</span> <span class="nf">update_record</span><span class="p">(</span><span class="o">*</span><span class="p">)</span>
+</span><span class='line'>        <span class="k">super</span><span class="p">(</span><span class="n">keys_for_partial_write</span><span class="p">)</span> <span class="k">if</span> <span class="n">changed?</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这个setting_objects主要是用来操作settings表的内容的</p>
+
+<p>attribute_names返回的是一个对象的所有属性名</p>
+
+<p>serialize :value, Hash 把value变成Hash对象来存储</p>
+
+<p>default_settings是有些不明白</p>
+
+<p>我们来看下lib/rails-settings/configuration.rb文件</p>
+
+<h3>6. has_settings的symbol列表</h3>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span><span class="o">.</span><span class="n">class_eval</span> <span class="k">do</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">has_settings</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+</span><span class='line'>    <span class="ss">RailsSettings</span><span class="p">:</span><span class="ss">:Configuration</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="o">.</span><span class="n">unshift</span><span class="p">(</span><span class="nb">self</span><span class="p">),</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kp">include</span> <span class="ss">RailsSettings</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>    <span class="kp">extend</span> <span class="ss">RailsSettings</span><span class="p">:</span><span class="ss">:Scopes</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">module</span> <span class="nn">RailsSettings</span>
+</span><span class='line'>  <span class="k">class</span> <span class="nc">Configuration</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+</span><span class='line'>      <span class="c1"># 如果最后一个参数是hash就弹出来</span>
+</span><span class='line'>      <span class="n">options</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">extract_options!</span>
+</span><span class='line'>      <span class="c1"># 把第一个参数弹出来</span>
+</span><span class='line'>      <span class="n">klass</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">shift</span>
+</span><span class='line'>      <span class="c1"># 剩下的给keys</span>
+</span><span class='line'>      <span class="n">keys</span> <span class="o">=</span> <span class="n">args</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="k">raise</span> <span class="no">ArgumentError</span> <span class="k">unless</span> <span class="n">klass</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="vi">@klass</span><span class="err">其实就是</span><span class="no">User</span><span class="err">这个</span><span class="n">model</span><span class="err">类</span>
+</span><span class='line'>      <span class="vi">@klass</span> <span class="o">=</span> <span class="n">klass</span>
+</span><span class='line'>      <span class="vi">@klass</span><span class="o">.</span><span class="n">class_attribute</span> <span class="ss">:default_settings</span><span class="p">,</span> <span class="ss">:setting_object_class_name</span>
+</span><span class='line'>      <span class="c1"># 默认为空的hash</span>
+</span><span class='line'>      <span class="vi">@klass</span><span class="o">.</span><span class="n">default_settings</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span class='line'>      <span class="c1"># 定义默认的class_name</span>
+</span><span class='line'>      <span class="vi">@klass</span><span class="o">.</span><span class="n">setting_object_class_name</span> <span class="o">=</span> <span class="n">options</span><span class="o">[</span><span class="ss">:class_name</span><span class="o">]</span> <span class="o">||</span> <span class="s1">&#39;RailsSettings::SettingObject&#39;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="c1"># keys可能会包含:dashboard</span>
+</span><span class='line'>      <span class="k">if</span> <span class="nb">block_given?</span>
+</span><span class='line'>        <span class="k">yield</span><span class="p">(</span><span class="nb">self</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">else</span>
+</span><span class='line'>        <span class="n">keys</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">k</span><span class="o">|</span>
+</span><span class='line'>          <span class="c1"># 可能default_settings的值会变成这样{:dashboard=&gt;{}}</span>
+</span><span class='line'>          <span class="n">key</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+</span><span class='line'>        <span class="k">end</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="k">raise</span> <span class="no">ArgumentError</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s1">&#39;has_settings: No keys defined&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="vi">@klass</span><span class="o">.</span><span class="n">default_settings</span><span class="o">.</span><span class="n">blank?</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">key</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">{})</span>
+</span><span class='line'>      <span class="c1"># 必须是symbol</span>
+</span><span class='line'>      <span class="k">raise</span> <span class="no">ArgumentError</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;has_settings: Symbol expected, but got a </span><span class="si">#{</span><span class="nb">name</span><span class="o">.</span><span class="n">class</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">unless</span> <span class="nb">name</span><span class="o">.</span><span class="n">is_a?</span><span class="p">(</span><span class="no">Symbol</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">raise</span> <span class="no">ArgumentError</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;has_settings: Option :defaults expected, but got </span><span class="si">#{</span><span class="n">options</span><span class="o">.</span><span class="n">keys</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">unless</span> <span class="n">options</span><span class="o">.</span><span class="n">blank?</span> <span class="o">||</span> <span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">keys</span> <span class="o">==</span> <span class="o">[</span><span class="ss">:defaults</span><span class="o">]</span><span class="p">)</span>
+</span><span class='line'>      <span class="vi">@klass</span><span class="o">.</span><span class="n">default_settings</span><span class="o">[</span><span class="nb">name</span><span class="o">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">options</span><span class="o">[</span><span class="ss">:defaults</span><span class="o">]</span> <span class="o">||</span> <span class="p">{})</span><span class="o">.</span><span class="n">stringify_keys</span><span class="o">.</span><span class="n">freeze</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">User</span><span class="o">.</span><span class="n">default_settings</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="p">{</span><span class="ss">:dashboard</span><span class="o">=&gt;</span><span class="p">{}}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>stringify_keys把hash的key转成字符串</p>
+
+<p>has_settings定义的Symbol列表就是放到default_settings中的</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">随风</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-02-08T09:34:00+08:00" pubdate data-updated="true">Feb 8<span>th</span>, 2014</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/on/'>on</a>, <a class='category' href='/blog/categories/rails/'>rails</a>, <a class='category' href='/blog/categories/ruby/'>ruby</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://yinsigan.github.io/blog/2014/02/08/rails-settingsyuan-ma-fen-xi/" data-via="" data-counturl="http://yinsigan.github.io/blog/2014/02/08/rails-settingsyuan-ma-fen-xi/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/01/18/settingslogicyuan-ma-fen-xi/" title="Previous Post: settingslogic源码分析">&laquo; settingslogic源码分析</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/02/10/jquery-tags-input-and-jquery-tag-it/" title="Next Post: jquery tags-input &amp; jquery tag-it">jquery tags-input &amp; jquery tag-it &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/09/10/zhong-zhuang-xi-tong-hou-ru-he-zhong-xie-ni-de-octopressbo-ke/">重装系统后如何重写你的Octopress博客</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/19/qian-ru-shi-biao-dan-yu-duo-tu-pian-shang-chuan/">嵌入式表单与多图片上传</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/12/carrierwavetu-pian-shang-chuan-de-jian-dan-shi-yong/">CarrierWave图片上传的简单使用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/12/jquery-treede-jie-shao-he-jian-dan-shi-yong/">Jquery Tree的介绍和简单使用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/11/jbuilder-and-rabl-and-gonjian-dan-shi-yong/">Jbuilder &amp; Rabl &amp; Gon简单使用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/10/jquery-tags-input-and-jquery-tag-it/">Jquery Tags-input &amp; Jquery Tag-it</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/08/rails-settingsyuan-ma-fen-xi/">Rails-settings源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/18/settingslogicyuan-ma-fen-xi/">Settingslogic源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/18/tabs-on-railsyuan-ma-fen-xi/">Tabs_on_rails源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/17/breadcrumbs-on-railsyuan-ma-fen-xi/">Breadcrumbs_on_rails源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/14/acts-as-messageableyuan-ma-fen-xi-1/">Acts-as-messageable源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/08/acts-as-taggable-onyuan-ma-fen-xi-9/">Acts-as-taggable-on源码分析(九)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/08/acts-as-taggable-onyuan-ma-fen-xi-8/">Acts-as-taggable-on源码分析(八)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/08/acts-as-taggable-onyuan-ma-fen-xi-7/">Acts-as-taggable-on源码分析(七)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/08/acts-as-taggable-onyuan-ma-fen-xi-6/">Acts-as-taggable-on源码分析(六)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/07/acts-as-taggable-onyuan-ma-fen-xi-5/">Acts-as-taggable-on源码分析(五)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/07/acts-as-taggable-onyuan-ma-fen-xi-4/">Acts-as-taggable-on源码分析(四)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/06/acts-as-taggable-onyuan-ma-fen-xi-3/">Acts-as-taggable-on源码分析(三)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/05/ubuntuxia-an-zhuang-linux-apache-mysql-php-dbninja/">ubuntu下安装Linux Apache MySQL PHP Dbninja</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/04/acts-as-taggable-onyuan-ma-fen-xi-2/">Acts-as-taggable-on源码分析(二)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/04/acts-as-taggable-onyuan-ma-fen-xi-1/">Acts-as-taggable-on源码分析(一)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/03/ubuntu-ruan-jian-tui-jian-yu-an-zhuang/">Ubuntu 软件推荐与安装</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/30/ubuntuxia-sublime-text-3shu-ru-zhong-wen/">Ubuntu下sublime Text 3输入中文</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/26/rubyyuan-bian-cheng-zhi-block/">Ruby元编程之block</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/20/acts-as-paranoidyuan-ma-fen-xi/">Acts_as_paranoid源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/14/ancestryyuan-ma-fen-xi/">Ancestry源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/11/rails-association-reference/">Rails Association Reference</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/10/rails-association/">Rails Association</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/09/acts-as-treeyuan-ma-fen-xi/">Acts_as_tree源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/03/acts-as-followeryuan-ma-fen-xi/">Acts_as_follower源码分析</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+Copyright &copy; 2017 - 随风 - <a href="https:/www.rails365.net">rails365</a>
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'xiaozi';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://yinsigan.github.io/blog/2014/02/08/rails-settingsyuan-ma-fen-xi/';
+        var disqus_url = 'http://yinsigan.github.io/blog/2014/02/08/rails-settingsyuan-ma-fen-xi/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = "/javascripts/widgets.js";
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: subl | 随风的博客]]></title>
+  <link href="http://yinsigan.github.io/blog/categories/subl/atom.xml" rel="self"/>
+  <link href="http://yinsigan.github.io/"/>
+  <updated>2017-09-05T18:11:22+08:00</updated>
+  <id>http://yinsigan.github.io/</id>
+  <author>
+    <name><![CDATA[随风]]></name>
+    <email><![CDATA[ganweiliang886@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[ubuntu下sublime text 3输入中文]]></title>
+    <link href="http://yinsigan.github.io/blog/2013/12/30/ubuntuxia-sublime-text-3shu-ru-zhong-wen/"/>
+    <updated>2013-12-30T21:11:00+08:00</updated>
+    <id>http://yinsigan.github.io/blog/2013/12/30/ubuntuxia-sublime-text-3shu-ru-zhong-wen</id>
+    <content type="html"><![CDATA[<ul>
+<li><a href="http://www.sublimetext.com/3">sublime text 3</a></li>
+</ul>
+
+
+<p>从官网下载的sublime text 3在linux下是无法输入中文的,但是有一个解决方法,它是通过编译一个c文件来实现的,然后加载它,最后sublime text 3就可以输入中文了</p>
+
+<p>我的环境</p>
+
+<ul>
+<li>ubuntu 13.04</li>
+<li>fcitx 4.2.7</li>
+<li>sublime text 3(stable build 3059)</li>
+</ul>
+
+
+<!-- more -->
+
+
+<h3>安装必要的软件环境</h3>
+
+<p><code>bash
+sudo apt-get install build-essential
+sudo apt-get install libgtk2.0-dev
+</code></p>
+
+<h3>复制该文件存在家目录下~/sublime-imfix.c</h3>
+
+<p>``` c sublime-imfix.c
+/*
+sublime-imfix.c
+Use LD_PRELOAD to interpose some function to fix sublime input method support for linux.
+By Cjacker Huang</p>
+
+<p>gcc -shared -o libsublime-imfix.so sublime-imfix.c <code>pkg-config --libs --cflags gtk+-2.0</code> -fPIC
+LD_PRELOAD=./libsublime-imfix.so subl
+*/</p>
+
+<h1>include &lt;gtk/gtk.h></h1>
+
+<h1>include &lt;gdk/gdkx.h></h1>
+
+<p>typedef GdkSegment GdkRegionBox;</p>
+
+<p>struct _GdkRegion
+{
+  long size;
+  long numRects;
+  GdkRegionBox *rects;
+  GdkRegionBox extents;
+};</p>
+
+<p>GtkIMContext *local_context;</p>
+
+<p>void
+gdk_region_get_clipbox (const GdkRegion *region,</p>
+
+<pre><code>        GdkRectangle    *rectangle)
+</code></pre>
+
+<p>{
+  g_return_if_fail (region != NULL);
+  g_return_if_fail (rectangle != NULL);</p>
+
+<p>  rectangle->x = region->extents.x1;
+  rectangle->y = region->extents.y1;
+  rectangle->width = region->extents.x2 &ndash; region->extents.x1;
+  rectangle->height = region->extents.y2 &ndash; region->extents.y1;
+  GdkRectangle rect;
+  rect.x = rectangle->x;
+  rect.y = rectangle->y;
+  rect.width = 0;
+  rect.height = rectangle->height;
+  //The caret width is 2;
+  //Maybe sometimes we will make a mistake, but for most of the time, it should be the caret.
+  if(rectangle->width == 2 &amp;&amp; GTK_IS_IM_CONTEXT(local_context)) {</p>
+
+<pre><code>    gtk_im_context_set_cursor_location(local_context, rectangle);
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>//this is needed, for example, if you input something in file dialog and return back the edit area
+//context will lost, so here we set it again.</p>
+
+<p>static GdkFilterReturn event_filter (GdkXEvent <em>xevent, GdkEvent </em>event, gpointer im_context)
+{</p>
+
+<pre><code>XEvent *xev = (XEvent *)xevent;
+if(xev-&gt;type == KeyRelease &amp;&amp; GTK_IS_IM_CONTEXT(im_context)) {
+   GdkWindow * win = g_object_get_data(G_OBJECT(im_context),"window");
+   if(GDK_IS_WINDOW(win))
+     gtk_im_context_set_client_window(im_context, win);
+}
+return GDK_FILTER_CONTINUE;
+</code></pre>
+
+<p>}</p>
+
+<p>void gtk_im_context_set_client_window (GtkIMContext *context,</p>
+
+<pre><code>      GdkWindow    *window)
+</code></pre>
+
+<p>{
+  GtkIMContextClass *klass;
+  g_return_if_fail (GTK_IS_IM_CONTEXT (context));
+  klass = GTK_IM_CONTEXT_GET_CLASS (context);
+  if (klass->set_client_window)</p>
+
+<pre><code>klass-&gt;set_client_window (context, window);
+</code></pre>
+
+<p>  if(!GDK_IS_WINDOW (window))</p>
+
+<pre><code>return;
+</code></pre>
+
+<p>  g_object_set_data(G_OBJECT(context),&ldquo;window&rdquo;,window);
+  int width = gdk_window_get_width(window);
+  int height = gdk_window_get_height(window);
+  if(width != 0 &amp;&amp; height !=0) {</p>
+
+<pre><code>gtk_im_context_focus_in(context);
+local_context = context;
+</code></pre>
+
+<p>  }
+  gdk_window_add_filter (window, event_filter, context);
+}</p>
+
+<p>```</p>
+
+<h3>将sublime-imfix.c编译成共享内库</h3>
+
+<p><code>bash
+gcc -shared -o libsublime-imfix.so sublime-imfix.c `pkg-config --libs --cflags gtk+-2.0` -fPIC
+</code></p>
+
+<p>它会生成libsublime-imfix.so的库文件</p>
+
+<h3>修改.bashrc加载该内库,这样命令subl开的sublime text输入中文就没问题了</h3>
+
+<p><code>bash ~/.bashrc
+export LD_PRELOAD=/home/yinsigan/libsublime-imfix.so subl
+</code></p>
+
+<p><code>bash
+source ~/.bashrc
+</code></p>
+
+<p><img src="/images/sublimelinux/c.gif"></p>
+
+<p>/home/yinsigan要替换成你自己的家目录,这里使用绝对路径</p>
+
+<h3>修改 /usr/share/applications/sublime_text.desktop 为</h3>
+
+<p>```
+[Desktop Entry]
+[&hellip;]
+Exec=env LD_PRELOAD=/home/yinsigan/libsublime-imfix.so /opt/sublime_text/sublime_text %F
+[&hellip;]</p>
+
+<p>[Desktop Action Window]
+[&hellip;]
+Exec=env LD_PRELOAD=/home/yinsigan/libsublime-imfix.so /opt/sublime_text/sublime_text -n
+[&hellip;]</p>
+
+<p>[Desktop Action Document]
+[&hellip;]
+Exec=env LD_PRELOAD=/home/yinsigan/libsublime-imfix.so /opt/sublime_text/sublime_text &mdash;command new_file
+[&hellip;]
+```</p>
+
+<p>这样在桌面上点击sublime text的图标开的sublime text也可以输入中文的</p>
+
+<h3>最后是效果图</h3>
+
+<p><img src="/images/sublimelinux/sublime.png"></p>
+]]></content>
+  </entry>
+  
+</feed>

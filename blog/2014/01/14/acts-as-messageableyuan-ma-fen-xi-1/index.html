@@ -1,0 +1,851 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>acts-as-messageable源码分析 - 随风的博客</title>
+  <meta name="author" content="随风">
+
+  
+  <meta name="description" content="acts-as-messageable 这个gem可以实现类似站内消息的机制。 数据库结构: 源码结构: 1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+lib
+├── acts-as-messageable
+│   ├── message.rb 定义了Message这个model
+│   ├── &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://yinsigan.github.io/blog/2014/01/14/acts-as-messageableyuan-ma-fen-xi-1">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="随风的博客" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/libs/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-46093029-1', 'yinsigan.github.io');
+  ga('send', 'pageview');
+
+</script>
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">随风的博客</a></h1>
+  
+    <h2>人生若如初见</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:yinsigan.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Acts-as-messageable源码分析</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-01-14T11:05:00+08:00" pubdate data-updated="true">Jan 14<span>th</span>, 2014</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p><a href="https://github.com/LTe/acts-as-messageable">acts-as-messageable</a></p>
+
+<p>这个gem可以实现类似站内消息的机制。</p>
+
+<p>数据库结构:</p>
+
+<p><img src="/images/acts-as-messageable/table.png"></p>
+
+<!-- more -->
+
+
+<p>源码结构:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>lib
+</span><span class='line'>├── acts-as-messageable
+</span><span class='line'>│   ├── message.rb 定义了Message这个model
+</span><span class='line'>│   ├── model.rb 主要定义了acts_as_messageable这个方法
+</span><span class='line'>│   ├── rails3.rb
+</span><span class='line'>│   ├── rails4.rb
+</span><span class='line'>│   ├── railtie.rb 加载时用到
+</span><span class='line'>│   ├── relation.rb 主要定义了process方法
+</span><span class='line'>│   └── scopes.rb 定义了几个scope
+</span><span class='line'>├── acts-as-messageable.rb  主程序</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>acts_as_messageable</h3>
+
+<p>这个方法定义在lib/acts-as-messageable/message.rb中。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">acts_as_messageable</span><span class="p">(</span><span class="n">options</span> <span class="o">=</span> <span class="p">{})</span>
+</span><span class='line'>  <span class="c1"># 定义默认的参数</span>
+</span><span class='line'>  <span class="n">default_options</span> <span class="o">=</span> <span class="p">{</span>
+</span><span class='line'>    <span class="ss">:table_name</span> <span class="o">=&gt;</span> <span class="s2">&quot;messages&quot;</span><span class="p">,</span>  <span class="c1"># 表名</span>
+</span><span class='line'>    <span class="ss">:class_name</span> <span class="o">=&gt;</span> <span class="s2">&quot;ActsAsMessageable::Message&quot;</span><span class="p">,</span> <span class="c1"># 类名</span>
+</span><span class='line'>    <span class="ss">:required</span> <span class="o">=&gt;</span> <span class="o">[</span><span class="ss">:topic</span><span class="p">,</span> <span class="ss">:body</span><span class="o">]</span><span class="p">,</span> <span class="c1"># 必须的参数填写</span>
+</span><span class='line'>    <span class="ss">:dependent</span> <span class="o">=&gt;</span> <span class="ss">:nullify</span><span class="p">,</span>
+</span><span class='line'>    <span class="ss">:group_messages</span> <span class="o">=&gt;</span> <span class="kp">false</span><span class="p">,</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>  <span class="n">options</span> <span class="o">=</span> <span class="n">default_options</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># 两个多态</span>
+</span><span class='line'>  <span class="n">has_many</span>  <span class="ss">:received_messages_relation</span><span class="p">,</span>  <span class="c1"># 接收者</span>
+</span><span class='line'>            <span class="ss">:as</span> <span class="o">=&gt;</span> <span class="ss">:received_messageable</span><span class="p">,</span>
+</span><span class='line'>            <span class="ss">:class_name</span> <span class="o">=&gt;</span> <span class="n">options</span><span class="o">[</span><span class="ss">:class_name</span><span class="o">]</span><span class="p">,</span>
+</span><span class='line'>            <span class="ss">:dependent</span> <span class="o">=&gt;</span> <span class="n">options</span><span class="o">[</span><span class="ss">:dependent</span><span class="o">]</span>
+</span><span class='line'>  <span class="n">has_many</span>  <span class="ss">:sent_messages_relation</span><span class="p">,</span> <span class="c1"># 发送者</span>
+</span><span class='line'>            <span class="ss">:as</span> <span class="o">=&gt;</span> <span class="ss">:sent_messageable</span><span class="p">,</span>
+</span><span class='line'>            <span class="ss">:class_name</span> <span class="o">=&gt;</span> <span class="n">options</span><span class="o">[</span><span class="ss">:class_name</span><span class="o">]</span><span class="p">,</span>
+</span><span class='line'>            <span class="ss">:dependent</span> <span class="o">=&gt;</span> <span class="n">options</span><span class="o">[</span><span class="ss">:dependent</span><span class="o">]</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># 字符串转成class</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">messages_class_name</span> <span class="o">=</span> <span class="n">options</span><span class="o">[</span><span class="ss">:class_name</span><span class="o">].</span><span class="n">constantize</span>
+</span><span class='line'>  <span class="c1"># 使用了has_ancestry这个gem</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">messages_class_name</span><span class="o">.</span><span class="n">has_ancestry</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">if</span> <span class="nb">self</span><span class="o">.</span><span class="n">messages_class_name</span><span class="o">.</span><span class="n">respond_to?</span><span class="p">(</span><span class="ss">:table_name</span><span class="o">=</span><span class="p">)</span>
+</span><span class='line'>    <span class="c1"># 设置表名</span>
+</span><span class='line'>    <span class="nb">self</span><span class="o">.</span><span class="n">messages_class_name</span><span class="o">.</span><span class="n">table_name</span> <span class="o">=</span> <span class="n">options</span><span class="o">[</span><span class="ss">:table_name</span><span class="o">]</span>
+</span><span class='line'>    <span class="c1"># 导入scopes.rb文件定义的几个scope</span>
+</span><span class='line'>    <span class="nb">self</span><span class="o">.</span><span class="n">messages_class_name</span><span class="o">.</span><span class="n">initialize_scopes</span>
+</span><span class='line'>  <span class="k">else</span>
+</span><span class='line'>    <span class="c1"># 老式用法</span>
+</span><span class='line'>    <span class="nb">self</span><span class="o">.</span><span class="n">messages_class_name</span><span class="o">.</span><span class="n">set_table_name</span><span class="p">(</span><span class="n">options</span><span class="o">[</span><span class="ss">:table_name</span><span class="o">]</span><span class="p">)</span>
+</span><span class='line'>    <span class="ss">ActiveSupport</span><span class="p">:</span><span class="ss">:Deprecation</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Calling set_table_name is deprecated. Please use `self.table_name = &#39;the_name&#39;` instead.&quot;</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># 包裹成数据</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">messages_class_name</span><span class="o">.</span><span class="n">required</span> <span class="o">=</span> <span class="nb">Array</span><span class="o">.</span><span class="n">wrap</span><span class="p">(</span><span class="n">options</span><span class="o">[</span><span class="ss">:required</span><span class="o">]</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1"># 验证参数的存在性</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">messages_class_name</span><span class="o">.</span><span class="n">validates_presence_of</span> <span class="nb">self</span><span class="o">.</span><span class="n">messages_class_name</span><span class="o">.</span><span class="n">required</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">group_messages</span> <span class="o">=</span> <span class="n">options</span><span class="o">[</span><span class="ss">:group_messages</span><span class="o">]</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kp">include</span> <span class="ss">ActsAsMessageable</span><span class="p">:</span><span class="ss">:Model</span><span class="o">::</span><span class="no">InstanceMethods</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">initialize_scopes</span>
+</span><span class='line'>  <span class="c1"># 查找发送消息的对象</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="ss">:are_from</span><span class="p">,</span>          <span class="nb">lambda</span> <span class="p">{</span> <span class="o">|*</span><span class="n">args</span><span class="o">|</span> <span class="n">where</span><span class="p">(</span><span class="ss">:sent_messageable_id</span> <span class="o">=&gt;</span> <span class="n">args</span><span class="o">.</span><span class="n">first</span><span class="p">,</span> <span class="ss">:sent_messageable_type</span> <span class="o">=&gt;</span> <span class="n">args</span><span class="o">.</span><span class="n">first</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">name</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>  <span class="c1"># 查找接收消息的对象</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="ss">:are_to</span><span class="p">,</span>            <span class="nb">lambda</span> <span class="p">{</span> <span class="o">|*</span><span class="n">args</span><span class="o">|</span> <span class="n">where</span><span class="p">(</span><span class="ss">:received_messageable_id</span> <span class="o">=&gt;</span> <span class="n">args</span><span class="o">.</span><span class="n">first</span><span class="p">,</span> <span class="ss">:received_messageable_type</span> <span class="o">=&gt;</span> <span class="n">args</span><span class="o">.</span><span class="n">first</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">name</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>  <span class="c1"># 模糊查找body和topic的内容</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="ss">:search</span><span class="p">,</span>            <span class="nb">lambda</span> <span class="p">{</span> <span class="o">|*</span><span class="n">args</span><span class="o">|</span>  <span class="n">where</span><span class="p">(</span><span class="s2">&quot;body like :search_txt or topic like :search_txt&quot;</span><span class="p">,</span><span class="ss">:search_txt</span> <span class="o">=&gt;</span> <span class="s2">&quot;%</span><span class="si">#{</span><span class="n">args</span><span class="o">.</span><span class="n">first</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)}</span>
+</span><span class='line'>  <span class="c1"># 传两个参数，第一个是发送消息的对象或者接收消息的对象，第二个为布尔值，是否删除</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="ss">:connected_with</span><span class="p">,</span>    <span class="nb">lambda</span> <span class="p">{</span> <span class="o">|*</span><span class="n">args</span><span class="o">|</span>  <span class="n">where</span><span class="p">(</span><span class="s2">&quot;(sent_messageable_type = :sent_type and</span>
+</span><span class='line'><span class="s2">                                            sent_messageable_id = :sent_id and</span>
+</span><span class='line'><span class="s2">                                            sender_delete = :s_delete and sender_permanent_delete = :s_perm_delete) or</span>
+</span><span class='line'><span class="s2">                                            (received_messageable_type = :received_type and</span>
+</span><span class='line'><span class="s2">                                            received_messageable_id = :received_id and</span>
+</span><span class='line'><span class="s2">                                            recipient_delete = :r_delete and recipient_permanent_delete = :r_perm_delete)&quot;</span><span class="p">,</span>
+</span><span class='line'>                                            <span class="ss">:sent_type</span>      <span class="o">=&gt;</span> <span class="n">args</span><span class="o">.</span><span class="n">first</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">resolve_active_record_ancestor</span><span class="o">.</span><span class="n">to_s</span><span class="p">,</span>
+</span><span class='line'>                                            <span class="ss">:sent_id</span>        <span class="o">=&gt;</span> <span class="n">args</span><span class="o">.</span><span class="n">first</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+</span><span class='line'>                                            <span class="ss">:received_type</span>  <span class="o">=&gt;</span> <span class="n">args</span><span class="o">.</span><span class="n">first</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">resolve_active_record_ancestor</span><span class="o">.</span><span class="n">to_s</span><span class="p">,</span>
+</span><span class='line'>                                            <span class="ss">:received_id</span>    <span class="o">=&gt;</span> <span class="n">args</span><span class="o">.</span><span class="n">first</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+</span><span class='line'>                                            <span class="ss">:r_delete</span>       <span class="o">=&gt;</span> <span class="n">args</span><span class="o">.</span><span class="n">last</span><span class="p">,</span>
+</span><span class='line'>                                            <span class="ss">:s_delete</span>       <span class="o">=&gt;</span> <span class="n">args</span><span class="o">.</span><span class="n">last</span><span class="p">,</span>
+</span><span class='line'>                                            <span class="ss">:r_perm_delete</span>  <span class="o">=&gt;</span> <span class="kp">false</span><span class="p">,</span>
+</span><span class='line'>                                            <span class="ss">:s_perm_delete</span>  <span class="o">=&gt;</span> <span class="kp">false</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>  <span class="c1"># 查找已经被查阅的</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="ss">:readed</span><span class="p">,</span>            <span class="nb">lambda</span> <span class="p">{</span> <span class="n">where</span><span class="p">(</span><span class="ss">:opened</span> <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">)</span>  <span class="p">}</span>
+</span><span class='line'>  <span class="c1"># 查找还未被查阅的</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="ss">:unreaded</span><span class="p">,</span>          <span class="nb">lambda</span> <span class="p">{</span> <span class="n">where</span><span class="p">(</span><span class="ss">:opened</span> <span class="o">=&gt;</span> <span class="kp">false</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>  <span class="c1"># 查找删除过的</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="ss">:deleted</span><span class="p">,</span>           <span class="nb">lambda</span> <span class="p">{</span> <span class="n">where</span><span class="p">(</span><span class="ss">:recipient_delete</span> <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">,</span> <span class="ss">:sender_delete</span> <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这样来使用的。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">User</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">attr_accessible</span> <span class="ss">:name</span>
+</span><span class='line'>  <span class="n">acts_as_messageable</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="ss">ActsAsMessageable</span><span class="p">:</span><span class="ss">:Message</span><span class="o">.</span><span class="n">are_from</span><span class="p">(</span><span class="no">User</span><span class="o">.</span><span class="n">first</span><span class="p">)</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="no">SELECT</span> <span class="sb">`messages`</span><span class="o">.</span><span class="n">*</span> <span class="no">FROM</span> <span class="sb">`messages`</span> <span class="no">WHERE</span> <span class="sb">`messages`</span><span class="o">.</span><span class="n">`sent_messageable_id</span><span class="sb">` = 1 AND `</span><span class="n">messages</span><span class="sb">`.`</span><span class="n">sent_messageable_type</span><span class="sb">` = &#39;User&#39; ORDER BY created_at desc</span>
+</span><span class='line'>
+</span><span class='line'><span class="sb">ActsAsMessageable::Message.connected_with(User.first, false)</span>
+</span><span class='line'><span class="sb">=&gt; SELECT `</span><span class="n">messages</span><span class="sb">`.* FROM `</span><span class="n">messages</span><span class="sb">` WHERE ((sent_messageable_type = &#39;User&#39; and</span>
+</span><span class='line'><span class="sb"> sent_messageable_id = 1 and</span>
+</span><span class='line'><span class="sb"> sender_delete = 0 and sender_permanent_delete = 0) or</span>
+</span><span class='line'><span class="sb"> (received_messageable_type = &#39;User&#39; and</span>
+</span><span class='line'><span class="sb"> received_messageable_id = 1 and</span>
+</span><span class='line'><span class="sb"> recipient_delete = 0 and recipient_permanent_delete = 0)) ORDER BY created_at desc</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>send_message</h3>
+
+<p>发送消息</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">send_message</span><span class="p">(</span><span class="n">to</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">message_attributes</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># 判断第一个参数的类型</span>
+</span><span class='line'>  <span class="k">case</span> <span class="n">args</span><span class="o">.</span><span class="n">first</span>
+</span><span class='line'>    <span class="k">when</span> <span class="nb">String</span>
+</span><span class='line'>      <span class="c1"># attribute为topic, body之类</span>
+</span><span class='line'>      <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">messages_class_name</span><span class="o">.</span><span class="n">required</span><span class="o">.</span><span class="n">each_with_index</span> <span class="k">do</span> <span class="o">|</span><span class="n">attribute</span><span class="p">,</span> <span class="n">index</span><span class="o">|</span>
+</span><span class='line'>        <span class="c1"># index为0,1之类</span>
+</span><span class='line'>        <span class="n">message_attributes</span><span class="o">[</span><span class="n">attribute</span><span class="o">]</span> <span class="o">=</span> <span class="n">args</span><span class="o">[</span><span class="n">index</span><span class="o">]</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">when</span> <span class="no">Hash</span>
+</span><span class='line'>      <span class="n">message_attributes</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">first</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># 存topic, body的值</span>
+</span><span class='line'>  <span class="n">message</span> <span class="o">=</span> <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">messages_class_name</span><span class="o">.</span><span class="n">new</span> <span class="n">message_attributes</span>
+</span><span class='line'>  <span class="c1"># 存接收者对象的class和id</span>
+</span><span class='line'>  <span class="n">message</span><span class="o">.</span><span class="n">received_messageable</span> <span class="o">=</span> <span class="n">to</span>
+</span><span class='line'>  <span class="c1"># 存发送者对象的class和id</span>
+</span><span class='line'>  <span class="n">message</span><span class="o">.</span><span class="n">sent_messageable</span> <span class="o">=</span> <span class="nb">self</span>
+</span><span class='line'>  <span class="n">message</span><span class="o">.</span><span class="n">save</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">message</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">User</span><span class="o">.</span><span class="n">first</span><span class="o">.</span><span class="n">send_message</span><span class="p">(</span><span class="no">User</span><span class="o">.</span><span class="n">last</span><span class="p">,</span> <span class="s1">&#39;h1, u2&#39;</span><span class="p">,</span> <span class="s1">&#39;hello u2&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="no">INSERT</span> <span class="no">INTO</span> <span class="sb">`messages`</span> <span class="p">(</span><span class="sb">`ancestry`</span><span class="p">,</span> <span class="sb">`body`</span><span class="p">,</span> <span class="sb">`created_at`</span><span class="p">,</span> <span class="sb">`opened`</span><span class="p">,</span> <span class="sb">`received_messageable_id`</span><span class="p">,</span> <span class="sb">`received_messageable_type`</span><span class="p">,</span> <span class="sb">`recipient_delete`</span><span class="p">,</span> <span class="sb">`recipient_permanent_delete`</span><span class="p">,</span> <span class="sb">`sender_delete`</span><span class="p">,</span> <span class="sb">`sender_permanent_delete`</span><span class="p">,</span> <span class="sb">`sent_messageable_id`</span><span class="p">,</span> <span class="sb">`sent_messageable_type`</span><span class="p">,</span> <span class="sb">`topic`</span><span class="p">,</span> <span class="sb">`updated_at`</span><span class="p">)</span> <span class="no">VALUES</span> <span class="p">(</span><span class="no">NULL</span><span class="p">,</span> <span class="s1">&#39;hello u2&#39;</span><span class="p">,</span> <span class="s1">&#39;2014-01-14 07:02:44&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;User&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;User&#39;</span><span class="p">,</span> <span class="s1">&#39;h1, u2&#39;</span><span class="p">,</span> <span class="s1">&#39;2014-01-14 07:02:44&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>reply_to</h3>
+
+<p>回复</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">reply_to</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">current_user</span> <span class="o">=</span> <span class="nb">self</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">if</span> <span class="n">message</span><span class="o">.</span><span class="n">participant?</span><span class="p">(</span><span class="n">current_user</span><span class="p">)</span>
+</span><span class='line'>    <span class="c1"># 根据real_receiver反方向发送等于回复，产生一个新的消息(即回复)</span>
+</span><span class='line'>    <span class="n">reply_message</span> <span class="o">=</span> <span class="n">send_message</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">real_receiver</span><span class="p">(</span><span class="n">current_user</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+</span><span class='line'>    <span class="c1"># 新产生的回复的父是刚才的消息</span>
+</span><span class='line'>    <span class="n">reply_message</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">message</span>
+</span><span class='line'>    <span class="n">reply_message</span><span class="o">.</span><span class="n">save</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># 返回回复的消息</span>
+</span><span class='line'>    <span class="n">reply_message</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">participant?</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">user</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">group_messages</span> <span class="o">||</span> <span class="p">(</span><span class="n">to</span> <span class="o">==</span> <span class="n">user</span><span class="p">)</span> <span class="o">||</span> <span class="p">(</span><span class="n">from</span> <span class="o">==</span> <span class="n">user</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">alias</span> <span class="ss">:from</span> <span class="ss">:sent_messageable</span>
+</span><span class='line'><span class="k">alias</span> <span class="ss">:to</span>   <span class="ss">:received_messageable</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 定义的消息接收者和发送者对象</span>
+</span><span class='line'><span class="n">belongs_to</span> <span class="ss">:received_messageable</span><span class="p">,</span> <span class="ss">:polymorphic</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'><span class="n">belongs_to</span> <span class="ss">:sent_messageable</span><span class="p">,</span>     <span class="ss">:polymorphic</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">real_receiver</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">user</span> <span class="o">==</span> <span class="n">from</span> <span class="p">?</span> <span class="n">to</span> <span class="p">:</span> <span class="n">from</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">m1</span> <span class="o">=</span> <span class="no">User</span><span class="o">.</span><span class="n">first</span><span class="o">.</span><span class="n">send_message</span><span class="p">(</span><span class="no">User</span><span class="o">.</span><span class="n">last</span><span class="p">,</span> <span class="s1">&#39;hi, u2&#39;</span><span class="p">,</span> <span class="s1">&#39;hello u2&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="no">User</span><span class="o">.</span><span class="n">first</span><span class="o">.</span><span class="n">reply_to</span><span class="p">(</span><span class="n">m1</span><span class="p">,</span> <span class="s1">&#39;reply: u1&#39;</span><span class="p">,</span> <span class="s2">&quot;I&#39;m fine!&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="no">INSERT</span> <span class="no">INTO</span> <span class="sb">`messages`</span> <span class="p">(</span><span class="sb">`ancestry`</span><span class="p">,</span> <span class="sb">`body`</span><span class="p">,</span> <span class="sb">`created_at`</span><span class="p">,</span> <span class="sb">`opened`</span><span class="p">,</span> <span class="sb">`received_messageable_id`</span><span class="p">,</span> <span class="sb">`received_messageable_type`</span><span class="p">,</span> <span class="sb">`recipient_delete`</span><span class="p">,</span> <span class="sb">`recipient_permanent_delete`</span><span class="p">,</span> <span class="sb">`sender_delete`</span><span class="p">,</span> <span class="sb">`sender_permanent_delete`</span><span class="p">,</span> <span class="sb">`sent_messageable_id`</span><span class="p">,</span> <span class="sb">`sent_messageable_type`</span><span class="p">,</span> <span class="sb">`topic`</span><span class="p">,</span> <span class="sb">`updated_at`</span><span class="p">)</span> <span class="no">VALUES</span> <span class="p">(</span><span class="no">NULL</span><span class="p">,</span> <span class="s1">&#39;I\&#39;m fine!&#39;</span><span class="p">,</span> <span class="s1">&#39;2014-01-14 07:25:39&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;User&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;User&#39;</span><span class="p">,</span> <span class="s1">&#39;reply: u1&#39;</span><span class="p">,</span> <span class="s1">&#39;2014-01-14 07:25:39&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>process和conversations</h3>
+
+<p>删除和恢复还有查找对话</p>
+
+<p>执行m1.delete => true</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="kp">attr_accessor</span>   <span class="ss">:removed</span><span class="p">,</span> <span class="ss">:restored</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">delete</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">removed</span> <span class="o">=</span> <span class="kp">true</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>如果要真正删除</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">User</span><span class="o">.</span><span class="n">first</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">process</span> <span class="k">do</span> <span class="o">|</span><span class="n">message</span><span class="o">|</span>
+</span><span class='line'>  <span class="n">message</span><span class="o">.</span><span class="n">delete</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>来看下process方法</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Relation</span><span class="o">.</span><span class="n">send</span> <span class="ss">:include</span><span class="p">,</span> <span class="ss">ActsAsMessageable</span><span class="p">:</span><span class="ss">:Relation</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># relation_context这个变量是在ActiveRecord::Relation基础上定义的</span>
+</span><span class='line'><span class="kp">attr_accessor</span> <span class="ss">:relation_context</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">messages</span><span class="p">(</span><span class="n">trash</span> <span class="o">=</span> <span class="kp">false</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">result</span> <span class="o">=</span> <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">messages_class_name</span><span class="o">.</span><span class="n">connected_with</span><span class="p">(</span><span class="nb">self</span><span class="p">,</span> <span class="n">trash</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1"># relation_context存的是user</span>
+</span><span class='line'>  <span class="n">result</span><span class="o">.</span><span class="n">relation_context</span> <span class="o">=</span> <span class="nb">self</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">result</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="n">context</span> <span class="o">=</span> <span class="nb">self</span><span class="o">.</span><span class="n">relation_context</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">message</span><span class="o">|</span>
+</span><span class='line'>    <span class="c1"># 执行传过来的block,这个方法会执行delete</span>
+</span><span class='line'>    <span class="n">block</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">message</span><span class="p">)</span> <span class="k">if</span> <span class="nb">block_given?</span>
+</span><span class='line'>    <span class="c1"># 如果原先执行过delete，就执行delete_message方法</span>
+</span><span class='line'>    <span class="n">context</span><span class="o">.</span><span class="n">delete_message</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>   <span class="k">if</span> <span class="n">message</span><span class="o">.</span><span class="n">removed</span>
+</span><span class='line'>    <span class="n">context</span><span class="o">.</span><span class="n">restore_message</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>  <span class="k">if</span> <span class="n">message</span><span class="o">.</span><span class="n">restored</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">delete_message</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">current_user</span> <span class="o">=</span> <span class="nb">self</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># 查找message是发送的还是接收的, 如果被删除过的话就要永久删除</span>
+</span><span class='line'>  <span class="k">case</span> <span class="n">current_user</span>
+</span><span class='line'>    <span class="k">when</span> <span class="n">message</span><span class="o">.</span><span class="n">to</span>
+</span><span class='line'>      <span class="n">attribute</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">recipient_delete</span> <span class="p">?</span> <span class="ss">:recipient_permanent_delete</span> <span class="p">:</span> <span class="ss">:recipient_delete</span>
+</span><span class='line'>    <span class="k">when</span> <span class="n">message</span><span class="o">.</span><span class="n">from</span>
+</span><span class='line'>      <span class="n">attribute</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">sender_delete</span> <span class="p">?</span> <span class="ss">:sender_permanent_delete</span> <span class="p">:</span> <span class="ss">:sender_delete</span>
+</span><span class='line'>    <span class="k">else</span>
+</span><span class='line'>      <span class="k">raise</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">current_user</span><span class="si">}</span><span class="s2"> can&#39;t delete this message&quot;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">message</span><span class="o">.</span><span class="n">update_attributes!</span><span class="p">(</span><span class="n">attribute</span> <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">conversations</span>
+</span><span class='line'>  <span class="n">map</span> <span class="p">{</span> <span class="o">|</span><span class="n">r</span><span class="o">|</span> <span class="n">r</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">subtree</span><span class="o">.</span><span class="n">order</span><span class="p">(</span><span class="s2">&quot;id desc&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">first</span> <span class="p">}</span><span class="o">.</span><span class="n">uniq</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">随风</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-01-14T11:05:00+08:00" pubdate data-updated="true">Jan 14<span>th</span>, 2014</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/on/'>on</a>, <a class='category' href='/blog/categories/rails/'>rails</a>, <a class='category' href='/blog/categories/ruby/'>ruby</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://yinsigan.github.io/blog/2014/01/14/acts-as-messageableyuan-ma-fen-xi-1/" data-via="" data-counturl="http://yinsigan.github.io/blog/2014/01/14/acts-as-messageableyuan-ma-fen-xi-1/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/01/08/acts-as-taggable-onyuan-ma-fen-xi-9/" title="Previous Post: acts-as-taggable-on源码分析(九)">&laquo; acts-as-taggable-on源码分析(九)</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/01/17/breadcrumbs-on-railsyuan-ma-fen-xi/" title="Next Post: breadcrumbs_on_rails源码分析">breadcrumbs_on_rails源码分析 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/09/10/zhong-zhuang-xi-tong-hou-ru-he-zhong-xie-ni-de-octopressbo-ke/">重装系统后如何重写你的Octopress博客</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/19/qian-ru-shi-biao-dan-yu-duo-tu-pian-shang-chuan/">嵌入式表单与多图片上传</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/12/carrierwavetu-pian-shang-chuan-de-jian-dan-shi-yong/">CarrierWave图片上传的简单使用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/12/jquery-treede-jie-shao-he-jian-dan-shi-yong/">Jquery Tree的介绍和简单使用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/11/jbuilder-and-rabl-and-gonjian-dan-shi-yong/">Jbuilder &amp; Rabl &amp; Gon简单使用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/10/jquery-tags-input-and-jquery-tag-it/">Jquery Tags-input &amp; Jquery Tag-it</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/08/rails-settingsyuan-ma-fen-xi/">Rails-settings源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/18/settingslogicyuan-ma-fen-xi/">Settingslogic源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/18/tabs-on-railsyuan-ma-fen-xi/">Tabs_on_rails源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/17/breadcrumbs-on-railsyuan-ma-fen-xi/">Breadcrumbs_on_rails源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/14/acts-as-messageableyuan-ma-fen-xi-1/">Acts-as-messageable源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/08/acts-as-taggable-onyuan-ma-fen-xi-9/">Acts-as-taggable-on源码分析(九)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/08/acts-as-taggable-onyuan-ma-fen-xi-8/">Acts-as-taggable-on源码分析(八)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/08/acts-as-taggable-onyuan-ma-fen-xi-7/">Acts-as-taggable-on源码分析(七)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/08/acts-as-taggable-onyuan-ma-fen-xi-6/">Acts-as-taggable-on源码分析(六)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/07/acts-as-taggable-onyuan-ma-fen-xi-5/">Acts-as-taggable-on源码分析(五)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/07/acts-as-taggable-onyuan-ma-fen-xi-4/">Acts-as-taggable-on源码分析(四)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/06/acts-as-taggable-onyuan-ma-fen-xi-3/">Acts-as-taggable-on源码分析(三)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/05/ubuntuxia-an-zhuang-linux-apache-mysql-php-dbninja/">ubuntu下安装Linux Apache MySQL PHP Dbninja</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/04/acts-as-taggable-onyuan-ma-fen-xi-2/">Acts-as-taggable-on源码分析(二)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/04/acts-as-taggable-onyuan-ma-fen-xi-1/">Acts-as-taggable-on源码分析(一)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/03/ubuntu-ruan-jian-tui-jian-yu-an-zhuang/">Ubuntu 软件推荐与安装</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/30/ubuntuxia-sublime-text-3shu-ru-zhong-wen/">Ubuntu下sublime Text 3输入中文</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/26/rubyyuan-bian-cheng-zhi-block/">Ruby元编程之block</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/20/acts-as-paranoidyuan-ma-fen-xi/">Acts_as_paranoid源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/14/ancestryyuan-ma-fen-xi/">Ancestry源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/11/rails-association-reference/">Rails Association Reference</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/10/rails-association/">Rails Association</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/09/acts-as-treeyuan-ma-fen-xi/">Acts_as_tree源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/03/acts-as-followeryuan-ma-fen-xi/">Acts_as_follower源码分析</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+Copyright &copy; 2017 - 随风 - <a href="https:/www.rails365.net">rails365</a>
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'xiaozi';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://yinsigan.github.io/blog/2014/01/14/acts-as-messageableyuan-ma-fen-xi-1/';
+        var disqus_url = 'http://yinsigan.github.io/blog/2014/01/14/acts-as-messageableyuan-ma-fen-xi-1/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = "/javascripts/widgets.js";
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

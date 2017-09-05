@@ -1,0 +1,736 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: ruby | 随风的博客]]></title>
+  <link href="http://yinsigan.github.io/blog/categories/ruby/atom.xml" rel="self"/>
+  <link href="http://yinsigan.github.io/"/>
+  <updated>2017-09-05T18:11:22+08:00</updated>
+  <id>http://yinsigan.github.io/</id>
+  <author>
+    <name><![CDATA[随风]]></name>
+    <email><![CDATA[ganweiliang886@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[重装系统后如何重写你的Octopress博客]]></title>
+    <link href="http://yinsigan.github.io/blog/2014/09/10/zhong-zhuang-xi-tong-hou-ru-he-zhong-xie-ni-de-octopressbo-ke/"/>
+    <updated>2014-09-10T12:43:00+08:00</updated>
+    <id>http://yinsigan.github.io/blog/2014/09/10/zhong-zhuang-xi-tong-hou-ru-he-zhong-xie-ni-de-octopressbo-ke</id>
+    <content type="html"><![CDATA[<p>当你重装系统后，你可能需要重新安装开发环境和你的开发工具。如果你有用<a href="http://octopress.org/">Octopress</a>记录的习惯，这个时候就得从github上clone代码来重建整个octopress博客系统，以方便你还能继续你的写博客生涯。</p>
+
+<h2>1.clone仓库代码</h2>
+
+<p>``` ruby 克隆source分支的代码</p>
+
+<h1>git_repository_url是你的仓库地址</h1>
+
+<p>git clone git_repository_url &mdash;branch=source
+```</p>
+
+<!-- more -->
+
+
+<h2>2.安装octopress</h2>
+
+<p><code>ruby
+bundle
+</code></p>
+
+<p>直到安装完所有gem就可以了</p>
+
+<h2>3.添加ssh public key到github上</h2>
+
+<p>首先需要生成ssh的public key</p>
+
+<p>``` ruby
+ssh-keygen -t rsa -C &ldquo;<a href="&#109;&#97;&#x69;&#108;&#x74;&#x6f;&#x3a;&#x79;&#x6f;&#117;&#x72;&#95;&#101;&#x6d;&#x61;&#x69;&#108;&#64;&#x65;&#120;&#x61;&#x6d;&#112;&#108;&#101;&#46;&#x63;&#x6f;&#109;">&#121;&#111;&#117;&#114;&#x5f;&#x65;&#x6d;&#97;&#105;&#x6c;&#x40;&#101;&#120;&#97;&#109;&#x70;&#x6c;&#x65;&#x2e;&#x63;&#111;&#x6d;</a>&rdquo;</p>
+
+<h1>把输出的内容添加到github settings中SSH keys</h1>
+
+<p>cat ~/.ssh/id_rsa.pub
+```</p>
+
+<h2>4.新增一篇blog</h2>
+
+<p><code>ruby
+bundle exec rake new_post['新增一篇blog']
+</code></p>
+
+<h2>5.发布blog</h2>
+
+<p><code>ruby
+bundle exec rake setup_github_pages
+bundle exec rake gen_deploy
+</code></p>
+
+<h2>6.保存你的成果</h2>
+
+<p><code>ruby
+git add .
+git commit -m "finished"
+git push origin source
+</code></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[嵌入式表单与多图片上传]]></title>
+    <link href="http://yinsigan.github.io/blog/2014/02/19/qian-ru-shi-biao-dan-yu-duo-tu-pian-shang-chuan/"/>
+    <updated>2014-02-19T12:17:00+08:00</updated>
+    <id>http://yinsigan.github.io/blog/2014/02/19/qian-ru-shi-biao-dan-yu-duo-tu-pian-shang-chuan</id>
+    <content type="html"><![CDATA[<h2>1.嵌入式表单</h2>
+
+<ul>
+<li><a href="http://api.rubyonrails.org/classes/ActiveRecord/NestedAttributes/ClassMethods.html">accepts_nested_attributes_for</a></li>
+</ul>
+
+
+<p>当面对越来越复杂的业务逻辑时,你一定遇到过一个表单不止涉及到一个model,这个时候会添加或修改其他model的数据,例如下面的例子就是在创建一个用户(user),顺便发一篇文章(post)</p>
+
+<!-- more -->
+
+
+<p>``` ruby
+class User &lt; ActiveRecord::Base
+  attr_accessible :name, :posts_attributes</p>
+
+<p>  has_many :posts</p>
+
+<p>  accepts_nested_attributes_for :posts</p>
+
+<p>end</p>
+
+<p>class Post &lt; ActiveRecord::Base
+  attr_accessible :name</p>
+
+<p>  belongs_to :user
+end
+```</p>
+
+<p>主要是利用了accepts_nested_attributes_for这个方法,它让user可以直接访问跟它有关系的(has_many posts)的posts中的数据,也就是说一旦更改或添加user时也会去处理相关联的posts中的数据</p>
+
+<p>假如我们在创建posts的时候默认至少可以添加三篇posts</p>
+
+<p><code>ruby app/controller/users_controller.rb
+def new
+  @user = User.new
+  3.times { @user.posts.build }
+end
+</code></p>
+
+<p>3.times { @user.posts.build }就是代表初始化了三个posts</p>
+
+<p>然后在view里可以创建三个posts</p>
+
+<p>``` ruby app/views/users/_form.html.erb</p>
+
+<div id="add_posts">
+  <% @user.posts.each do |post| %>
+    <%= fields_for "user[posts_attributes][]", post do |task_form| %>
+      <p>
+        Task: <%= task_form.text_field :name %>
+      </p>
+    <% end %>
+  <% end %>
+</div>
+
+
+<p>```</p>
+
+<p>fields_for的作用是生成嵌入式表单相关的域(input),关键在于<code>user[posts_attributes][]</code></p>
+
+<p>它生成的input是这样的</p>
+
+<p>``` html</p>
+
+<p><p>Task: <input id="user_posts_attributes__name" name="user[posts_attributes][][name]" size="30" type="text"><p>
+```</p>
+
+<p>input中name属性的值必须正确</p>
+
+<p>它有什么讲究呢,这就要看<a href="http://api.rubyonrails.org/classes/ActiveRecord/NestedAttributes/ClassMethods.html">accepts_nested_attributes_for</a>了</p>
+
+<p>只能添加三个posts肯定不够,我们需要添加无数个posts</p>
+
+<p>``` ruby app/views/users/_form.html.erb
+<a href="javascript:void(0)" id="add">点击我添加一个post</a></p>
+
+<p><script></p>
+
+<p>  $(&ldquo;#add&rdquo;).click(function() {</p>
+
+<pre><code>$('&lt;p&gt;Task: &lt;input id="user_posts_attributes__name" name="user[posts_attributes][][name]" size="30" type="text"&gt;&lt;p&gt;').appendTo("#add_posts");
+</code></pre>
+
+<p>  })</p>
+
+<p></script>
+```</p>
+
+<p>试一下吧</p>
+
+<h2>2. 多图片上传</h2>
+
+<p>先说嵌入式表单,是因为在多图片上传中我们要应用到它的原理</p>
+
+<p>图片上传主要是用到<a href="blog/2014/02/12/carrierwavetu-pian-shang-chuan-de-jian-dan-shi-yong/">carrierwave</a></p>
+
+<p>这里我们要用到<a href="blog/2013/12/10/rails-association/">多态</a>,首先我们创建一个model叫attachment,这个model是用作存上传图片的信息吧</p>
+
+<p>它主要包括三个字段attachmentable_id, attachmentable_type, image</p>
+
+<p>``` ruby
+class Attachment &lt; ActiveRecord::Base
+  attr_accessible :attachmentable_id, :attachmentable_type, :image, :image_cache</p>
+
+<p>  belongs_to :attachmentable, :polymorphic => true</p>
+
+<p>  mount_uploader :image, AvatarUploader
+end
+```</p>
+
+<p>有了attachmentable这个<a href="blog/2013/12/10/rails-association/">多态</a>,以后要用到图片上传的model都可以跟attachment关联起来了</p>
+
+<p>假如user这个model就要用到多图片上传</p>
+
+<p><code>ruby
+class User &lt; ActiveRecord::Base
+  has_many :attachments, :as =&gt; :attachmentable
+  accepts_nested_attributes_for :attachments
+end
+</code></p>
+
+<p>还是跟上面一样,假设默认最少可以添加三个图片</p>
+
+<p><code>ruby app/controllers/users_controller.rb
+def new
+  @user = User.new
+  3.times { @user.attachments.build }
+end
+</code></p>
+
+<p>然后,view是这样的</p>
+
+<p>``` ruby app/views/users/_form.html.erb
+<div id="add_posts">
+  &lt;% @user.attachments.each do |attachment| %></p>
+
+<pre><code>&lt;%= fields_for "user[attachments_attributes][]", attachment do |task_form| %&gt;
+  &lt;p&gt;
+    attachment: &lt;%= task_form.file_field :image %&gt;
+    &lt;%= task_form.hidden_field :image_cache %&gt;
+  &lt;/p&gt;
+&lt;% end %&gt;
+</code></pre>
+
+<p>  &lt;% end %>
+</div>
+```</p>
+
+<p>记得form表单添加这个属性entrype=&ldquo;multipart/form-data&rdquo;</p>
+
+<p><code>ruby
+&lt;%= form_for(@user, html: {enctype: "multipart/form-data"}) do |f| %&gt;
+</code></p>
+
+<p>可以添加无数个图片</p>
+
+<p>``` ruby
+<a href="javascript:void(0)" id="add">点击我添加一个attachment</a></p>
+
+<p>$(&ldquo;#add&rdquo;).click(function() {
+  $(&lsquo;<p>attachment: <input id="user_attachments_attributes_image" name="user[attachments_attributes][][image]" size="30" type="file"><p>&rsquo;).appendTo(&ldquo;#add_posts&rdquo;);
+})
+```</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[CarrierWave图片上传的简单使用]]></title>
+    <link href="http://yinsigan.github.io/blog/2014/02/12/carrierwavetu-pian-shang-chuan-de-jian-dan-shi-yong/"/>
+    <updated>2014-02-12T16:02:00+08:00</updated>
+    <id>http://yinsigan.github.io/blog/2014/02/12/carrierwavetu-pian-shang-chuan-de-jian-dan-shi-yong</id>
+    <content type="html"><![CDATA[<p>使用CarrierWave这个gem来完成图片上传和使用mini_magick这个gem来处理上传的图片</p>
+
+<h2>1. <a href="https://github.com/carrierwaveuploader/carrierwave">CarrierWave</a></h2>
+
+<h3>1.1 安装</h3>
+
+<p><code>ruby
+gem 'carrierwave'
+</code></p>
+
+<!-- more -->
+
+
+<h3>1.2 生成uploader</h3>
+
+<p>```
+rails generate uploader Avatar</p>
+
+<h1>这是生成的文件</h1>
+
+<p>app/uploaders/avatar_uploader.rb
+```</p>
+
+<h3>1.3 添加图片的字段</h3>
+
+<p><code>
+rails g migration add_image_to_articles image:string
+</code></p>
+
+<p>image存储是文件名</p>
+
+<h3>1.4 挂载那个uploader</h3>
+
+<p><code>ruby
+class Article &lt; ActiveRecord::Base
+  attr_accessible :content, :title, :image, :remote_image_url
+  mount_uploader :image, AvatarUploader
+end
+</code></p>
+
+<h3>1.5 给表单加上图片上传的域</h3>
+
+<p>``` html</p>
+
+<div class="field">
+  <%= f.label :image %><br />
+  <%= f.file_field :image %>
+  <%= f.hidden_field :image_cache %>
+</div>
+
+
+<p>```</p>
+
+<h3>1.6 引用上传的图片地址</h3>
+
+<p><code>ruby app/views/articles/show.html.erb
+&lt;%= image_tag @article.image_url.to_s %&gt;
+</code></p>
+
+<p>这样就可以上传图片了,默认图片是存储在public那个文件夹中</p>
+
+<h3>1.7 远程图片</h3>
+
+<p>``` ruby app/views/articles/show.html.erb</p>
+
+<div class="field">
+  <%= f.label :remote_image_url, "or image URL" %>
+  <%= f.text_field :remote_image_url %>
+</div>
+
+
+<p>```</p>
+
+<h2>2. MiniMagick处理图片</h2>
+
+<h3>2.1 安装</h3>
+
+<p><code>ruby
+gem 'mini_magick'
+</code></p>
+
+<p><code>ruby app/uploaders/avatar_uploader.rb
+include CarrierWave::MiniMagick
+</code></p>
+
+<h3>2.2 裁减图片</h3>
+
+<p><code>ruby app/uploaders/avatar_uploader.rb
+version :thumb do
+ process :resize_to_limit =&gt; [200, 200]
+end
+</code></p>
+
+<p><code>ruby app/views/articles/show.html.erb
+&lt;%= image_tag @article.image_url(:thumb).to_s %&gt;
+</code></p>
+
+<h3>2.3 增加模糊</h3>
+
+<p>``` ruby app/uploaders/avatar_uploader.rb</p>
+
+<h1>radial_blur为模糊的程度</h1>
+
+<p>process :radial_blur => 2
+def radial_blur(amount)
+  manipulate! do |img|</p>
+
+<pre><code>img.radial_blur(amount)
+img = yield(img) if block_given?
+img
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<h3>2.4 旋转</h3>
+
+<p>``` ruby
+process :sample_rotate => [&ldquo;90%&rdquo;, &ldquo;-80>&rdquo;]
+def sample_rotate(sample, rotate)
+  manipulate! do |img|</p>
+
+<pre><code>img.combine_options do |c|
+  c.sample(sample)
+  c.rotate(rotate)
+end
+img = yield(img) if block_given?
+img
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<h3>2.5 加水印</h3>
+
+<p>``` ruby
+process :make_watermark => &ldquo;你的图片的地址&rdquo;
+def make_watermark(watermark)
+  manipulate! do |img|</p>
+
+<pre><code>img = img.composite(MiniMagick::Image.open(watermark, "jpg")) do |c|
+  c.gravity "SouthEast"
+end
+img = yield(img) if block_given?
+img
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>打水印的位置可以是'Center', &lsquo;NorthWest&rsquo;, &lsquo;North&rsquo;, &lsquo;NorthEast&rsquo;, &lsquo;West&rsquo;, &lsquo;Center&rsquo;, &lsquo;East&rsquo;, &lsquo;SouthWest&rsquo;, &lsquo;South&rsquo;, &lsquo;SouthEast&rsquo;</p>
+
+<h3>2.6 转化格式</h3>
+
+<p>``` ruby
+process :convert => &lsquo;png&rsquo;</p>
+
+<p>def filename
+  super.chomp(File.extname(super)) + &lsquo;.png&rsquo; if original_filename.present?
+end
+```</p>
+
+<p>更多的用法可以看这里<a href="https://github.com/carrierwaveuploader/carrierwave/blob/master/lib/carrierwave/processing/mini_magick.rb">https://github.com/carrierwaveuploader/carrierwave/blob/master/lib/carrierwave/processing/mini_magick.rb</a></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[jbuilder &amp; rabl &amp; gon简单使用]]></title>
+    <link href="http://yinsigan.github.io/blog/2014/02/11/jbuilder-and-rabl-and-gonjian-dan-shi-yong/"/>
+    <updated>2014-02-11T14:56:00+08:00</updated>
+    <id>http://yinsigan.github.io/blog/2014/02/11/jbuilder-and-rabl-and-gonjian-dan-shi-yong</id>
+    <content type="html"><![CDATA[<p>这节介绍几个和json处理有关的gem(大部分的内容跟railscasts的差不多,在这里只是进行汇总和总结,方便查看)</p>
+
+<p>用rails在默认情况下就能产生json</p>
+
+<p>是这样的</p>
+
+<p>``` ruby app/controllers/articles_controller.rb</p>
+
+<h1>GET /articles/1</h1>
+
+<h1>GET /articles/1.json</h1>
+
+<p>def show
+  @article = Article.find(params[:id])
+  respond_to do |format|</p>
+
+<pre><code>format.html # new.html.erb
+format.json { render json: @article }
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<!-- more -->
+
+
+<p>看到那个/articles/1.json没有,默认情况下你在浏览器访问/articles/1.json就能返回json了,是这个format.json { render json: @article }</p>
+
+<p>@article拥有as_json这样的方法可以格式化json的输出,具体的使用可以查看<a href="http://api.rubyonrails.org/classes/ActiveModel/Serializers/JSON.html">rails as_json api</a></p>
+
+<p>这种方法还是有局限性,不能灵活自定义json的输出,例如不能改写字段的名字</p>
+
+<p>先删除掉respond_to那段代码</p>
+
+<p>下面我们来介绍两个可以产生json的gem:<a href="https://github.com/rails/jbuilder">jbuilder</a>和<a href="https://github.com/nesquena/rabl">rabl</a></p>
+
+<h3>1. <a href="https://github.com/rails/jbuilder">jbuilder</a></h3>
+
+<h4>1.1 这个gem在rails中是被注释掉的,开启它就可以用了</h4>
+
+<p><code>ruby Gemfile
+gem 'jbuilder'
+</code></p>
+
+<h4>1.2 新增jbuilder的模板文件</h4>
+
+<h5>1.2.1 最简单的方式</h5>
+
+<p><code>ruby app/views/articles/show.json.jbuilder
+json.id @article.id
+json.title @article.title
+</code></p>
+
+<p>输出一个json,键为id和title(json之后的词)</p>
+
+<h5>1.2.2 不写键名,默认用字段名</h5>
+
+<p><code>ruby app/views/articles/show.json.jbuilder
+json.extract! @article, :id, :title, :updated_at
+</code></p>
+
+<p>输出的结果为</p>
+
+<p><code>ruby
+{"id":1,"title":"dddddd","updated_at":"2014-02-09T01:58:47Z"}
+</code></p>
+
+<h5>1.2.3 extract!的简写方式</h5>
+
+<p><code>ruby app/views/articles/show.json.jbuilder
+json.(@article, :id, :title, :updated_at)
+</code></p>
+
+<h5>1.2.4 自己加一个key</h5>
+
+<p><code>ruby
+json.edit_url edit_article_url(@article) if current_user.admin?
+</code></p>
+
+<h5>1.2.5 关联一个对象</h5>
+
+<p>如果article属于user</p>
+
+<p><code>ruby
+json.user @article.user, :id, :name
+</code></p>
+
+<p>输出为</p>
+
+<p><code>ruby
+{"id":1,"title":"dddddd","updated_at":"2014-02-09T01:58:47Z","user":{"id":1,"name":"xxx"}}
+</code></p>
+
+<p>jbuilder还有许多其他功能,例如partial,array等</p>
+
+<h3>2. <a href="https://github.com/nesquena/rabl">rabl</a></h3>
+
+<p>rabl相比于jbuilder,个人觉得更具有可读性</p>
+
+<h4>2.1 安装</h4>
+
+<p><code>ruby Gemfile
+gem 'rabl'
+</code></p>
+
+<h4>2.2 使用</h4>
+
+<p>它的模版更简单</p>
+
+<h5>2.2.1 最简单的方式</h5>
+
+<p><code>ruby
+object @article
+attributes :id, :title
+</code></p>
+
+<h5>2.2.2 添加一个key</h5>
+
+<p><code>ruby
+node(:edit_url) { "..." }
+</code></p>
+
+<h4>2.2.3 关联</h4>
+
+<p>``` ruby
+child :user do
+  attributes :id, :name
+end</p>
+
+<p>child :comments do
+  attributes :id, :content
+end
+```</p>
+
+<h4>2.2.4 partial</h4>
+
+<p><code>ruby index.json.rabl
+collection @articles
+extends "articles/show"
+</code></p>
+
+<h4>2.2.5 去掉Root Nodes</h4>
+
+<p>也就是去掉那个"article"</p>
+
+<p><code>ruby config/initializers/rabl_config.rb
+Rabl.configure do |config|
+  config.include_json_root = false
+end
+</code></p>
+
+<h4>2.2.6 Embedding JSON in a Web Page</h4>
+
+<p>``` ruby</p>
+
+<p><div id="articles" data-articles="<%= render(template: "articles/index.json.rabl") %>&ldquo; >
+```</p>
+
+<p>rabl github上的readme介绍了更好的用法,可以自定于key的名字,还有很多的配置选项</p>
+
+<h3>3. <a href="https://github.com/gazay/gon">gon</a></h3>
+
+<p>之所以要介绍这个gem,并不是因为它是产生json的,而它能把前面两个gem结合起来</p>
+
+<p>它的作用是传递变量给javascript(Passing Data to JavaScript)</p>
+
+<h4>3.1 安装</h4>
+
+<p><code>ruby Gemfile
+gem 'gon'
+</code></p>
+
+<p><code>ruby app/views/layouts/application.html.erb
+&lt;head&gt;
+  &lt;title&gt;Store&lt;/title&gt;
+  &lt;%= include_gon %&gt;
+  &lt;%= stylesheet_link_tag    "application", media: "all" %&gt;
+  &lt;%= javascript_include_tag "application" %&gt;
+  &lt;%= csrf_meta_tag %&gt;
+&lt;/head&gt;
+</code></p>
+
+<h4>3.2 简单使用</h4>
+
+<p><code>ruby app/controllers/articles_controlle.rb
+def index
+  @articles = Article.all
+  gon.articles = Article.all
+end
+</code></p>
+
+<p><code>ruby app/assets/javascripts/articles.js.coffee
+Jquery -&gt;
+  console.log gon.articles
+</code></p>
+
+<h4>3.3 和rabl结合</h4>
+
+<p><code>ruby app/controllers/articles_controlle.rb
+def index
+  @articles = Article.all
+  gon.rabl "app/views/articles/index.json.rabl", as: "articles"
+end
+</code></p>
+
+<p><code>ruby app/assets/javascripts/articles.js.coffee
+alert gon.articles if gon
+</code></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[jquery tags-input &amp; jquery tag-it]]></title>
+    <link href="http://yinsigan.github.io/blog/2014/02/10/jquery-tags-input-and-jquery-tag-it/"/>
+    <updated>2014-02-10T10:17:00+08:00</updated>
+    <id>http://yinsigan.github.io/blog/2014/02/10/jquery-tags-input-and-jquery-tag-it</id>
+    <content type="html"><![CDATA[<p>标签大家肯定很熟悉,在文章中你可能会使用标签,你或许看过土豆视频的标签，或许看过京东商品的标签。这节我们在rails中分别使用tag-it和tags-input这两种关于标签的库,这两种库可以和<a href="http://yinsigan.github.io/blog/2014/01/04/acts-as-taggable-onyuan-ma-fen-xi-1/">Acts-as-taggable-on</a>结合使用</p>
+
+<h3>1. <a href="https://github.com/aehlke/tag-it">tag-it</a></h3>
+
+<p>这个库要利用jquery和jquery ui这两种库</p>
+
+<p>jquery在rails默认是开启的,现在来开启jquery ui这个库</p>
+
+<!-- more -->
+
+
+<h4>1.1 使用<code>jquery-ui-rails</code>这个gem</h4>
+
+<p><code>ruby Gemfile
+group :assets do
+  gem 'jquery-ui-rails'
+end
+</code></p>
+
+<p><code>javascript application.js
+//= require jquery.ui.all
+</code></p>
+
+<p><code>css application.css
+*= require jquery.ui.all
+</code></p>
+
+<h4>1.2 下载tag-it中tag-it.js和tagit.ui-zendesk.css和jquery.tagit文件</h4>
+
+<p>在layouts中引用这些文件</p>
+
+<p><code>ruby application.html.erb
+&lt;%= javascript_include_tag "tag-it" %&gt;
+&lt;%= stylesheet_link_tag "tagit.ui-zendesk" %&gt;
+&lt;%= stylesheet_link_tag    "jquery.tagit", :media =&gt; "all" %&gt;
+</code></p>
+
+<h4>1.3 使用这个库</h4>
+
+<p>``` ruby
+<input type="text" name="" value="" id="myTags"/></p>
+
+<script type="text/javascript">
+    $(document).ready(function() {
+      $("#myTags").tagit({
+        afterTagAdded: function() {
+          // do something special
+          $(this).attr('value', $(this).tagit("assignedTags").join(" "));
+        },
+
+        afterTagRemoved: function() {
+          // do something special
+          // $(this).attr('value', $(this).tagit("assignedTags").join(" "));
+          $(this).attr('value', $(this).tagit("assignedTags").join(" "));
+        },
+      });
+    });
+</script>
+
+
+<p>```</p>
+
+<h3>2. <a href="https://github.com/xoxco/jQuery-Tags-Input">tags-input</a></h3>
+
+<p>这个库比较简单使用</p>
+
+<h4>2.1 下载源文件, jquery.tagsinput.js和jquery.tagsinput.css</h4>
+
+<p><code>ruby
+&lt;%= stylesheet_link_tag "jquery.tagsinput", :media =&gt; "all" %&gt;
+&lt;%= stylesheet_link_tag "jquery.tagsinput" %&gt;
+</code></p>
+
+<h4>2.2 使用</h4>
+
+<p>``` ruby
+<input name="tags" id="tags" value="foo,bar,baz" /></p>
+
+<p>$(&lsquo;#tags&rsquo;).tagsInput({
+  onChange: function() {</p>
+
+<pre><code>$(this).attr("value", $(this).val());
+</code></pre>
+
+<p>  }
+});
+```</p>
+]]></content>
+  </entry>
+  
+</feed>

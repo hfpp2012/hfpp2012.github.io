@@ -1,0 +1,770 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>acts-as-taggable-on源码分析(三) - 随风的博客</title>
+  <meta name="author" content="随风">
+
+  
+  <meta name="description" content="Acts-as-taggable-on源码分析(一)
+Acts-as-taggable-on源码分析(二) 这节我们来使用acts_as_taggable这个方法 1
+2
+3
+class Topic &lt; ActiveRecord::Base acts_as_taggable # Alias &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://yinsigan.github.io/blog/2014/01/06/acts-as-taggable-onyuan-ma-fen-xi-3">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="随风的博客" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/libs/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-46093029-1', 'yinsigan.github.io');
+  ga('send', 'pageview');
+
+</script>
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">随风的博客</a></h1>
+  
+    <h2>人生若如初见</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:yinsigan.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Acts-as-taggable-on源码分析(三)</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-01-06T09:38:00+08:00" pubdate data-updated="true">Jan 6<span>th</span>, 2014</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><ul>
+<li><a href="/blog/2014/01/04/acts-as-taggable-onyuan-ma-fen-xi-1/">Acts-as-taggable-on源码分析(一)</a></li>
+<li><a href="/blog/2014/01/04/acts-as-taggable-onyuan-ma-fen-xi-2/">Acts-as-taggable-on源码分析(二)</a></li>
+</ul>
+
+
+<p>这节我们来使用acts_as_taggable这个方法</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Topic</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">acts_as_taggable</span> <span class="c1"># Alias for acts_as_taggable_on :tags</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<!-- more -->
+
+
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">t</span> <span class="o">=</span> <span class="no">Topic</span><span class="o">.</span><span class="n">first</span>
+</span><span class='line'><span class="n">t</span><span class="o">.</span><span class="n">tag_list</span> <span class="o">=</span> <span class="s1">&#39;ruby, rails&#39;</span>
+</span><span class='line'><span class="n">t</span><span class="o">.</span><span class="n">save</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><img src="/images/acts_as_taggable_on/acts_as_taggable.png"></p>
+
+<p>先来看看acts_as_taggable到底做了什么</p>
+
+<p>它定义在taggable.rb文件中</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">acts_as_taggable</span>
+</span><span class='line'>  <span class="n">acts_as_taggable_on</span> <span class="ss">:tags</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>继续看acts_as_taggable_on是什么</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">acts_as_taggable_on</span><span class="p">(</span><span class="o">*</span><span class="n">tag_types</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">taggable_on</span><span class="p">(</span><span class="kp">false</span><span class="p">,</span> <span class="n">tag_types</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>来到taggable_on</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">taggable_on</span><span class="p">(</span><span class="n">preserve_tag_order</span><span class="p">,</span> <span class="o">*</span><span class="n">tag_types</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1"># 把所有种类的标签打成symbol</span>
+</span><span class='line'>  <span class="n">tag_types</span> <span class="o">=</span> <span class="n">tag_types</span><span class="o">.</span><span class="n">to_a</span><span class="o">.</span><span class="n">flatten</span><span class="o">.</span><span class="n">compact</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:to_sym</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># 如果已经用过taggable_on方法,也就是打过标签了,taggable_on会动态修改taggable?方法的定义,而它的值将由false被修改成true</span>
+</span><span class='line'>  <span class="k">if</span> <span class="n">taggable?</span>
+</span><span class='line'>    <span class="c1"># 数组加法</span>
+</span><span class='line'>    <span class="nb">self</span><span class="o">.</span><span class="n">tag_types</span> <span class="o">=</span> <span class="p">(</span><span class="nb">self</span><span class="o">.</span><span class="n">tag_types</span> <span class="o">+</span> <span class="n">tag_types</span><span class="p">)</span><span class="o">.</span><span class="n">uniq</span>
+</span><span class='line'>    <span class="nb">self</span><span class="o">.</span><span class="n">preserve_tag_order</span> <span class="o">=</span> <span class="n">preserve_tag_order</span>
+</span><span class='line'>  <span class="k">else</span>
+</span><span class='line'>    <span class="c1"># 只属于类</span>
+</span><span class='line'>    <span class="n">class_attribute</span> <span class="ss">:tag_types</span>
+</span><span class='line'>    <span class="nb">self</span><span class="o">.</span><span class="n">tag_types</span> <span class="o">=</span> <span class="n">tag_types</span>
+</span><span class='line'>    <span class="n">class_attribute</span> <span class="ss">:preserve_tag_order</span>
+</span><span class='line'>    <span class="nb">self</span><span class="o">.</span><span class="n">preserve_tag_order</span> <span class="o">=</span> <span class="n">preserve_tag_order</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nb">class_eval</span> <span class="k">do</span>
+</span><span class='line'>      <span class="n">has_many</span> <span class="ss">:taggings</span><span class="p">,</span> <span class="ss">:as</span> <span class="o">=&gt;</span> <span class="ss">:taggable</span><span class="p">,</span> <span class="ss">:dependent</span> <span class="o">=&gt;</span> <span class="ss">:destroy</span><span class="p">,</span> <span class="ss">:class_name</span> <span class="o">=&gt;</span> <span class="s2">&quot;ActsAsTaggableOn::Tagging&quot;</span>
+</span><span class='line'>      <span class="n">has_many</span> <span class="ss">:base_tags</span><span class="p">,</span> <span class="ss">:through</span> <span class="o">=&gt;</span> <span class="ss">:taggings</span><span class="p">,</span> <span class="ss">:source</span> <span class="o">=&gt;</span> <span class="ss">:tag</span><span class="p">,</span> <span class="ss">:class_name</span> <span class="o">=&gt;</span> <span class="s2">&quot;ActsAsTaggableOn::Tag&quot;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="c1"># 动态更改了taggable?方法的定义</span>
+</span><span class='line'>      <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">taggable?</span>
+</span><span class='line'>        <span class="kp">true</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="kp">include</span> <span class="ss">ActsAsTaggableOn</span><span class="p">:</span><span class="ss">:Utils</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># each of these add context-specific methods and must be</span>
+</span><span class='line'>  <span class="c1"># called on each call of taggable_on</span>
+</span><span class='line'>  <span class="kp">include</span> <span class="ss">ActsAsTaggableOn</span><span class="p">:</span><span class="ss">:Taggable</span><span class="o">::</span><span class="no">Core</span>
+</span><span class='line'>  <span class="kp">include</span> <span class="ss">ActsAsTaggableOn</span><span class="p">:</span><span class="ss">:Taggable</span><span class="o">::</span><span class="no">Collection</span>
+</span><span class='line'>  <span class="kp">include</span> <span class="ss">ActsAsTaggableOn</span><span class="p">:</span><span class="ss">:Taggable</span><span class="o">::</span><span class="no">Cache</span>
+</span><span class='line'>  <span class="kp">include</span> <span class="ss">ActsAsTaggableOn</span><span class="p">:</span><span class="ss">:Taggable</span><span class="o">::</span><span class="no">Ownership</span>
+</span><span class='line'>  <span class="kp">include</span> <span class="ss">ActsAsTaggableOn</span><span class="p">:</span><span class="ss">:Taggable</span><span class="o">::</span><span class="no">Related</span>
+</span><span class='line'>  <span class="kp">include</span> <span class="ss">ActsAsTaggableOn</span><span class="p">:</span><span class="ss">:Taggable</span><span class="o">::</span><span class="no">Dirty</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>通过分析acts_as_taggable的方法定义,并没有找到实际的关于保存之后修改tags表和taggings表的语句。</p>
+
+<p>按照我们的猜测如果要实现上述类似的功能,必须要定义一个callback,可以叫before_save或before_save</p>
+
+<p>到底是before_save还是after_save呢</p>
+
+<p>是after_save,为什么,因为你看上面那个图就知道,修改那两个表都是在更变topics表的updated_at之后才发生的,所以是after_save</p>
+
+<p>我们来找这个方法,只能在剩下的几个include语句里下功夫了</p>
+
+<p>我们只能一个一个翻,好运的是include ActsAsTaggableOn::Taggable::Core引用的lib/acts_as_taggable/core.rb文件就定义了这样的after_save</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">after_save</span> <span class="ss">:save_tags</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">save_tags</span>
+</span><span class='line'>  <span class="n">tagging_contexts</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">context</span><span class="o">|</span>
+</span><span class='line'>    <span class="c1"># 如果当前记录(topic)没有类似tag_list这样的方法就退出</span>
+</span><span class='line'>    <span class="k">next</span> <span class="k">unless</span> <span class="n">tag_list_cache_set_on</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+</span><span class='line'>    <span class="c1"># 返回当前记录相关tags的tag_list变量的值</span>
+</span><span class='line'>    <span class="n">tag_list</span> <span class="o">=</span> <span class="n">tag_list_cache_on</span><span class="p">(</span><span class="n">context</span><span class="p">)</span><span class="o">.</span><span class="n">uniq</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># 处理tags表,通过tag_list看是否有存在相同的tag,有的话就返回,没有就创建一个</span>
+</span><span class='line'>    <span class="n">tags</span> <span class="o">=</span> <span class="ss">ActsAsTaggableOn</span><span class="p">:</span><span class="ss">:Tag</span><span class="o">.</span><span class="n">find_or_create_all_with_like_by_name</span><span class="p">(</span><span class="n">tag_list</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># 查当前记录已经存在数据中的tag</span>
+</span><span class='line'>    <span class="n">current_tags</span> <span class="o">=</span> <span class="n">tags_on</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># Tag maintenance based on whether preserving the created order of tags</span>
+</span><span class='line'>    <span class="k">if</span> <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">preserve_tag_order?</span>
+</span><span class='line'>      <span class="n">old_tags</span><span class="p">,</span> <span class="n">new_tags</span> <span class="o">=</span> <span class="n">current_tags</span> <span class="o">-</span> <span class="n">tags</span><span class="p">,</span> <span class="n">tags</span> <span class="o">-</span> <span class="n">current_tags</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="n">shared_tags</span> <span class="o">=</span> <span class="n">current_tags</span> <span class="o">&amp;</span> <span class="n">tags</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="k">if</span> <span class="n">shared_tags</span><span class="o">.</span><span class="n">any?</span> <span class="o">&amp;&amp;</span> <span class="n">tags</span><span class="o">[</span><span class="mi">0</span><span class="o">.</span><span class="n">.</span><span class="o">.</span><span class="n">shared_tags</span><span class="o">.</span><span class="n">size</span><span class="o">]</span> <span class="o">!=</span> <span class="n">shared_tags</span>
+</span><span class='line'>        <span class="n">index</span> <span class="o">=</span> <span class="n">shared_tags</span><span class="o">.</span><span class="n">each_with_index</span> <span class="p">{</span> <span class="o">|</span><span class="n">_</span><span class="p">,</span> <span class="n">i</span><span class="o">|</span> <span class="k">break</span> <span class="n">i</span> <span class="k">unless</span> <span class="n">shared_tags</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">==</span> <span class="n">tags</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="c1"># Update arrays of tag objects</span>
+</span><span class='line'>        <span class="n">old_tags</span> <span class="o">|=</span> <span class="n">current_tags</span><span class="o">[</span><span class="n">index</span><span class="o">.</span><span class="n">.</span><span class="o">.</span><span class="n">current_tags</span><span class="o">.</span><span class="n">size</span><span class="o">]</span>
+</span><span class='line'>        <span class="n">new_tags</span> <span class="o">|=</span> <span class="n">current_tags</span><span class="o">[</span><span class="n">index</span><span class="o">.</span><span class="n">.</span><span class="o">.</span><span class="n">current_tags</span><span class="o">.</span><span class="n">size</span><span class="o">]</span> <span class="o">&amp;</span> <span class="n">shared_tags</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="c1"># Order the array of tag objects to match the tag list</span>
+</span><span class='line'>        <span class="n">new_tags</span> <span class="o">=</span> <span class="n">tags</span><span class="o">.</span><span class="n">map</span> <span class="k">do</span> <span class="o">|</span><span class="n">t</span><span class="o">|</span>
+</span><span class='line'>          <span class="n">new_tags</span><span class="o">.</span><span class="n">find</span> <span class="p">{</span> <span class="o">|</span><span class="n">n</span><span class="o">|</span> <span class="n">n</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">downcase</span> <span class="o">==</span> <span class="n">t</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">downcase</span> <span class="p">}</span>
+</span><span class='line'>        <span class="k">end</span><span class="o">.</span><span class="n">compact</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">else</span>
+</span><span class='line'>      <span class="c1"># current_tags是当前记录在数据库有的tag, tags是新的tag</span>
+</span><span class='line'>      <span class="c1"># 所以old_tags是老的tag</span>
+</span><span class='line'>      <span class="c1"># new_tags是新的</span>
+</span><span class='line'>      <span class="c1"># 大家可以动手找几个数组试验一下结果</span>
+</span><span class='line'>      <span class="n">old_tags</span> <span class="o">=</span> <span class="n">current_tags</span> <span class="o">-</span> <span class="n">tags</span>
+</span><span class='line'>      <span class="n">new_tags</span> <span class="o">=</span> <span class="n">tags</span> <span class="o">-</span> <span class="n">current_tags</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># 查taggings表,准备删除老的taggings记录</span>
+</span><span class='line'>    <span class="k">if</span> <span class="n">old_tags</span><span class="o">.</span><span class="n">present?</span>
+</span><span class='line'>      <span class="n">old_taggings</span> <span class="o">=</span> <span class="n">taggings</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="ss">:tagger_type</span> <span class="o">=&gt;</span> <span class="kp">nil</span><span class="p">,</span> <span class="ss">:tagger_id</span> <span class="o">=&gt;</span> <span class="kp">nil</span><span class="p">,</span> <span class="ss">:context</span> <span class="o">=&gt;</span> <span class="n">context</span><span class="o">.</span><span class="n">to_s</span><span class="p">,</span> <span class="ss">:tag_id</span> <span class="o">=&gt;</span> <span class="n">old_tags</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># 删除老的taggings记录</span>
+</span><span class='line'>    <span class="k">if</span> <span class="n">old_taggings</span><span class="o">.</span><span class="n">present?</span>
+</span><span class='line'>      <span class="ss">ActsAsTaggableOn</span><span class="p">:</span><span class="ss">:Tagging</span><span class="o">.</span><span class="n">destroy_all</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="ss">ActsAsTaggableOn</span><span class="p">:</span><span class="ss">:Tagging</span><span class="o">.</span><span class="n">primary_key</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">to_sym</span> <span class="o">=&gt;</span> <span class="n">old_taggings</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:id</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># 创建新的taggings记录</span>
+</span><span class='line'>    <span class="n">new_tags</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">tag</span><span class="o">|</span>
+</span><span class='line'>      <span class="n">taggings</span><span class="o">.</span><span class="n">create!</span><span class="p">(</span><span class="ss">:tag_id</span> <span class="o">=&gt;</span> <span class="n">tag</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="ss">:context</span> <span class="o">=&gt;</span> <span class="n">context</span><span class="o">.</span><span class="n">to_s</span><span class="p">,</span> <span class="ss">:taggable</span> <span class="o">=&gt;</span> <span class="nb">self</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kp">true</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>我们把所有相关的方法找出来一个个来看</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">tagging_contexts</span>
+</span><span class='line'>  <span class="n">custom_contexts</span> <span class="o">+</span> <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">tag_types</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:to_s</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="kp">attr_writer</span> <span class="ss">:custom_contexts</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">custom_contexts</span>
+</span><span class='line'>  <span class="vi">@custom_contexts</span> <span class="o">||=</span> <span class="o">[]</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 判断是否定义了类似tag_list这样的实例变量而且它的值不能为nil</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">tag_list_cache_set_on</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">variable_name</span> <span class="o">=</span> <span class="s2">&quot;@</span><span class="si">#{</span><span class="n">context</span><span class="o">.</span><span class="n">to_s</span><span class="o">.</span><span class="n">singularize</span><span class="si">}</span><span class="s2">_list&quot;</span>
+</span><span class='line'>  <span class="n">instance_variable_defined?</span><span class="p">(</span><span class="n">variable_name</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="nb">instance_variable_get</span><span class="p">(</span><span class="n">variable_name</span><span class="p">)</span><span class="o">.</span><span class="n">nil?</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 如果类似tag_list这样的实例变量的值存在而不为nil,就返回</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">tag_list_cache_on</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">variable_name</span> <span class="o">=</span> <span class="s2">&quot;@</span><span class="si">#{</span><span class="n">context</span><span class="o">.</span><span class="n">to_s</span><span class="o">.</span><span class="n">singularize</span><span class="si">}</span><span class="s2">_list&quot;</span>
+</span><span class='line'>  <span class="k">return</span> <span class="nb">instance_variable_get</span><span class="p">(</span><span class="n">variable_name</span><span class="p">)</span> <span class="k">if</span> <span class="n">instance_variable_defined?</span><span class="p">(</span><span class="n">variable_name</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nb">instance_variable_get</span><span class="p">(</span><span class="n">variable_name</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1"># tags_on(context).map(&amp;name)查的是tags表,返回当前记录(topic)相关context(tags)的base_tags的所有name</span>
+</span><span class='line'>  <span class="nb">instance_variable_set</span><span class="p">(</span><span class="n">variable_name</span><span class="p">,</span> <span class="ss">ActsAsTaggableOn</span><span class="p">:</span><span class="ss">:TagList</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">tags_on</span><span class="p">(</span><span class="n">context</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:name</span><span class="p">)))</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 主要是一个where语句,关联(join)taggings表的context字段,查tags表</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">tags_on</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1"># topics has_many base_tags,acts_as_taggable定义的</span>
+</span><span class='line'>  <span class="c1"># 关联taggins表,看它的context是否等于类似tags而且它的tagger_id不能为NULL</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="o">=</span> <span class="n">base_tags</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">[</span><span class="s2">&quot;</span><span class="si">#{</span><span class="ss">ActsAsTaggableOn</span><span class="p">:</span><span class="ss">:Tagging</span><span class="o">.</span><span class="n">table_name</span><span class="si">}</span><span class="s2">.context = ? AND </span><span class="si">#{</span><span class="ss">ActsAsTaggableOn</span><span class="p">:</span><span class="ss">:Tagging</span><span class="o">.</span><span class="n">table_name</span><span class="si">}</span><span class="s2">.tagger_id IS NULL&quot;</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">to_s</span><span class="o">]</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1"># 如果preserve_tag_order等于true根据taggings表的id来排序</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="o">=</span> <span class="n">scope</span><span class="o">.</span><span class="n">order</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">#{</span><span class="ss">ActsAsTaggableOn</span><span class="p">:</span><span class="ss">:Tagging</span><span class="o">.</span><span class="n">table_name</span><span class="si">}</span><span class="s2">.id&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">preserve_tag_order?</span>
+</span><span class='line'>  <span class="n">scope</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">find_or_create_all_with_like_by_name</span><span class="p">(</span><span class="o">*</span><span class="n">list</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">list</span> <span class="o">=</span> <span class="o">[</span><span class="n">list</span><span class="o">].</span><span class="n">flatten</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">return</span> <span class="o">[]</span> <span class="k">if</span> <span class="n">list</span><span class="o">.</span><span class="n">empty?</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># 查tags表是否已经有tag了</span>
+</span><span class='line'>  <span class="n">existing_tags</span> <span class="o">=</span> <span class="no">Tag</span><span class="o">.</span><span class="n">named_any</span><span class="p">(</span><span class="n">list</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">list</span><span class="o">.</span><span class="n">map</span> <span class="k">do</span> <span class="o">|</span><span class="n">tag_name</span><span class="o">|</span>
+</span><span class='line'>    <span class="c1"># 把tag_name转成小写的</span>
+</span><span class='line'>    <span class="n">comparable_tag_name</span> <span class="o">=</span> <span class="n">comparable_name</span><span class="p">(</span><span class="n">tag_name</span><span class="p">)</span>
+</span><span class='line'>    <span class="c1"># 发现tags表已经有了就返回</span>
+</span><span class='line'>    <span class="n">existing_tag</span> <span class="o">=</span> <span class="n">existing_tags</span><span class="o">.</span><span class="n">find</span> <span class="p">{</span> <span class="o">|</span><span class="n">tag</span><span class="o">|</span> <span class="n">comparable_name</span><span class="p">(</span><span class="n">tag</span><span class="o">.</span><span class="n">name</span><span class="p">)</span> <span class="o">==</span> <span class="n">comparable_tag_name</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># 没有的就创建一个tag</span>
+</span><span class='line'>    <span class="n">existing_tag</span> <span class="o">||</span> <span class="no">Tag</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="ss">:name</span> <span class="o">=&gt;</span> <span class="n">tag_name</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 查tags表返回数组</span>
+</span><span class='line'><span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">named_any</span><span class="p">(</span><span class="n">list</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">if</span> <span class="no">ActsAsTaggableOn</span><span class="o">.</span><span class="n">strict_case_match</span>
+</span><span class='line'>    <span class="n">where</span><span class="p">(</span><span class="n">list</span><span class="o">.</span><span class="n">map</span> <span class="p">{</span> <span class="o">|</span><span class="n">tag</span><span class="o">|</span> <span class="n">sanitize_sql</span><span class="p">(</span><span class="o">[</span><span class="s2">&quot;name = </span><span class="si">#{</span><span class="n">binary</span><span class="si">}</span><span class="s2">?&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="o">.</span><span class="n">to_s</span><span class="o">.</span><span class="n">mb_chars</span><span class="o">]</span><span class="p">)</span> <span class="p">}</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot; OR &quot;</span><span class="p">))</span>
+</span><span class='line'>  <span class="k">else</span>
+</span><span class='line'>    <span class="n">where</span><span class="p">(</span><span class="n">list</span><span class="o">.</span><span class="n">map</span> <span class="p">{</span> <span class="o">|</span><span class="n">tag</span><span class="o">|</span> <span class="n">sanitize_sql</span><span class="p">(</span><span class="o">[</span><span class="s2">&quot;lower(name) = ?&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="o">.</span><span class="n">to_s</span><span class="o">.</span><span class="n">mb_chars</span><span class="o">.</span><span class="n">downcase</span><span class="o">]</span><span class="p">)</span> <span class="p">}</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot; OR &quot;</span><span class="p">))</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">comparable_name</span><span class="p">(</span><span class="n">str</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">str</span><span class="o">.</span><span class="n">mb_chars</span><span class="o">.</span><span class="n">downcase</span><span class="o">.</span><span class="n">to_s</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>tag_list_cache_on和tag_list_cache_set_on跟tag_list变量有关,跟cache有关,它们都是实例方法,可以用类似t.tag_list_cache_set_on(&lsquo;tags&rsquo;)来调用,可以试下效果</p>
+
+<p>tags_on也是个实例方法,它查找tags表,返回当前记录(topic)的base_tags</p>
+
+<p>关于tag_list和ActsAsTaggableOn::Tagging.table_name后绪会说</p>
+
+<p>总结save_tags的作用,首先是检查tag_list变量的值,先把它的值保存起来,它是的新的tag的列表,然后通过这个tag_list去查数据库中的tags表,如果已经有了相同的name的tag就跳过,如果没有就创建,先把tags表创建好,接着来处理taggings表,首先求当前记录在数据库的tag表相关的记录,通过数组的运算来求出新的tags和老的tags,然后把老的taggings相关的记录删除,再创建新的,这样就完成了。</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">随风</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-01-06T09:38:00+08:00" pubdate data-updated="true">Jan 6<span>th</span>, 2014</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/on/'>on</a>, <a class='category' href='/blog/categories/rails/'>rails</a>, <a class='category' href='/blog/categories/ruby/'>ruby</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://yinsigan.github.io/blog/2014/01/06/acts-as-taggable-onyuan-ma-fen-xi-3/" data-via="" data-counturl="http://yinsigan.github.io/blog/2014/01/06/acts-as-taggable-onyuan-ma-fen-xi-3/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/01/05/ubuntuxia-an-zhuang-linux-apache-mysql-php-dbninja/" title="Previous Post: ubuntu下安装Linux Apache MySQL PHP dbninja">&laquo; ubuntu下安装Linux Apache MySQL PHP dbninja</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/01/07/acts-as-taggable-onyuan-ma-fen-xi-4/" title="Next Post: acts-as-taggable-on源码分析(四)">acts-as-taggable-on源码分析(四) &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/09/10/zhong-zhuang-xi-tong-hou-ru-he-zhong-xie-ni-de-octopressbo-ke/">重装系统后如何重写你的Octopress博客</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/19/qian-ru-shi-biao-dan-yu-duo-tu-pian-shang-chuan/">嵌入式表单与多图片上传</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/12/carrierwavetu-pian-shang-chuan-de-jian-dan-shi-yong/">CarrierWave图片上传的简单使用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/12/jquery-treede-jie-shao-he-jian-dan-shi-yong/">Jquery Tree的介绍和简单使用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/11/jbuilder-and-rabl-and-gonjian-dan-shi-yong/">Jbuilder &amp; Rabl &amp; Gon简单使用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/10/jquery-tags-input-and-jquery-tag-it/">Jquery Tags-input &amp; Jquery Tag-it</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/08/rails-settingsyuan-ma-fen-xi/">Rails-settings源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/18/settingslogicyuan-ma-fen-xi/">Settingslogic源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/18/tabs-on-railsyuan-ma-fen-xi/">Tabs_on_rails源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/17/breadcrumbs-on-railsyuan-ma-fen-xi/">Breadcrumbs_on_rails源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/14/acts-as-messageableyuan-ma-fen-xi-1/">Acts-as-messageable源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/08/acts-as-taggable-onyuan-ma-fen-xi-9/">Acts-as-taggable-on源码分析(九)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/08/acts-as-taggable-onyuan-ma-fen-xi-8/">Acts-as-taggable-on源码分析(八)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/08/acts-as-taggable-onyuan-ma-fen-xi-7/">Acts-as-taggable-on源码分析(七)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/08/acts-as-taggable-onyuan-ma-fen-xi-6/">Acts-as-taggable-on源码分析(六)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/07/acts-as-taggable-onyuan-ma-fen-xi-5/">Acts-as-taggable-on源码分析(五)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/07/acts-as-taggable-onyuan-ma-fen-xi-4/">Acts-as-taggable-on源码分析(四)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/06/acts-as-taggable-onyuan-ma-fen-xi-3/">Acts-as-taggable-on源码分析(三)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/05/ubuntuxia-an-zhuang-linux-apache-mysql-php-dbninja/">ubuntu下安装Linux Apache MySQL PHP Dbninja</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/04/acts-as-taggable-onyuan-ma-fen-xi-2/">Acts-as-taggable-on源码分析(二)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/04/acts-as-taggable-onyuan-ma-fen-xi-1/">Acts-as-taggable-on源码分析(一)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/03/ubuntu-ruan-jian-tui-jian-yu-an-zhuang/">Ubuntu 软件推荐与安装</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/30/ubuntuxia-sublime-text-3shu-ru-zhong-wen/">Ubuntu下sublime Text 3输入中文</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/26/rubyyuan-bian-cheng-zhi-block/">Ruby元编程之block</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/20/acts-as-paranoidyuan-ma-fen-xi/">Acts_as_paranoid源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/14/ancestryyuan-ma-fen-xi/">Ancestry源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/11/rails-association-reference/">Rails Association Reference</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/10/rails-association/">Rails Association</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/09/acts-as-treeyuan-ma-fen-xi/">Acts_as_tree源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/03/acts-as-followeryuan-ma-fen-xi/">Acts_as_follower源码分析</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+Copyright &copy; 2017 - 随风 - <a href="https:/www.rails365.net">rails365</a>
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'xiaozi';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://yinsigan.github.io/blog/2014/01/06/acts-as-taggable-onyuan-ma-fen-xi-3/';
+        var disqus_url = 'http://yinsigan.github.io/blog/2014/01/06/acts-as-taggable-onyuan-ma-fen-xi-3/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = "/javascripts/widgets.js";
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

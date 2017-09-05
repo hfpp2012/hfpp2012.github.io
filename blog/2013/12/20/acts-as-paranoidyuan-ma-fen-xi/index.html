@@ -1,0 +1,1727 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>acts_as_paranoid源码分析 - 随风的博客</title>
+  <meta name="author" content="随风">
+
+  
+  <meta name="description" content="acts_as_paranoid 它的作用就是假删除,在实际中还是会很有用的。有一天,客户说,她刚才误删了一个东西,要你把它找回来,这个时候它就派上用场了。 回收站或者垃圾箱也是假删除的典型应用.假如一个邮箱系统中,用户把邮件删除掉,这个时候这些邮件并没有被彻底删除掉,它其实是先到了垃圾箱中, &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://yinsigan.github.io/blog/2013/12/20/acts-as-paranoidyuan-ma-fen-xi">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="随风的博客" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/libs/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-46093029-1', 'yinsigan.github.io');
+  ga('send', 'pageview');
+
+</script>
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">随风的博客</a></h1>
+  
+    <h2>人生若如初见</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:yinsigan.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Acts_as_paranoid源码分析</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-12-20T21:57:00+08:00" pubdate data-updated="true">Dec 20<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><ul>
+<li><a href="https://github.com/goncalossilva/acts_as_paranoid">acts_as_paranoid</a></li>
+</ul>
+
+
+<p>它的作用就是假删除,在实际中还是会很有用的。有一天,客户说,她刚才误删了一个东西,要你把它找回来,这个时候它就派上用场了。</p>
+
+<p>回收站或者垃圾箱也是假删除的典型应用.假如一个邮箱系统中,用户把邮件删除掉,这个时候这些邮件并没有被彻底删除掉,它其实是先到了垃圾箱中,如果要彻底删除它,请到垃圾箱那里再删一次吧</p>
+
+<p>其实它实际上不删除数据中的数据,只不过是隐藏起来而已,只要让用户看不到,它就等于删除了,实际上,要还原的话修改一下数据库就可以回来了</p>
+
+<!-- more -->
+
+
+<p>它实现的原理很简单,只不过是用一个标志来实现隐藏数据,在数据表中加一个字段,把它的值改一下,它就删除了(隐藏),修改回来,它又出现了</p>
+
+<p>它的目的就是保护数据的安全,让用户能在误操作的情况下也能恢复数据。但是缺点也很明显,由于不是真正的删除,数据库中仍然保留着那条数据,数据库会越来越庞大,垃圾的信息也是越来越多</p>
+
+<p>默认情况下用<strong>&ldquo;deleted_at&rdquo;</strong>这个字段,用一个参数<strong>column</strong>来指定,它可以有三种类型boolean, string, time,这三个类型用<strong>column_type</strong>参数来指定</p>
+
+<p>boolean:布尔型,被删除时值为true</p>
+
+<p>string:字符串型,被删除时值为&#8221;deleted&#8221;,这个值可以用deleted_value参数来指定</p>
+
+<p>time:时间型,被删除时值为当前时间(删除操作的时间)</p>
+
+<p>以上三个类型未删除时值都为NULL(nil)。建议使用time类型</p>
+
+<p>使用举例如下:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">School</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">acts_as_paranoid</span> <span class="ss">:column_type</span> <span class="o">=&gt;</span> <span class="ss">:boolean</span>
+</span><span class='line'>  <span class="err">或</span>
+</span><span class='line'>  <span class="n">acts_as_paranoid</span> <span class="ss">:column</span> <span class="o">=&gt;</span> <span class="s2">&quot;is_deleted&quot;</span><span class="p">,</span> <span class="ss">:column_type</span> <span class="o">=&gt;</span> <span class="ss">:string</span><span class="p">,</span> <span class="ss">:deleted_value</span> <span class="o">=&gt;</span> <span class="s2">&quot;deleted&quot;</span>
+</span><span class='line'>  <span class="o">.</span><span class="n">.</span><span class="o">.</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>分析该gem的源码可以懂得下面的知识</p>
+
+<ol>
+<li>attr_protected的使用</li>
+<li>写一个callback</li>
+<li>included_modules的用法</li>
+<li>scoped unscoped的用法</li>
+<li>activerecord/Reflection的用法</li>
+<li>自己写一个validator</li>
+<li>class_attribute的用法</li>
+<li>activerecord/relation中klass的用法</li>
+<li>alias_method_chain的用法</li>
+<li>method_defined?的用法</li>
+</ol>
+
+
+<h2>代码分析</h2>
+
+<h3>代码结构</h3>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="err">├──</span> <span class="n">lib</span>
+</span><span class='line'><span class="err">│  </span> <span class="err">├──</span> <span class="n">acts_as_paranoid</span>
+</span><span class='line'><span class="err">│  </span> <span class="err">│  </span> <span class="err">├──</span> <span class="n">associations</span><span class="o">.</span><span class="n">rb</span>   <span class="err">关于关联模型的</span>
+</span><span class='line'><span class="err">│  </span> <span class="err">│  </span> <span class="err">├──</span> <span class="n">core</span><span class="o">.</span><span class="n">rb</span>   <span class="err">核心文件</span>
+</span><span class='line'><span class="err">│  </span> <span class="err">│  </span> <span class="err">├──</span> <span class="n">relation</span><span class="o">.</span><span class="n">rb</span>     <span class="err">关于</span><span class="n">relation</span><span class="err">的操作</span>
+</span><span class='line'><span class="err">│  </span> <span class="err">│  </span> <span class="err">└──</span> <span class="n">validations</span><span class="o">.</span><span class="n">rb</span>   <span class="err">一个验证方法</span>
+</span><span class='line'><span class="err">│  </span> <span class="err">└──</span> <span class="n">acts_as_paranoid</span><span class="o">.</span><span class="n">rb</span>  <span class="err">主程序</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Filtering(过滤)</h3>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">School</span><span class="o">.</span><span class="n">only_deleted</span> <span class="c1"># 找到所有已经假删除的数据</span>
+</span><span class='line'><span class="no">School</span><span class="o">.</span><span class="n">with_deleted</span> <span class="c1"># 找到所有数据(不管有没有假删除的)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><img src="/images/acts_as_paranoid/delete_record.png"></p>
+
+<h4>only_deleted</h4>
+
+<p>现在我们执行School.only_deleted来看看有什么效果</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">School</span> <span class="no">Load</span> <span class="p">(</span><span class="mi">0</span><span class="o">.</span><span class="mi">8</span><span class="n">ms</span><span class="p">)</span>  <span class="no">SELECT</span> <span class="sb">`schools`</span><span class="o">.</span><span class="n">*</span> <span class="no">FROM</span> <span class="sb">`schools`</span> <span class="no">WHERE</span> <span class="p">(</span><span class="n">schools</span><span class="o">.</span><span class="n">deleted_at</span> <span class="no">IS</span> <span class="no">NOT</span> <span class="no">NULL</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>如果我们自己写only_deleted的实现代码可能会写成这样</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">deleted_at</span> <span class="o">=</span> <span class="n">options</span><span class="o">[</span><span class="ss">:column</span><span class="o">]</span>
+</span><span class='line'><span class="no">School</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">#{</span><span class="n">deleted_at</span><span class="si">}</span><span class="s2"> IS NOT NULL&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>其实acts_as_paranoid的源码也差不多</p>
+
+<figure class='code'><figcaption><span>acts_as_paranoid</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">only_deleted</span>
+</span><span class='line'>  <span class="c1"># 判断是不是string类型</span>
+</span><span class='line'>  <span class="k">if</span> <span class="n">string_type_with_deleted_value?</span>
+</span><span class='line'>    <span class="n">without_paranoid_default_scope</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">#{</span><span class="n">paranoid_column_reference</span><span class="si">}</span><span class="s2"> IS ?&quot;</span><span class="p">,</span> <span class="n">paranoid_configuration</span><span class="o">[</span><span class="ss">:deleted_value</span><span class="o">]</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">else</span>
+</span><span class='line'>    <span class="n">without_paranoid_default_scope</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">#{</span><span class="n">paranoid_column_reference</span><span class="si">}</span><span class="s2"> IS NOT ?&quot;</span><span class="p">,</span> <span class="kp">nil</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>由于string这种类型的不能判断是不是等于NULL,而是要看是不是等于一个值(默认为&#8221;deleted&#8221;, 由&#8221;:deleted_value&#8221;这个参数决定)</p>
+
+<p>于是</p>
+
+<figure class='code'><figcaption><span>伪代码</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">string_type_with_deleted_value?</span>
+</span><span class='line'>  <span class="k">if</span> <span class="n">options</span><span class="o">[</span><span class="ss">:column_type</span><span class="o">]</span> <span class="o">==</span> <span class="ss">:string</span>
+</span><span class='line'>    <span class="k">return</span> <span class="kp">true</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>  <span class="kp">false</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>acts_as_paranoid的代码为</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">string_type_with_deleted_value?</span>
+</span><span class='line'>  <span class="n">paranoid_column_type</span> <span class="o">==</span> <span class="ss">:string</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">paranoid_configuration</span><span class="o">[</span><span class="ss">:deleted_value</span><span class="o">].</span><span class="n">nil?</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>without_paranoid_default_scope是?</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">without_paranoid_default_scope</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="o">=</span> <span class="nb">self</span><span class="o">.</span><span class="n">scoped</span><span class="o">.</span><span class="n">with_default_scope</span>
+</span><span class='line'>  <span class="n">scope</span><span class="o">.</span><span class="n">where_values</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">paranoid_default_scope_sql</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">scope</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>如果不是一个gem它不要也行,我们写成School.where&hellip;照样目的能达到</p>
+
+<p>既然做成了一个gem,每个用acts_as_paranoid的model都默认加了一个default_scope,一般情况下,假删除的数据是查不到的,所以要隐藏起来,with_deleted会使用,或者你执行School.all也会使用的</p>
+
+<p>default_scope的效果大约是这样的</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">School</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="s2">&quot;deleted_at IS NULL&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>所以without_paranoid_default_scope的作用就是去掉这个效果</p>
+
+<p>其实要去掉只要用unscoped就可以了,但acts_as_paranoid把with_deleted,和only_deleted做成了scope(activerecord/relations)的效果</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">School</span><span class="o">.</span><span class="n">scoped</span><span class="o">.</span><span class="n">with_default_scope</span><span class="o">.</span><span class="n">where_values</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="o">[</span><span class="s2">&quot;`schools`.`deleted_at` IS NULL&quot;</span><span class="o">]</span>
+</span><span class='line'><span class="no">School</span><span class="o">.</span><span class="n">paranoid_default_scope_sql</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="s2">&quot;`schools`.`deleted_at` IS NULL&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>so</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">School</span><span class="o">.</span><span class="n">with_deleted</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">.</span><span class="n">.</span><span class="o">.</span><span class="p">)</span>
+</span><span class='line'><span class="no">School</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">.</span><span class="n">.</span><span class="o">.</span><span class="p">)</span><span class="o">.</span><span class="n">with_deleted</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>而acts_as_paranoid的default_scope是这样的</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">default_scope</span> <span class="p">{</span> <span class="n">where</span><span class="p">(</span><span class="n">paranoid_default_scope_sql</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">paranoid_default_scope_sql</span>
+</span><span class='line'>  <span class="k">if</span> <span class="n">string_type_with_deleted_value?</span>
+</span><span class='line'>    <span class="nb">self</span><span class="o">.</span><span class="n">scoped</span><span class="o">.</span><span class="n">table</span><span class="o">[</span><span class="n">paranoid_column</span><span class="o">].</span><span class="n">eq</span><span class="p">(</span><span class="kp">nil</span><span class="p">)</span><span class="o">.</span>
+</span><span class='line'>      <span class="ow">or</span><span class="p">(</span><span class="nb">self</span><span class="o">.</span><span class="n">scoped</span><span class="o">.</span><span class="n">table</span><span class="o">[</span><span class="n">paranoid_column</span><span class="o">].</span><span class="n">not_eq</span><span class="p">(</span><span class="n">paranoid_configuration</span><span class="o">[</span><span class="ss">:deleted_value</span><span class="o">]</span><span class="p">))</span><span class="o">.</span>
+</span><span class='line'>      <span class="n">to_sql</span>
+</span><span class='line'>  <span class="k">else</span>
+</span><span class='line'>    <span class="nb">self</span><span class="o">.</span><span class="n">scoped</span><span class="o">.</span><span class="n">table</span><span class="o">[</span><span class="n">paranoid_column</span><span class="o">].</span><span class="n">eq</span><span class="p">(</span><span class="kp">nil</span><span class="p">)</span><span class="o">.</span><span class="n">to_sql</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>scoped.table不懂的看<a href="https://github.com/rails/arel">arel-table</a></p>
+
+<p>paranoid_column_reference是?</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">self</span><span class="o">.</span><span class="n">paranoid_column_reference</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="nb">self</span><span class="o">.</span><span class="n">table_name</span><span class="si">}</span><span class="s2">.</span><span class="si">#{</span><span class="n">paranoid_configuration</span><span class="o">[</span><span class="ss">:column</span><span class="o">]</span><span class="si">}</span><span class="s2">&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>paranoid_configuration是?</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">raise</span> <span class="no">ArgumentError</span><span class="p">,</span> <span class="s2">&quot;Hash expected, got </span><span class="si">#{</span><span class="n">options</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">options</span><span class="o">.</span><span class="n">is_a?</span><span class="p">(</span><span class="no">Hash</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">options</span><span class="o">.</span><span class="n">empty?</span>
+</span><span class='line'><span class="n">class_attribute</span> <span class="ss">:paranoid_configuration</span><span class="p">,</span> <span class="ss">:paranoid_column_reference</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">self</span><span class="o">.</span><span class="n">paranoid_configuration</span> <span class="o">=</span> <span class="p">{</span> <span class="ss">:column</span> <span class="o">=&gt;</span> <span class="s2">&quot;deleted_at&quot;</span><span class="p">,</span> <span class="ss">:column_type</span> <span class="o">=&gt;</span> <span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="ss">:recover_dependent_associations</span> <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">,</span> <span class="ss">:dependent_recovery_window</span> <span class="o">=&gt;</span> <span class="mi">2</span><span class="o">.</span><span class="n">minutes</span> <span class="p">}</span>
+</span><span class='line'><span class="nb">self</span><span class="o">.</span><span class="n">paranoid_configuration</span><span class="o">.</span><span class="n">merge!</span><span class="p">({</span> <span class="ss">:deleted_value</span> <span class="o">=&gt;</span> <span class="s2">&quot;deleted&quot;</span> <span class="p">})</span> <span class="k">if</span> <span class="n">options</span><span class="o">[</span><span class="ss">:column_type</span><span class="o">]</span> <span class="o">==</span> <span class="s2">&quot;string&quot;</span>
+</span><span class='line'><span class="nb">self</span><span class="o">.</span><span class="n">paranoid_configuration</span><span class="o">.</span><span class="n">merge!</span><span class="p">(</span><span class="n">options</span><span class="p">)</span> <span class="c1"># user options</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">raise</span> <span class="no">ArgumentError</span><span class="p">,</span> <span class="s2">&quot;&#39;time&#39;, &#39;boolean&#39; or &#39;string&#39; expected for :column_type option, got </span><span class="si">#{</span><span class="n">paranoid_configuration</span><span class="o">[</span><span class="ss">:column_type</span><span class="o">]</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">unless</span> <span class="o">[</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="s1">&#39;boolean&#39;</span><span class="p">,</span> <span class="s1">&#39;string&#39;</span><span class="o">].</span><span class="n">include?</span> <span class="n">paranoid_configuration</span><span class="o">[</span><span class="ss">:column_type</span><span class="o">]</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">self</span><span class="o">.</span><span class="n">paranoid_column_reference</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="nb">self</span><span class="o">.</span><span class="n">table_name</span><span class="si">}</span><span class="s2">.</span><span class="si">#{</span><span class="n">paranoid_configuration</span><span class="o">[</span><span class="ss">:column</span><span class="o">]</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">return</span> <span class="k">if</span> <span class="n">paranoid?</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>paranoid_configuration是个关于配置的,我们传入的column和column_type等都会存到这个hash里面</p>
+
+<p><a href="http://apidock.com/rails/Class/class_attribute">class_attribute</a>这个和<a href="http://apidock.com/rails/Class/cattr_accessor">cattr_accessor</a>可以作这个比较</p>
+
+<p>class_attribute和cattr_accessor都包含read(get)和write(set),但是class_attribute只属于类,子类都不能共享,而cattr_accessor是类和子类和实例共享的,具体的看文档就知道了</p>
+
+<p>merge和merge!的区别是后者会改变原来的hash</p>
+
+<p>merge和update差不多,如果有相同的key,会替换原来的值,没有的会添加</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">paranoid?</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">included_modules</span><span class="o">.</span><span class="n">include?</span><span class="p">(</span><span class="ss">ActsAsParanoid</span><span class="p">:</span><span class="ss">:Core</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>included_modules是类方法,返回所以它include的module,用这个就可以判断是否有加载过ActsAsParanoid,加载过的就可以不用再次加载了</p>
+
+<p>至此only_deleted已经解释完了</p>
+
+<h4>with_deleted</h4>
+
+<p>来看下with_deleted,它就是无论有没有被假删除,都读出来</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">with_deleted</span>
+</span><span class='line'>  <span class="n">without_paranoid_default_scope</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>without_paranoid_default_scope上面已经解释过</p>
+
+<h4>deleted_after_time &amp; deleted_before_time &amp; deleted_inside_time_window</h4>
+
+<p>deleted_after_time: 在一个时间之后假删除的记录</p>
+
+<p>deleted_before_time: 在一个时间之前假删除的记录</p>
+
+<p>deleted_inside_time_window: 在一定时间内假删除的记录</p>
+
+<p><img src="/images/acts_as_paranoid/deleted_time.png"></p>
+
+<p>实现方法也很简单</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">if</span> <span class="n">paranoid_configuration</span><span class="o">[</span><span class="ss">:column_type</span><span class="o">]</span> <span class="o">==</span> <span class="s1">&#39;time&#39;</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="ss">:deleted_inside_time_window</span><span class="p">,</span> <span class="nb">lambda</span> <span class="p">{</span><span class="o">|</span><span class="n">time</span><span class="p">,</span> <span class="n">window</span><span class="o">|</span>
+</span><span class='line'>    <span class="n">deleted_after_time</span><span class="p">((</span><span class="n">time</span> <span class="o">-</span> <span class="n">window</span><span class="p">))</span><span class="o">.</span><span class="n">deleted_before_time</span><span class="p">((</span><span class="n">time</span> <span class="o">+</span> <span class="n">window</span><span class="p">))</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">scope</span> <span class="ss">:deleted_after_time</span><span class="p">,</span> <span class="nb">lambda</span>  <span class="p">{</span> <span class="o">|</span><span class="n">time</span><span class="o">|</span> <span class="n">where</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">#{</span><span class="n">paranoid_column</span><span class="si">}</span><span class="s2"> &gt; ?&quot;</span><span class="p">,</span> <span class="n">time</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="ss">:deleted_before_time</span><span class="p">,</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="o">|</span><span class="n">time</span><span class="o">|</span> <span class="n">where</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">#{</span><span class="n">paranoid_column</span><span class="si">}</span><span class="s2"> &lt; ?&quot;</span><span class="p">,</span> <span class="n">time</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Real deletion(真删除)</h3>
+
+<p>实际上我们执行School.first.destroy时是假删除而已,只是把字段(deleted_at)的值改了一下,要想真正删除还是要再执行一次destroy</p>
+
+<p><img src="/images/acts_as_paranoid/destroy_record.png"></p>
+
+<p>如果不想执行两次destroy,那就用destroy!一次搞定</p>
+
+<h4>destroy 单条记录假删除</h4>
+
+<p>我们来看一下它实现的代码,它把本来的destroy方法给重写了</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">destroy</span>
+</span><span class='line'>  <span class="c1"># 还没有被假删除的情况下</span>
+</span><span class='line'>  <span class="k">if</span> <span class="o">!</span><span class="n">deleted?</span>
+</span><span class='line'>    <span class="n">with_transaction_returning_status</span> <span class="k">do</span>
+</span><span class='line'>      <span class="n">run_callbacks</span> <span class="ss">:destroy</span> <span class="k">do</span>
+</span><span class='line'>        <span class="c1"># Handle composite keys, otherwise we would just use `self.class.primary_key.to_sym =&gt; self.id`.</span>
+</span><span class='line'>        <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">delete_all</span><span class="p">(</span><span class="no">Hash</span><span class="o">[[</span><span class="nb">Array</span><span class="p">(</span><span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">primary_key</span><span class="p">),</span> <span class="nb">Array</span><span class="p">(</span><span class="nb">self</span><span class="o">.</span><span class="n">id</span><span class="p">)</span><span class="o">].</span><span class="n">transpose</span><span class="o">]</span><span class="p">)</span> <span class="k">if</span> <span class="n">persisted?</span>
+</span><span class='line'>        <span class="nb">self</span><span class="o">.</span><span class="n">paranoid_value</span> <span class="o">=</span> <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">delete_now_value</span>
+</span><span class='line'>        <span class="nb">self</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">else</span>
+</span><span class='line'>    <span class="n">destroy!</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>读懂上面的代码必须先弄懂deleted?</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># 通过deleted_at的值来检验记录是否被删除</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">deleted?</span>
+</span><span class='line'>  <span class="o">!</span><span class="p">(</span><span class="n">paranoid_value</span><span class="o">.</span><span class="n">nil?</span> <span class="o">||</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">string_type_with_deleted_value?</span> <span class="o">&amp;&amp;</span> <span class="n">paranoid_value</span> <span class="o">!=</span> <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">delete_now_value</span><span class="p">))</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># destroyed?是rails提供的,现在的效果跟:deleted?一样</span>
+</span><span class='line'><span class="n">alias_method</span> <span class="ss">:destroyed?</span><span class="p">,</span> <span class="ss">:deleted?</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 判断一条记录是否是常归存在</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">persisted?</span>
+</span><span class='line'>  <span class="o">!</span><span class="p">(</span><span class="n">new_record?</span> <span class="o">||</span> <span class="vi">@destroyed</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 这个方法是rails提供的,destroyed?会利用到@destroyed</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">destroyed?</span>
+</span><span class='line'>  <span class="vi">@destroyed</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>总而言之,deleted?是判断是不是被假删除</p>
+
+<p><a href="http://apidock.com/rails/ActiveRecord/Transactions/with_transaction_returning_status">with_transaction_returning_status</a>是ActiveRecord::Base提供的方法,作用就是运行一个transaction,然后再返回一个状态值</p>
+
+<figure class='code'><figcaption><span>with_transaction_returning_status的源码</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">with_transaction_returning_status</span>
+</span><span class='line'>  <span class="n">status</span> <span class="o">=</span> <span class="kp">nil</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">transaction</span> <span class="k">do</span>
+</span><span class='line'>    <span class="n">add_to_transaction</span>
+</span><span class='line'>    <span class="n">status</span> <span class="o">=</span> <span class="k">yield</span>
+</span><span class='line'>    <span class="k">raise</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Rollback</span> <span class="k">unless</span> <span class="n">status</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>  <span class="n">status</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>现在我们知道了,原来destroy?是包在一个transaction里的</p>
+
+<p>接下来,run_callbacks :destroy是?</p>
+
+<p>关于run_callbacks可以看<a href="http://api.rubyonrails.org/classes/ActiveSupport/Callbacks.html">callback</a></p>
+
+<p>运行run_callbacks :destroy的时候如果有定义before_destroy和after_destroy的话,会运行它们</p>
+
+<p>run_callbacks :destroy里面的内容才是真正的删除操作</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">delete_all</span><span class="p">(</span><span class="no">Hash</span><span class="o">[[</span><span class="nb">Array</span><span class="p">(</span><span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">primary_key</span><span class="p">),</span> <span class="nb">Array</span><span class="p">(</span><span class="nb">self</span><span class="o">.</span><span class="n">id</span><span class="p">)</span><span class="o">].</span><span class="n">transpose</span><span class="o">]</span><span class="p">)</span> <span class="k">if</span> <span class="n">persisted?</span>
+</span><span class='line'><span class="nb">self</span><span class="o">.</span><span class="n">paranoid_value</span> <span class="o">=</span> <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">delete_now_value</span>
+</span><span class='line'><span class="nb">self</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>先来看下self.class.delete_all!</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">delete_all</span><span class="p">(</span><span class="n">conditions</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1"># update_all相比于update_attributes来说后面可以加查询条件conditions,还有update_all是类方法</span>
+</span><span class='line'>  <span class="c1"># 如果不加条件(conditions),update_all会修改所有记录的deleted_at值</span>
+</span><span class='line'>  <span class="n">update_all</span> <span class="o">[</span><span class="s2">&quot;</span><span class="si">#{</span><span class="n">paranoid_configuration</span><span class="o">[</span><span class="ss">:column</span><span class="o">]</span><span class="si">}</span><span class="s2"> = ?&quot;</span><span class="p">,</span> <span class="n">delete_now_value</span><span class="o">]</span><span class="p">,</span> <span class="n">conditions</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>delete_now_value它的作用就是把deleted_all改为当前时间(如果deleted_at为time类型)或True(如果delete_at为boolean类型)或一个值(如果delete_at为string类型)</p>
+
+<p>so</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">delete_now_value</span>
+</span><span class='line'>  <span class="k">case</span> <span class="n">paranoid_configuration</span><span class="o">[</span><span class="ss">:column_type</span><span class="o">]</span>
+</span><span class='line'>  <span class="k">when</span> <span class="s2">&quot;time&quot;</span> <span class="k">then</span> <span class="no">Time</span><span class="o">.</span><span class="n">now</span>
+</span><span class='line'>  <span class="k">when</span> <span class="s2">&quot;boolean&quot;</span> <span class="k">then</span> <span class="kp">true</span>
+</span><span class='line'>  <span class="k">when</span> <span class="s2">&quot;string&quot;</span> <span class="k">then</span> <span class="n">paranoid_configuration</span><span class="o">[</span><span class="ss">:deleted_value</span><span class="o">]</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>destroy! 单条记录真删除</h4>
+
+<p>实现的代码跟destroy差不多,它不改deleted_at的值,直接删除数据</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">destroy!</span>
+</span><span class='line'>  <span class="n">with_transaction_returning_status</span> <span class="k">do</span>
+</span><span class='line'>    <span class="n">run_callbacks</span> <span class="ss">:destroy</span> <span class="k">do</span>
+</span><span class='line'>      <span class="n">destroy_dependent_associations!</span>
+</span><span class='line'>      <span class="c1"># Handle composite keys, otherwise we would just use `self.class.primary_key.to_sym =&gt; self.id`.</span>
+</span><span class='line'>      <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">delete_all!</span><span class="p">(</span><span class="no">Hash</span><span class="o">[[</span><span class="nb">Array</span><span class="p">(</span><span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">primary_key</span><span class="p">),</span> <span class="nb">Array</span><span class="p">(</span><span class="nb">self</span><span class="o">.</span><span class="n">id</span><span class="p">)</span><span class="o">].</span><span class="n">transpose</span><span class="o">]</span><span class="p">)</span> <span class="k">if</span> <span class="n">persisted?</span>
+</span><span class='line'>      <span class="nb">self</span><span class="o">.</span><span class="n">paranoid_value</span> <span class="o">=</span> <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">delete_now_value</span>
+</span><span class='line'>      <span class="nb">freeze</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>destroy_dependent_associations!这个跟关联删除(dependent: destroy)有关的,也说是说假如school has_many squads,删除一条school的时候会先把所有squads先删除掉,这个留待下文详述</p>
+
+<p>来看delete_all!方法</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">delete_all!</span><span class="p">(</span><span class="n">conditions</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">without_paranoid_default_scope</span><span class="o">.</span><span class="n">delete_all!</span><span class="p">(</span><span class="n">conditions</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>without_paranoid_default_scope是不带default_scope的scoped查询,也就是去掉那个默认的查询(不含假删除过的记录),上文有说过</p>
+
+<p>without_paranoid_default_scope.delete_all!这个delete_all!可不是类方法,而是scoped中的方法,因为without_paranoid_default_scope是一个scoped(可以看without_paranoid_default_scope的定义)</p>
+
+<p>在哪里找到delete_all!呢?</p>
+
+<p>由于scoped是定义在ActiveRecord/Relation中的,lib/acts_as_paranoid.rb有一条语句</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Override ActiveRecord::Relation&#39;s behavior</span>
+</span><span class='line'><span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Relation</span><span class="o">.</span><span class="n">send</span> <span class="ss">:include</span><span class="p">,</span> <span class="ss">ActsAsParanoid</span><span class="p">:</span><span class="ss">:Relation</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>so</p>
+
+<figure class='code'><figcaption><span>lib/acts_as_paranoid/relation.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">module</span> <span class="nn">ActsAsParanoid</span>
+</span><span class='line'>  <span class="k">module</span> <span class="nn">Relation</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">included</span><span class="p">(</span><span class="n">base</span><span class="p">)</span>
+</span><span class='line'>      <span class="c1"># 实例方法</span>
+</span><span class='line'>      <span class="n">base</span><span class="o">.</span><span class="n">class_eval</span> <span class="k">do</span>
+</span><span class='line'>        <span class="o">.</span><span class="n">.</span><span class="o">.</span><span class="n">.</span>
+</span><span class='line'>        <span class="n">alias_method</span> <span class="ss">:orig_delete_all</span><span class="p">,</span> <span class="ss">:delete_all</span>
+</span><span class='line'>        <span class="k">def</span> <span class="nf">delete_all!</span><span class="p">(</span><span class="n">conditions</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">)</span>
+</span><span class='line'>          <span class="k">if</span> <span class="n">conditions</span>
+</span><span class='line'>            <span class="c1"># 没有条件就会去调用orig_delete_all</span>
+</span><span class='line'>            <span class="n">where</span><span class="p">(</span><span class="n">conditions</span><span class="p">)</span><span class="o">.</span><span class="n">delete_all!</span>
+</span><span class='line'>          <span class="k">else</span>
+</span><span class='line'>            <span class="n">orig_delete_all</span>
+</span><span class='line'>          <span class="k">end</span>
+</span><span class='line'>        <span class="k">end</span>
+</span><span class='line'>        <span class="o">.</span><span class="n">.</span><span class="o">.</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>其实把那个查询条件交给where,再用orig_delete_all删除</p>
+
+<p>上面的例子前后已经出现过两次alias_method了,我们来总结一下</p>
+
+<p>在上面的例子中alias_method会把:delete_all(这个时候的delete_all是rails默认提供的那个)的代码复制一份给orig_delete_all,然后把delete_all重写一次,以后调用都会用重写过的,被重写那个(rails提供)就变成了orig_delete_all</p>
+
+<p>freeze的作用是它那个记录锁住,已经被删除了那就不能修改,虽然存到变量之后还能读取</p>
+
+<h4>delete_all 多条记录假删除</h4>
+
+<p>多条记录真删除的那个方法就lib/acts_as_paranoid/relation.rb中的delete_all!方法</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">delete_all</span><span class="p">(</span><span class="n">conditions</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1"># 判断是否有加载过acts_as_paranoid,对于没有使用这个gem的会使用rails提供的delete_all!(真删除)来删除</span>
+</span><span class='line'>  <span class="k">if</span> <span class="n">paranoid?</span>
+</span><span class='line'>    <span class="n">update_all</span><span class="p">(</span><span class="n">paranoid_deletion_attributes</span><span class="p">,</span> <span class="n">conditions</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">else</span>
+</span><span class='line'>    <span class="n">delete_all!</span><span class="p">(</span><span class="n">conditions</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 传入数组</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">destroy!</span><span class="p">(</span><span class="n">id_or_array</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">where</span><span class="p">(</span><span class="n">primary_key</span> <span class="o">=&gt;</span> <span class="n">id_or_array</span><span class="p">)</span><span class="o">.</span><span class="n">orig_delete_all</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Associations 关联关系</h3>
+
+<p>有一种情况是这样的,我们可能在school model里有这样的东西<code>has_many :squads, :dependent =&gt; :destroy</code>(班级),假如你删除了一条school,那squads怎么办呢</p>
+
+<p>这种情况下squad model分为两种可能: 1:要么没使用acts_as_paranoid 2:要么使用acts_as_paranoid</p>
+
+<p>对于没使用acts_as_paranoid的squad model那就很简单,本来该怎么着就怎么着</p>
+
+<p>对于使用acts_as_paranoid的squad model那就是<strong>连带假删除</strong></p>
+
+<h4>连带假删除</h4>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">School</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">has_many</span> <span class="ss">:squads</span><span class="p">,</span> <span class="ss">:dependent</span> <span class="o">=&gt;</span> <span class="ss">:destroy</span>
+</span><span class='line'>  <span class="n">acts_as_paranoid</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="n">squad</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">belongs_to</span> <span class="ss">:school</span>
+</span><span class='line'>  <span class="n">acts_as_paranoid</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><img src="/images/acts_as_paranoid/dependent_destroy.png"></p>
+
+<p>其实关于acts_as_paranoid的假删除上面已经说过它的代码了</p>
+
+<p>就是那个destroy方法,按照rails的机制,当设置:dependent => :destroy,父类执行destroy方法,子类也是会执行自己的destroy的</p>
+
+<p>也就是squad model会执行acts_as_paranoid重写的destroy方法,因为squad model使用了acts_as_paranoid</p>
+
+<p>所以它(squad)使用了跟父类(school)同样的destroy方法,上文说过,这里就不做多解释了</p>
+
+<h4>连带真删除</h4>
+
+<p>上文说过,真删除使用的是destroy!方法,在父类(school)使用destroy!,子类(squad)并没有执行任何方法,但它又需要把属于school的所有squads(班级)全部删除</p>
+
+<p>所以在destroy!需要处理子类(把它删除掉)</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">destroy!</span>
+</span><span class='line'>  <span class="n">with_transaction_returning_status</span> <span class="k">do</span>
+</span><span class='line'>    <span class="n">run_callbacks</span> <span class="ss">:destroy</span> <span class="k">do</span>
+</span><span class='line'>      <span class="n">destroy_dependent_associations!</span>
+</span><span class='line'>      <span class="o">.</span><span class="n">.</span><span class="o">.</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>destroy_dependent_associations这个方法才是处理子类的关键</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">destroy_dependent_associations!</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">dependent_associations</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">reflection</span><span class="o">|</span>
+</span><span class='line'>    <span class="c1"># 这句也很关键,判断子类有没有使用acts_as_paranoid,</span>
+</span><span class='line'>    <span class="c1"># 没有的话就没必要进行下去,应该根本没有destroy!方法,而rails默认就会删除的</span>
+</span><span class='line'>    <span class="k">next</span> <span class="k">unless</span> <span class="n">reflection</span><span class="o">.</span><span class="n">klass</span><span class="o">.</span><span class="n">paranoid?</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">scope</span> <span class="o">=</span> <span class="n">reflection</span><span class="o">.</span><span class="n">klass</span><span class="o">.</span><span class="n">only_deleted</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># Merge in the association&#39;s scope</span>
+</span><span class='line'>    <span class="n">scope</span> <span class="o">=</span> <span class="n">scope</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">association</span><span class="p">(</span><span class="n">reflection</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">association_scope</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">scope</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">object</span><span class="o">|</span>
+</span><span class='line'>      <span class="c1"># 这句才是真正的删除</span>
+</span><span class='line'>      <span class="n">object</span><span class="o">.</span><span class="n">destroy!</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>要真删除school,总得知道它有哪些子类belongs_to school吧,所以这个destroy_dependent_associations方法的前半部分都在找school究终has_many了哪些model,最后一句object.destroy!才是真正的删除</p>
+
+<p>dependent_associations是?</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">dependent_associations</span>
+</span><span class='line'>  <span class="c1"># 过滤父类中has_many dependent等于:destroy或:delete_all的association</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">reflect_on_all_associations</span><span class="o">.</span><span class="n">select</span> <span class="p">{</span><span class="o">|</span><span class="n">a</span><span class="o">|</span> <span class="o">[</span><span class="ss">:destroy</span><span class="p">,</span> <span class="ss">:delete_all</span><span class="o">].</span><span class="n">include?</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">options</span><span class="o">[</span><span class="ss">:dependent</span><span class="o">]</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><a href="http://api.rubyonrails.org/classes/ActiveRecord/Reflection/ClassMethods.html">reflect_on_all_associations</a>是rails提供的方法</p>
+
+<p>其实reflect_on_all_associations就是返回model所有包含的associations(关联关系的数组),而reflect_on_association可以取得某个特定的关联关系,例如School.reflect_on_association(:squads)</p>
+
+<p><img src="/images/acts_as_paranoid/reflect_on_association.png"></p>
+
+<p>association是activerecord/associations.rb提供的</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">association</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span> <span class="c1">#:nodoc:</span>
+</span><span class='line'>  <span class="n">association</span> <span class="o">=</span> <span class="n">association_instance_get</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">if</span> <span class="n">association</span><span class="o">.</span><span class="n">nil?</span>
+</span><span class='line'>    <span class="n">reflection</span>  <span class="o">=</span> <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">reflect_on_association</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">association</span> <span class="o">=</span> <span class="n">reflection</span><span class="o">.</span><span class="n">association_class</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="nb">self</span><span class="p">,</span> <span class="n">reflection</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">association_instance_set</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">association</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">association</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>其实它内部主要也是在用reflect_on_association,它用于某个实例,找到这个实例相关联的squads,然后交给下面的代码删除</p>
+
+<h4>belongs_to的参数with_deleted</h4>
+
+<p>把一个school假删除之后,它包含的squads也被假删除了,但是执行squad.school来查找school的时候会找不到,因为它使用了default_scope,那个default_scope本来就不查假删除的数据的</p>
+
+<p><img src="/images/acts_as_paranoid/belongs_to_with_deleted.png"></p>
+
+<p>而acts_as_paranoid提供了一个方式(:with_deleted => true)解决这个问题</p>
+
+<p>看下面的代码</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Squad</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">belongs_to</span> <span class="ss">:deleted_school</span><span class="p">,</span> <span class="ss">:class_name</span> <span class="o">=&gt;</span> <span class="s1">&#39;School&#39;</span><span class="p">,</span> <span class="ss">:foreign_key</span> <span class="o">=&gt;</span> <span class="s2">&quot;school_id&quot;</span><span class="p">,</span> <span class="ss">:with_deleted</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>当执行squad.deleted_school就可以查到那条假删除的school数据了</p>
+
+<p><img src="/images/acts_as_paranoid/belongs_to_search.png"></p>
+
+<p>其实那个:with_deleted => true会破掉default_scope</p>
+
+<p>它的源码定义在lib/acts_as_paranoid/associations.rb文件</p>
+
+<p>在acts_as_paranoid.rb主程序文件里引入它</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Extend ActiveRecord::Base with paranoid associations</span>
+</span><span class='line'><span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span><span class="o">.</span><span class="n">send</span> <span class="ss">:include</span><span class="p">,</span> <span class="ss">ActsAsParanoid</span><span class="p">:</span><span class="ss">:Associations</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">module</span> <span class="nn">ActsAsParanoid</span>
+</span><span class='line'>  <span class="k">module</span> <span class="nn">Associations</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">included</span><span class="p">(</span><span class="n">base</span><span class="p">)</span>
+</span><span class='line'>      <span class="n">base</span><span class="o">.</span><span class="n">extend</span> <span class="no">ClassMethods</span>
+</span><span class='line'>      <span class="k">class</span> <span class="o">&lt;&lt;</span> <span class="n">base</span>
+</span><span class='line'>        <span class="c1"># 用belongs_to_with_deleted重写belongs_to</span>
+</span><span class='line'>        <span class="n">alias_method_chain</span> <span class="ss">:belongs_to</span><span class="p">,</span> <span class="ss">:deleted</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">module</span> <span class="nn">ClassMethods</span>
+</span><span class='line'>      <span class="k">def</span> <span class="nf">belongs_to_with_deleted</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">options</span> <span class="o">=</span> <span class="p">{})</span>
+</span><span class='line'>        <span class="c1"># 从options移除with_deleted的值并返回</span>
+</span><span class='line'>        <span class="n">with_deleted</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="ss">:with_deleted</span><span class="p">)</span>
+</span><span class='line'>        <span class="c1"># 由于返回的是result,假如with_deleted是false,将使用原生的belongs_to方法,即belongs_to_with_deleted,假如是true,也是会返回belongs_to的结果留待下面的操作</span>
+</span><span class='line'>        <span class="n">result</span> <span class="o">=</span> <span class="n">belongs_to_without_deleted</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="c1"># 按照上面的例子,target是:deleted_school</span>
+</span><span class='line'>        <span class="c1"># 会用到:deleted_school_with_unscoped代替:deleted_school</span>
+</span><span class='line'>        <span class="c1"># 而原先的用:deleted_school_without_unscoped</span>
+</span><span class='line'>        <span class="k">if</span> <span class="n">with_deleted</span>
+</span><span class='line'>          <span class="c1"># 增加一个option: with_deleted</span>
+</span><span class='line'>          <span class="n">result</span><span class="o">.</span><span class="n">options</span><span class="o">[</span><span class="ss">:with_deleted</span><span class="o">]</span> <span class="o">=</span> <span class="n">with_deleted</span>
+</span><span class='line'>          <span class="c1"># 在我们上面的例子中,target就是:deleted_school</span>
+</span><span class='line'>          <span class="k">unless</span> <span class="nb">method_defined?</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">target</span><span class="si">}</span><span class="s2">_with_unscoped&quot;</span>
+</span><span class='line'>            <span class="c1"># 实例方法</span>
+</span><span class='line'>            <span class="nb">class_eval</span> <span class="o">&lt;&lt;-</span><span class="no">RUBY</span><span class="p">,</span> <span class="bp">__FILE__</span><span class="p">,</span> <span class="bp">__LINE__</span>
+</span><span class='line'><span class="sh">              def #{target}_with_unscoped(*args)</span>
+</span><span class='line'><span class="sh">                # 取出关联关系,包括school的记录</span>
+</span><span class='line'><span class="sh">                association = association(:#{target})</span>
+</span><span class='line'><span class="sh">                return nil if association.options[:polymorphic] &amp;&amp; association.klass.nil?</span>
+</span><span class='line'><span class="sh">                # 如果school没有用paranoid,就直接用原生的belongs_to</span>
+</span><span class='line'><span class="sh">                return #{target}_without_unscoped(*args) unless association.klass.paranoid?</span>
+</span><span class='line'><span class="sh">                # 去掉default_scope,scoping跟scoped的作用差不多,不过是接一个block</span>
+</span><span class='line'><span class="sh">                association.klass.with_deleted.scoping { #{target}_without_unscoped(*args) }</span>
+</span><span class='line'><span class="sh">              end</span>
+</span><span class='line'><span class="sh">              alias_method_chain :#{target}, :unscoped</span>
+</span><span class='line'><span class="no">            RUBY</span>
+</span><span class='line'>          <span class="k">end</span>
+</span><span class='line'>        <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="n">result</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>其实上面的代码就是把belongs_to方法重写了,主要是<code>alias_method_chain :belongs_to, :deleted</code>发挥作用,它的意思是会用belongs_to_with_deleted重写原来的belongs_to方法,原来那个就变成belongs_to_without_deleted方法</p>
+
+<p>相当于这样</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">alias_method</span> <span class="ss">:belongs_to_without_deleted</span><span class="p">,</span> <span class="ss">:belongs_to</span>
+</span><span class='line'><span class="n">alias_method</span> <span class="ss">:belongs_to</span><span class="p">,</span> <span class="ss">:belongs_to_with_deleted</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>在ruby2.0之后会用<a href="http://dev.af83.com/2012/10/19/ruby-2-0-module-prepend.html">module prepend</a>代替它</p>
+
+<p>不明白的可以看<a href="http://dev.iforeach.com/blogs/2011-02-15/alias-alias_method-and-alias_method_chain-compare">alias-alias_method-and-alias_method_chain-compare</a>和<a href="http://apidock.com/rails/Module/alias_method_chain">alias_method_chain</a></p>
+
+<p>上述的代码总结一下,首先重写了belongs_to的代码,让它可以加个with_deleted的参数,但通过squad.deleted_school,就会通过association(:deleted_school)这个方法找所属的school(包含default_scope),然而最后一句<code>association.klass.with_deleted.scoping { #{target}_without_unscoped(*args) }</code>能够去掉default_scope,因为用了with_deleted嘛</p>
+
+<h3>Recovery 还原</h3>
+
+<p>假如把一个邮件放到垃圾箱里,那个垃圾箱应该有个清空(真删除)的操作,也要有个还原的操作,现在我们来介绍这个还原的功能</p>
+
+<p><img src="/images/acts_as_paranoid/recover.png"></p>
+
+<p>源码是这样的</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">recover</span><span class="p">(</span><span class="n">options</span><span class="o">=</span><span class="p">{})</span>
+</span><span class='line'>  <span class="c1"># 这样组织参数很灵活</span>
+</span><span class='line'>  <span class="n">options</span> <span class="o">=</span> <span class="p">{</span>
+</span><span class='line'>    <span class="ss">:recursive</span> <span class="o">=&gt;</span> <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">paranoid_configuration</span><span class="o">[</span><span class="ss">:recover_dependent_associations</span><span class="o">]</span><span class="p">,</span>
+</span><span class='line'>    <span class="ss">:recovery_window</span> <span class="o">=&gt;</span> <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">paranoid_configuration</span><span class="o">[</span><span class="ss">:dependent_recovery_window</span><span class="o">]</span>
+</span><span class='line'>  <span class="p">}</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">transaction</span> <span class="k">do</span>
+</span><span class='line'>    <span class="n">run_callbacks</span> <span class="ss">:recover</span> <span class="k">do</span>
+</span><span class='line'>      <span class="c1"># 通过options[:recursive]的值来判断是否要连带还原</span>
+</span><span class='line'>      <span class="n">recover_dependent_associations</span><span class="p">(</span><span class="n">options</span><span class="o">[</span><span class="ss">:recovery_window</span><span class="o">]</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span> <span class="k">if</span> <span class="n">options</span><span class="o">[</span><span class="ss">:recursive</span><span class="o">]</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="nb">self</span><span class="o">.</span><span class="n">paranoid_value</span> <span class="o">=</span> <span class="kp">nil</span>
+</span><span class='line'>      <span class="nb">self</span><span class="o">.</span><span class="n">save</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>它的主要内容是<code>self.paranoid_value = nil</code>,然后再保存(save),这样就可以还原成功</p>
+
+<p>它还带了两个参数,一个叫recursive,它是关于<strong>连带还原</strong>的,也就是说你把school还原了,顺便把属于school的squads(班级)也给还原了</p>
+
+<p>还有另外一个叫recovery_window,它是一个间隔时间,它的作用跟上文说过deleted_inside_time_window差不多,这个recovery_window参数是跟子类的deleted_at时间比较的</p>
+
+<p>而这两个参数都有默认值,而且是从paranoid_configuration这个变量读取的,也就是说在使用acts_as_paranoid就可以给它指定值了,不一定要从recover(options={})中的options传入</p>
+
+<p>看这个就知道了</p>
+
+<figure class='code'><figcaption><span>lib/acts_as_paranoid.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">self</span><span class="o">.</span><span class="n">paranoid_configuration</span> <span class="o">=</span> <span class="p">{</span> <span class="ss">:column</span> <span class="o">=&gt;</span> <span class="s2">&quot;deleted_at&quot;</span><span class="p">,</span> <span class="ss">:column_type</span> <span class="o">=&gt;</span> <span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="ss">:recover_dependent_associations</span> <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">,</span> <span class="ss">:dependent_recovery_window</span> <span class="o">=&gt;</span> <span class="mi">2</span><span class="o">.</span><span class="n">minutes</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>主要的内容在这一行<code>recover_dependent_associations(options[:recovery_window], options) if options[:recursive]</code></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">recover_dependent_associations</span><span class="p">(</span><span class="n">window</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">dependent_associations</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">reflection</span><span class="o">|</span>
+</span><span class='line'>    <span class="c1"># 同样的,没有使用acts_as_paranoid的子类model跳过</span>
+</span><span class='line'>    <span class="k">next</span> <span class="k">unless</span> <span class="n">reflection</span><span class="o">.</span><span class="n">klass</span><span class="o">.</span><span class="n">paranoid?</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">scope</span> <span class="o">=</span> <span class="n">reflection</span><span class="o">.</span><span class="n">klass</span><span class="o">.</span><span class="n">only_deleted</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># Merge in the association&#39;s scope</span>
+</span><span class='line'>    <span class="n">scope</span> <span class="o">=</span> <span class="n">scope</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">association</span><span class="p">(</span><span class="n">reflection</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">association_scope</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># We can only recover by window if both parent and dependant have a</span>
+</span><span class='line'>    <span class="c1"># paranoid column type of :time.</span>
+</span><span class='line'>    <span class="k">if</span> <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">paranoid_column_type</span> <span class="o">==</span> <span class="ss">:time</span> <span class="o">&amp;&amp;</span> <span class="n">reflection</span><span class="o">.</span><span class="n">klass</span><span class="o">.</span><span class="n">paranoid_column_type</span> <span class="o">==</span> <span class="ss">:time</span>
+</span><span class='line'>      <span class="n">scope</span> <span class="o">=</span> <span class="n">scope</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">reflection</span><span class="o">.</span><span class="n">klass</span><span class="o">.</span><span class="n">deleted_inside_time_window</span><span class="p">(</span><span class="n">paranoid_value</span><span class="p">,</span> <span class="n">window</span><span class="p">))</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">scope</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">object</span><span class="o">|</span>
+</span><span class='line'>      <span class="n">object</span><span class="o">.</span><span class="n">recover</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这个方法的内容跟destroy_dependent_associations差不多,也是想通过association找到相关联的记录(squads),有区别是下面这几行</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># self是自己,reflection.class是每个关联的子类model</span>
+</span><span class='line'><span class="k">if</span> <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">paranoid_column_type</span> <span class="o">==</span> <span class="ss">:time</span> <span class="o">&amp;&amp;</span> <span class="n">reflection</span><span class="o">.</span><span class="n">klass</span><span class="o">.</span><span class="n">paranoid_column_type</span> <span class="o">==</span> <span class="ss">:time</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="o">=</span> <span class="n">scope</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">reflection</span><span class="o">.</span><span class="n">klass</span><span class="o">.</span><span class="n">deleted_inside_time_window</span><span class="p">(</span><span class="n">paranoid_value</span><span class="p">,</span> <span class="n">window</span><span class="p">))</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">scope</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">object</span><span class="o">|</span>
+</span><span class='line'>  <span class="n">object</span><span class="o">.</span><span class="n">recover</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>首先通过判断paranoid_column_type的类型是否是time,因为只有time类型才会用到deleted_inside_time_window,然后遍历scope来执行recover</p>
+
+<h3>Validation 验证</h3>
+
+<p>这里的验证是唯一性验证,它的意思是一个字段不能存同个相同的值,例如身份证号码,是唯一的.但是一条记录被假删除之后,在用户层次,这里数据已经不复存在了(虽然数据库还保留着),所以即使有唯一性的验证,这条记录还是应该被允许重新覆盖那个唯一性的字段。但是仅仅用rails提供的uniqueness验证就不够,因为它是不管你有没有假删除的,就是不能允许有重复的值,所以acts_as_paranoid提供了自己的验证方法。</p>
+
+<p><img src="/images/acts_as_paranoid/validation.png"></p>
+
+<p>自己定义一个validator是这样的</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">EmailValidator</span> <span class="o">&lt;</span> <span class="ss">ActiveModel</span><span class="p">:</span><span class="ss">:EachValidator</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">validate_each</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">unless</span> <span class="n">value</span> <span class="o">=~</span> <span class="sr">/\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\z/i</span>
+</span><span class='line'>      <span class="n">record</span><span class="o">.</span><span class="n">errors</span><span class="o">[</span><span class="n">attribute</span><span class="o">]</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">options</span><span class="o">[</span><span class="ss">:message</span><span class="o">]</span> <span class="o">||</span> <span class="s2">&quot;is not an email&quot;</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Person</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">validates</span> <span class="ss">:email</span><span class="p">,</span> <span class="ss">:presence</span> <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">,</span> <span class="ss">:email</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>必须定义一个类继承ActiveModel::EachValidator,在这个类下还有定义validate_each方法,具体的可以看<a href="http://guides.rubyonrails.org/active_record_validations.html">rails guides validation</a></p>
+
+<p>而validates_as_paranoid的源码是这样的</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">validates_as_paranoid</span>
+</span><span class='line'>  <span class="kp">include</span> <span class="ss">ActsAsParanoid</span><span class="p">:</span><span class="ss">:Validations</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>ActsAsParanoid::Validations它的源码放在lib/acts_as_paranoid/validations.rb文件</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># https://github.com/rails/rails/blob/master/activesupport/lib/active_support/core_ext/array/wrap.rb 只是对Array的扩展,把对象包裹成array返回</span>
+</span><span class='line'><span class="nb">require</span> <span class="s1">&#39;active_support/core_ext/array/wrap&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">module</span> <span class="nn">ActsAsParanoid</span>
+</span><span class='line'>  <span class="k">module</span> <span class="nn">Validations</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">included</span><span class="p">(</span><span class="n">base</span><span class="p">)</span>
+</span><span class='line'>      <span class="n">base</span><span class="o">.</span><span class="n">extend</span> <span class="no">ClassMethods</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># ActiveRecord::Validations::UniquenessValidator也是继承自ActiveModel::EachValidator</span>
+</span><span class='line'>    <span class="k">class</span> <span class="nc">UniquenessWithoutDeletedValidator</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Validations</span><span class="o">::</span><span class="no">UniquenessValidator</span>
+</span><span class='line'>      <span class="c1"># 这个validate_each方法是必须定义的</span>
+</span><span class='line'>      <span class="k">def</span> <span class="nf">validate_each</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+</span><span class='line'>        <span class="c1"># 找到记录的class</span>
+</span><span class='line'>        <span class="n">finder_class</span> <span class="o">=</span> <span class="n">find_finder_class_for</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+</span><span class='line'>        <span class="n">table</span> <span class="o">=</span> <span class="n">finder_class</span><span class="o">.</span><span class="n">arel_table</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="n">coder</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">serialized_attributes</span><span class="o">[</span><span class="n">attribute</span><span class="o">.</span><span class="n">to_s</span><span class="o">]</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="k">if</span> <span class="n">value</span> <span class="o">&amp;&amp;</span> <span class="n">coder</span>
+</span><span class='line'>          <span class="n">value</span> <span class="o">=</span> <span class="n">coder</span><span class="o">.</span><span class="n">dump</span> <span class="n">value</span>
+</span><span class='line'>        <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="n">relation</span> <span class="o">=</span> <span class="n">build_relation</span><span class="p">(</span><span class="n">finder_class</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+</span><span class='line'>        <span class="o">[</span><span class="nb">Array</span><span class="p">(</span><span class="n">finder_class</span><span class="o">.</span><span class="n">primary_key</span><span class="p">),</span> <span class="nb">Array</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="ss">:id</span><span class="p">))</span><span class="o">].</span><span class="n">transpose</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">pk_key</span><span class="p">,</span> <span class="n">pk_value</span><span class="o">|</span>
+</span><span class='line'>          <span class="n">relation</span> <span class="o">=</span> <span class="n">relation</span><span class="o">.</span><span class="n">and</span><span class="p">(</span><span class="n">table</span><span class="o">[</span><span class="n">pk_key</span><span class="o">.</span><span class="n">to_sym</span><span class="o">].</span><span class="n">not_eq</span><span class="p">(</span><span class="n">pk_value</span><span class="p">))</span>
+</span><span class='line'>        <span class="k">end</span> <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">persisted?</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="nb">Array</span><span class="o">.</span><span class="n">wrap</span><span class="p">(</span><span class="n">options</span><span class="o">[</span><span class="ss">:scope</span><span class="o">]</span><span class="p">)</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">scope_item</span><span class="o">|</span>
+</span><span class='line'>          <span class="n">scope_value</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">scope_item</span><span class="p">)</span>
+</span><span class='line'>          <span class="n">relation</span> <span class="o">=</span> <span class="n">relation</span><span class="o">.</span><span class="n">and</span><span class="p">(</span><span class="n">table</span><span class="o">[</span><span class="n">scope_item</span><span class="o">].</span><span class="n">eq</span><span class="p">(</span><span class="n">scope_value</span><span class="p">))</span>
+</span><span class='line'>        <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="c1"># Re-add ActsAsParanoid default scope conditions manually.</span>
+</span><span class='line'>        <span class="k">if</span> <span class="n">finder_class</span><span class="o">.</span><span class="n">unscoped</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">finder_class</span><span class="o">.</span><span class="n">paranoid_default_scope_sql</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">relation</span><span class="p">)</span><span class="o">.</span><span class="n">exists?</span>
+</span><span class='line'>          <span class="n">record</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">attribute</span><span class="p">,</span> <span class="ss">:taken</span><span class="p">,</span> <span class="n">options</span><span class="o">.</span><span class="n">except</span><span class="p">(</span><span class="ss">:case_sensitive</span><span class="p">,</span> <span class="ss">:scope</span><span class="p">)</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="ss">:value</span> <span class="o">=&gt;</span> <span class="n">value</span><span class="p">))</span>
+</span><span class='line'>        <span class="k">end</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>    <span class="k">module</span> <span class="nn">ClassMethods</span>
+</span><span class='line'>      <span class="k">def</span> <span class="nf">validates_uniqueness_of_without_deleted</span><span class="p">(</span><span class="o">*</span><span class="n">attr_names</span><span class="p">)</span>
+</span><span class='line'>        <span class="n">validates_with</span> <span class="no">UniquenessWithoutDeletedValidator</span><span class="p">,</span> <span class="n">_merge_attributes</span><span class="p">(</span><span class="n">attr_names</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>上面的validate_each应该跟rails提供的UniquenessValidator中的<a href="http://api.rubyonrails.org/v3.2.13/classes/ActiveRecord/Validations/UniquenessValidator.html">validate_each</a>做比较</p>
+
+<p>最大的不同在于下面两个</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="o">-</span> <span class="n">relation</span> <span class="o">=</span> <span class="n">relation</span><span class="o">.</span><span class="n">and</span><span class="p">(</span><span class="n">table</span><span class="o">[</span><span class="n">finder_class</span><span class="o">.</span><span class="n">primary_key</span><span class="o">.</span><span class="n">to_sym</span><span class="o">].</span><span class="n">not_eq</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="ss">:id</span><span class="p">)))</span> <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">persisted?</span>
+</span><span class='line'><span class="o">+</span> <span class="o">[</span><span class="nb">Array</span><span class="p">(</span><span class="n">finder_class</span><span class="o">.</span><span class="n">primary_key</span><span class="p">),</span> <span class="nb">Array</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="ss">:id</span><span class="p">))</span><span class="o">].</span><span class="n">transpose</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">pk_key</span><span class="p">,</span> <span class="n">pk_value</span><span class="o">|</span>
+</span><span class='line'><span class="o">+</span>   <span class="n">relation</span> <span class="o">=</span> <span class="n">relation</span><span class="o">.</span><span class="n">and</span><span class="p">(</span><span class="n">table</span><span class="o">[</span><span class="n">pk_key</span><span class="o">.</span><span class="n">to_sym</span><span class="o">].</span><span class="n">not_eq</span><span class="p">(</span><span class="n">pk_value</span><span class="p">))</span>
+</span><span class='line'><span class="o">+</span> <span class="k">end</span> <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">persisted?</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 这里才是主要的变化</span>
+</span><span class='line'><span class="o">-</span> <span class="k">if</span> <span class="n">finder_class</span><span class="o">.</span><span class="n">unscoped</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">relation</span><span class="p">)</span><span class="o">.</span><span class="n">exists?</span>
+</span><span class='line'><span class="o">+</span> <span class="k">if</span> <span class="n">finder_class</span><span class="o">.</span><span class="n">unscoped</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">finder_class</span><span class="o">.</span><span class="n">paranoid_default_scope_sql</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">relation</span><span class="p">)</span><span class="o">.</span><span class="n">exists?</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>其实UniquenessWithoutDeletedValidator做的就是重写原生的ActiveRecord::Validations::UniquenessValidator,加上自己的改动,把唯一性验证的范围缩小(finder_class.paranoid_default_scope_sql),最后达到目的</p>
+
+<h3>Callback 回调方法</h3>
+
+<p>acts_as_paranoid提供了一组回调方法, before_recover &amp; after_after</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">School</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">acts_as_paranoid</span>
+</span><span class='line'>  <span class="n">before_recover</span> <span class="ss">:br</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">br</span>
+</span><span class='line'>    <span class="k">if</span> <span class="n">deleted?</span>
+</span><span class='line'>      <span class="nb">puts</span> <span class="s1">&#39;running before recover&#39;</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>  <span class="n">after_recover</span> <span class="ss">:ar</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">ar</span>
+</span><span class='line'>    <span class="k">unless</span> <span class="n">deleted?</span>
+</span><span class='line'>      <span class="nb">puts</span> <span class="s1">&#39;running after recover&#39;</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><img src="/images/acts_as_paranoid/recover_callback.png"></p>
+
+<p>关于自定义callback可以看<a href="http://api.rubyonrails.org/classes/ActiveSupport/Callbacks.html">activesupport/callbacks</a></p>
+
+<p>现在我们来看下源码</p>
+
+<figure class='code'><figcaption><span>lib/acts_as_paranoid.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Push the recover callback onto the activerecord callback list</span>
+</span><span class='line'><span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Callbacks</span><span class="o">::</span><span class="no">CALLBACKS</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="ss">:before_recover</span><span class="p">,</span> <span class="ss">:after_recover</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>lib/acts_as_paranoid/core.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">extended</span><span class="p">(</span><span class="n">base</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1"># 定义recover回调方法</span>
+</span><span class='line'>  <span class="n">base</span><span class="o">.</span><span class="n">define_callbacks</span> <span class="ss">:recover</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 设置before_recover这个回调方法所使用的方法</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">before_recover</span><span class="p">(</span><span class="nb">method</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">set_callback</span> <span class="ss">:recover</span><span class="p">,</span> <span class="ss">:before</span><span class="p">,</span> <span class="nb">method</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 设置after_recover这个回调方法所使用的方法</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">after_recover</span><span class="p">(</span><span class="nb">method</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">set_callback</span> <span class="ss">:recover</span><span class="p">,</span> <span class="ss">:after</span><span class="p">,</span> <span class="nb">method</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">recover</span><span class="p">(</span><span class="n">options</span><span class="o">=</span><span class="p">{})</span>
+</span><span class='line'>  <span class="o">.</span><span class="n">.</span><span class="o">.</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">transaction</span> <span class="k">do</span>
+</span><span class='line'>    <span class="c1"># 这行是执行callback</span>
+</span><span class='line'>    <span class="n">run_callbacks</span> <span class="ss">:recover</span> <span class="k">do</span>
+</span><span class='line'>      <span class="n">recover_dependent_associations</span><span class="p">(</span><span class="n">options</span><span class="o">[</span><span class="ss">:recovery_window</span><span class="o">]</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span> <span class="k">if</span> <span class="n">options</span><span class="o">[</span><span class="ss">:recursive</span><span class="o">]</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="nb">self</span><span class="o">.</span><span class="n">paranoid_value</span> <span class="o">=</span> <span class="kp">nil</span>
+</span><span class='line'>      <span class="nb">self</span><span class="o">.</span><span class="n">save</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>总结一下,自定义一个callback,需要三个方法define_callbacks, set_callback, run_callbacks</p>
+
+<p>define_callbacks是定义一个回调方法的名称,例如recover,而set_callback是设置before或after回调方法使用的方法,run_callbacks是运行回调方法,会前后运行before和after回调方法</p>
+
+<h2>总结</h2>
+
+<p>学习一个gem总能获得各种各样的知识,从这个gem我们就学习到了如果自定义一个validator,自定义一个callback,掌握它们方便我们去使用它们.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">随风</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-12-20T21:57:00+08:00" pubdate data-updated="true">Dec 20<span>th</span>, 2013</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/on/'>on</a>, <a class='category' href='/blog/categories/rails/'>rails</a>, <a class='category' href='/blog/categories/ruby/'>ruby</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://yinsigan.github.io/blog/2013/12/20/acts-as-paranoidyuan-ma-fen-xi/" data-via="" data-counturl="http://yinsigan.github.io/blog/2013/12/20/acts-as-paranoidyuan-ma-fen-xi/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2013/12/14/ancestryyuan-ma-fen-xi/" title="Previous Post: ancestry源码分析">&laquo; ancestry源码分析</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2013/12/26/rubyyuan-bian-cheng-zhi-block/" title="Next Post: ruby元编程之block">ruby元编程之block &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/09/10/zhong-zhuang-xi-tong-hou-ru-he-zhong-xie-ni-de-octopressbo-ke/">重装系统后如何重写你的Octopress博客</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/19/qian-ru-shi-biao-dan-yu-duo-tu-pian-shang-chuan/">嵌入式表单与多图片上传</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/12/carrierwavetu-pian-shang-chuan-de-jian-dan-shi-yong/">CarrierWave图片上传的简单使用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/12/jquery-treede-jie-shao-he-jian-dan-shi-yong/">Jquery Tree的介绍和简单使用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/11/jbuilder-and-rabl-and-gonjian-dan-shi-yong/">Jbuilder &amp; Rabl &amp; Gon简单使用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/10/jquery-tags-input-and-jquery-tag-it/">Jquery Tags-input &amp; Jquery Tag-it</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/08/rails-settingsyuan-ma-fen-xi/">Rails-settings源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/18/settingslogicyuan-ma-fen-xi/">Settingslogic源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/18/tabs-on-railsyuan-ma-fen-xi/">Tabs_on_rails源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/17/breadcrumbs-on-railsyuan-ma-fen-xi/">Breadcrumbs_on_rails源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/14/acts-as-messageableyuan-ma-fen-xi-1/">Acts-as-messageable源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/08/acts-as-taggable-onyuan-ma-fen-xi-9/">Acts-as-taggable-on源码分析(九)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/08/acts-as-taggable-onyuan-ma-fen-xi-8/">Acts-as-taggable-on源码分析(八)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/08/acts-as-taggable-onyuan-ma-fen-xi-7/">Acts-as-taggable-on源码分析(七)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/08/acts-as-taggable-onyuan-ma-fen-xi-6/">Acts-as-taggable-on源码分析(六)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/07/acts-as-taggable-onyuan-ma-fen-xi-5/">Acts-as-taggable-on源码分析(五)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/07/acts-as-taggable-onyuan-ma-fen-xi-4/">Acts-as-taggable-on源码分析(四)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/06/acts-as-taggable-onyuan-ma-fen-xi-3/">Acts-as-taggable-on源码分析(三)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/05/ubuntuxia-an-zhuang-linux-apache-mysql-php-dbninja/">ubuntu下安装Linux Apache MySQL PHP Dbninja</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/04/acts-as-taggable-onyuan-ma-fen-xi-2/">Acts-as-taggable-on源码分析(二)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/04/acts-as-taggable-onyuan-ma-fen-xi-1/">Acts-as-taggable-on源码分析(一)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/03/ubuntu-ruan-jian-tui-jian-yu-an-zhuang/">Ubuntu 软件推荐与安装</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/30/ubuntuxia-sublime-text-3shu-ru-zhong-wen/">Ubuntu下sublime Text 3输入中文</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/26/rubyyuan-bian-cheng-zhi-block/">Ruby元编程之block</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/20/acts-as-paranoidyuan-ma-fen-xi/">Acts_as_paranoid源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/14/ancestryyuan-ma-fen-xi/">Ancestry源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/11/rails-association-reference/">Rails Association Reference</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/10/rails-association/">Rails Association</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/09/acts-as-treeyuan-ma-fen-xi/">Acts_as_tree源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/03/acts-as-followeryuan-ma-fen-xi/">Acts_as_follower源码分析</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+Copyright &copy; 2017 - 随风 - <a href="https:/www.rails365.net">rails365</a>
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'xiaozi';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://yinsigan.github.io/blog/2013/12/20/acts-as-paranoidyuan-ma-fen-xi/';
+        var disqus_url = 'http://yinsigan.github.io/blog/2013/12/20/acts-as-paranoidyuan-ma-fen-xi/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = "/javascripts/widgets.js";
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

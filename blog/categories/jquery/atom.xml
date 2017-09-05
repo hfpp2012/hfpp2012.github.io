@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: jquery | 随风的博客]]></title>
+  <link href="http://yinsigan.github.io/blog/categories/jquery/atom.xml" rel="self"/>
+  <link href="http://yinsigan.github.io/"/>
+  <updated>2017-09-05T18:11:22+08:00</updated>
+  <id>http://yinsigan.github.io/</id>
+  <author>
+    <name><![CDATA[随风]]></name>
+    <email><![CDATA[ganweiliang886@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[jquery tree的介绍和简单使用]]></title>
+    <link href="http://yinsigan.github.io/blog/2014/02/12/jquery-treede-jie-shao-he-jian-dan-shi-yong/"/>
+    <updated>2014-02-12T11:24:00+08:00</updated>
+    <id>http://yinsigan.github.io/blog/2014/02/12/jquery-treede-jie-shao-he-jian-dan-shi-yong</id>
+    <content type="html"><![CDATA[<p>这节来介绍树(tree)形菜单的使用</p>
+
+<p>首先通过介绍<a href="https://github.com/jzaefferer/jquery-treeview">jquery treeview</a>的使用来了解树形菜单,最后会介绍几种jquery tree的特性</p>
+
+<!-- more -->
+
+
+<h3>1. jquery treeview</h3>
+
+<p>这个tree支持引导线的显示,支持图片,支持ajax,给我感觉中规中距</p>
+
+<h4>1.1 安装</h4>
+
+<p>下载所有的图片文件,还有jquery.treeview.js和jquery.treeview.css</p>
+
+<p><code>ruby
+&lt;%= javascript_link_tag "jquery.treeview" %&gt;
+&lt;%= javascript_include_tag "jquery.treeview" %&gt;
+</code></p>
+
+<p>Note: 如果发现图片没有找到,应该根据你图片的存储位置,更改jquery.treeview.css中的background-image中的路径,直到正确为止.</p>
+
+<h4>1.2 添加html</h4>
+
+<p>html为ul li结构,只要按照类似的结构姐织代码就可以,如果有使用ancestry这种gem,可以用它来生成html代码</p>
+
+<p>``` html</p>
+
+<ul id="browser" class="filetree treeview-famfamfam">
+  <li><span class="folder">Folder 1</span>
+  <ul>
+    <li><span class="folder">Item 1.1</span>
+    <ul>
+      <li><span class="file">Item 1.1.1</span></li>
+    </ul>
+    </li>
+    <li><span class="folder">Folder 2</span>
+    <ul>
+      <li><span class="folder">Subfolder 2.1</span>
+      <ul id="folder21">
+        <li><span class="file">File 2.1.1</span></li>
+        <li><span class="file">File 2.1.2</span></li>
+      </ul>
+      </li>
+      <li><span class="folder">Subfolder 2.2</span>
+      <ul>
+        <li><span class="file">File 2.2.1</span></li>
+        <li><span class="file">File 2.2.2</span></li>
+      </ul>
+      </li>
+    </ul>
+    </li>
+    <li class="closed"><span class="folder">Folder 3 (closed at start)</span>
+    <ul>
+      <li><span class="file">File 3.1</span></li>
+    </ul>
+    </li>
+    <li><span class="file">File 4</span></li>
+  </ul>
+  </li>
+</ul>
+
+
+<p>```</p>
+
+<h4>1.3 添加javascript</h4>
+
+<p>只要一个函数</p>
+
+<p>``` javascript
+$(&ldquo;#browser&rdquo;).treeview({</p>
+
+<pre><code>toggle: function() {
+    console.log("%s was toggled.", $(this).find("&gt;span").text());
+}
+</code></pre>
+
+<p>});
+```</p>
+
+<h4>1.4 有图片的</h4>
+
+<p>``` html</p>
+
+<ul id="browser" class="filetree">
+  <li><img src="folder.gif" /> 123</span>
+<ul>
+  <li>blabla <img src="file.gif" /></li>
+</ul>
+</li>
+<li><img src="folder.gif" />
+<ul>
+  <li><img src="folder.gif" />
+  <ul id="folder21">
+    <li><img src="file.gif" /> more text</li>
+    <li>and here, too<img src="file.gif" /></li>
+  </ul>
+  </li>
+  <li><img src="file.gif" /></li>
+</ul>
+</li>
+<li class="closed">this is closed! <img src="folder.gif" />
+<ul>
+  <li><img src="file.gif" /></li>
+</ul>
+</li>
+<li><img src="file.gif" /></li>
+</ul>
+
+
+<p>```</p>
+
+<h3>2. 几种jquery tree</h3>
+
+<h4>2.1 <a href="http://jtree.tk/index">jtree</a></h4>
+
+<ul>
+<li>简单使用</li>
+<li>支持拖拽</li>
+<li>插入新元素</li>
+<li>事件功能</li>
+</ul>
+
+
+<p>它的功能比treeview强大些</p>
+
+<h4>2.2 <a href="https://github.com/mbraak/jqTree">jqTree</a></h4>
+
+<ul>
+<li>界面简洁清爽</li>
+<li>帮助文档详细</li>
+<li>支持从JSON创建树</li>
+<li>支持拖拽,拖拽动画效果显示良好</li>
+<li>功能强大,可设置参数和事件多</li>
+</ul>
+
+
+<p>如果需要从JSON获得数据来建tree,选择这款不错</p>
+
+<h4>2.3 <a href="http://www.ztree.me/hunter/zTree.html">zTree</a></h4>
+
+<p>zTree的功能最强大了,如果要做复杂的tree就用它了</p>
+]]></content>
+  </entry>
+  
+</feed>

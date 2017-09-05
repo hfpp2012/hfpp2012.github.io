@@ -1,0 +1,969 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>acts_as_tree源码分析 - 随风的博客</title>
+  <meta name="author" content="随风">
+
+  
+  <meta name="description" content="acts_as_tree 这个gem是干什么的?原理是什么? 这个gem是用来实现树型结构的,例如一个分类(category),下面还有子分类,这个时候就可以用它了,还有,你回复了一个贴子,别人再来回复你，这个时候也可以用它。一个菜单之下还有子菜单，子菜单之下又可以有子菜单,子菜单之下有菜单项， &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://yinsigan.github.io/blog/2013/12/09/acts-as-treeyuan-ma-fen-xi">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="随风的博客" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/libs/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-46093029-1', 'yinsigan.github.io');
+  ga('send', 'pageview');
+
+</script>
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">随风的博客</a></h1>
+  
+    <h2>人生若如初见</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:yinsigan.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Acts_as_tree源码分析</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-12-09T14:30:00+08:00" pubdate data-updated="true">Dec 9<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><ul>
+<li><a href="https://github.com/amerine/acts_as_tree">acts_as_tree</a></li>
+</ul>
+
+
+<h3>这个gem是干什么的?原理是什么?</h3>
+
+<p>这个gem是用来实现树型结构的,例如一个分类(category),下面还有子分类,这个时候就可以用它了,还有,你回复了一个贴子,别人再来回复你，这个时候也可以用它。一个菜单之下还有子菜单，子菜单之下又可以有子菜单,子菜单之下有菜单项，它可以实现一种树型结构的菜单。它的原理也很简单,在模型中是实现了一个自关联,假如在一个comment(评论)model中,定义一个children(孩子),再定义一个parent(父), :class_name都是&#8217;Comment&#8217;。那他们怎么实现关联的,也就是说孩子要知道父亲是谁,父亲要知道它有哪些孩子,它在数据存储中是通过一个字段来关联的,在这个gem中这个字段叫<strong>parent_id</strong>假如我们创建一个根(root), <code>root = Comment.create</code>, 这个时候<strong>root</strong>*的parent_id是null,它是一个根,<code>children = root.children.create</code>,这个<strong>children</strong>是<strong>root</strong>的一个孩子,那<strong>children</strong>的<strong>parent_id</strong>就是<strong>root</strong>的<strong>id</strong></p>
+
+<!-- more -->
+
+
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>  菜单
+</span><span class='line'>   |_ 系统设置
+</span><span class='line'>   |    |_ 模版设置
+</span><span class='line'>   |    |_ 表格设置
+</span><span class='line'>   |_ 人员管理
+</span><span class='line'>        |_ 教职工管理
+</span><span class='line'>        |_ 学员管理</span></code></pre></td></tr></table></div></figure>
+
+
+<p>children和parent的关系是这样实现的</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">belongs_to</span> <span class="ss">:parent</span><span class="o">.</span><span class="n">.</span><span class="o">.</span>
+</span><span class='line'><span class="n">has_many</span>   <span class="ss">:children</span><span class="o">.</span><span class="n">.</span><span class="o">.</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>数据表是这样存储的</p>
+
+<p><img src="/images/acts_as_tree_table.png"></p>
+
+<h3>分析</h3>
+
+<p>这个gem的版本是1.4.0,关于新版的改变可以看文章的最后部分</p>
+
+<p>它的核心文件只有一个<strong>lib/acts_as_tree.rb</strong></p>
+
+<figure class='code'><figcaption><span>lib/acts_as_tree.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
+<span class='line-number'>81</span>
+<span class='line-number'>82</span>
+<span class='line-number'>83</span>
+<span class='line-number'>84</span>
+<span class='line-number'>85</span>
+<span class='line-number'>86</span>
+<span class='line-number'>87</span>
+<span class='line-number'>88</span>
+<span class='line-number'>89</span>
+<span class='line-number'>90</span>
+<span class='line-number'>91</span>
+<span class='line-number'>92</span>
+<span class='line-number'>93</span>
+<span class='line-number'>94</span>
+<span class='line-number'>95</span>
+<span class='line-number'>96</span>
+<span class='line-number'>97</span>
+<span class='line-number'>98</span>
+<span class='line-number'>99</span>
+<span class='line-number'>100</span>
+<span class='line-number'>101</span>
+<span class='line-number'>102</span>
+<span class='line-number'>103</span>
+<span class='line-number'>104</span>
+<span class='line-number'>105</span>
+<span class='line-number'>106</span>
+<span class='line-number'>107</span>
+<span class='line-number'>108</span>
+<span class='line-number'>109</span>
+<span class='line-number'>110</span>
+<span class='line-number'>111</span>
+<span class='line-number'>112</span>
+<span class='line-number'>113</span>
+<span class='line-number'>114</span>
+<span class='line-number'>115</span>
+<span class='line-number'>116</span>
+<span class='line-number'>117</span>
+<span class='line-number'>118</span>
+<span class='line-number'>119</span>
+<span class='line-number'>120</span>
+<span class='line-number'>121</span>
+<span class='line-number'>122</span>
+<span class='line-number'>123</span>
+<span class='line-number'>124</span>
+<span class='line-number'>125</span>
+<span class='line-number'>126</span>
+<span class='line-number'>127</span>
+<span class='line-number'>128</span>
+<span class='line-number'>129</span>
+<span class='line-number'>130</span>
+<span class='line-number'>131</span>
+<span class='line-number'>132</span>
+<span class='line-number'>133</span>
+<span class='line-number'>134</span>
+<span class='line-number'>135</span>
+<span class='line-number'>136</span>
+<span class='line-number'>137</span>
+<span class='line-number'>138</span>
+<span class='line-number'>139</span>
+<span class='line-number'>140</span>
+<span class='line-number'>141</span>
+<span class='line-number'>142</span>
+<span class='line-number'>143</span>
+<span class='line-number'>144</span>
+<span class='line-number'>145</span>
+<span class='line-number'>146</span>
+<span class='line-number'>147</span>
+<span class='line-number'>148</span>
+<span class='line-number'>149</span>
+<span class='line-number'>150</span>
+<span class='line-number'>151</span>
+<span class='line-number'>152</span>
+<span class='line-number'>153</span>
+<span class='line-number'>154</span>
+<span class='line-number'>155</span>
+<span class='line-number'>156</span>
+<span class='line-number'>157</span>
+<span class='line-number'>158</span>
+<span class='line-number'>159</span>
+<span class='line-number'>160</span>
+<span class='line-number'>161</span>
+<span class='line-number'>162</span>
+<span class='line-number'>163</span>
+<span class='line-number'>164</span>
+<span class='line-number'>165</span>
+<span class='line-number'>166</span>
+<span class='line-number'>167</span>
+<span class='line-number'>168</span>
+<span class='line-number'>169</span>
+<span class='line-number'>170</span>
+<span class='line-number'>171</span>
+<span class='line-number'>172</span>
+<span class='line-number'>173</span>
+<span class='line-number'>174</span>
+<span class='line-number'>175</span>
+<span class='line-number'>176</span>
+<span class='line-number'>177</span>
+<span class='line-number'>178</span>
+<span class='line-number'>179</span>
+<span class='line-number'>180</span>
+<span class='line-number'>181</span>
+<span class='line-number'>182</span>
+<span class='line-number'>183</span>
+<span class='line-number'>184</span>
+<span class='line-number'>185</span>
+<span class='line-number'>186</span>
+<span class='line-number'>187</span>
+<span class='line-number'>188</span>
+<span class='line-number'>189</span>
+<span class='line-number'>190</span>
+<span class='line-number'>191</span>
+<span class='line-number'>192</span>
+<span class='line-number'>193</span>
+<span class='line-number'>194</span>
+<span class='line-number'>195</span>
+<span class='line-number'>196</span>
+<span class='line-number'>197</span>
+<span class='line-number'>198</span>
+<span class='line-number'>199</span>
+<span class='line-number'>200</span>
+<span class='line-number'>201</span>
+<span class='line-number'>202</span>
+<span class='line-number'>203</span>
+<span class='line-number'>204</span>
+<span class='line-number'>205</span>
+<span class='line-number'>206</span>
+<span class='line-number'>207</span>
+<span class='line-number'>208</span>
+<span class='line-number'>209</span>
+<span class='line-number'>210</span>
+<span class='line-number'>211</span>
+<span class='line-number'>212</span>
+<span class='line-number'>213</span>
+<span class='line-number'>214</span>
+<span class='line-number'>215</span>
+<span class='line-number'>216</span>
+<span class='line-number'>217</span>
+<span class='line-number'>218</span>
+<span class='line-number'>219</span>
+<span class='line-number'>220</span>
+<span class='line-number'>221</span>
+<span class='line-number'>222</span>
+<span class='line-number'>223</span>
+<span class='line-number'>224</span>
+<span class='line-number'>225</span>
+<span class='line-number'>226</span>
+<span class='line-number'>227</span>
+<span class='line-number'>228</span>
+<span class='line-number'>229</span>
+<span class='line-number'>230</span>
+<span class='line-number'>231</span>
+<span class='line-number'>232</span>
+<span class='line-number'>233</span>
+<span class='line-number'>234</span>
+<span class='line-number'>235</span>
+<span class='line-number'>236</span>
+<span class='line-number'>237</span>
+<span class='line-number'>238</span>
+<span class='line-number'>239</span>
+<span class='line-number'>240</span>
+<span class='line-number'>241</span>
+<span class='line-number'>242</span>
+<span class='line-number'>243</span>
+<span class='line-number'>244</span>
+<span class='line-number'>245</span>
+<span class='line-number'>246</span>
+<span class='line-number'>247</span>
+<span class='line-number'>248</span>
+<span class='line-number'>249</span>
+<span class='line-number'>250</span>
+<span class='line-number'>251</span>
+<span class='line-number'>252</span>
+<span class='line-number'>253</span>
+<span class='line-number'>254</span>
+<span class='line-number'>255</span>
+<span class='line-number'>256</span>
+<span class='line-number'>257</span>
+<span class='line-number'>258</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;acts_as_tree/version&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">module</span> <span class="nn">ActsAsTree</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">if</span> <span class="n">defined?</span> <span class="ss">Rails</span><span class="p">:</span><span class="ss">:Railtie</span>
+</span><span class='line'>    <span class="nb">require</span> <span class="s1">&#39;acts_as_tree/railtie&#39;</span>
+</span><span class='line'>  <span class="k">elsif</span> <span class="n">defined?</span> <span class="ss">Rails</span><span class="p">:</span><span class="ss">:Initializer</span>
+</span><span class='line'>    <span class="k">raise</span> <span class="s2">&quot;acts_as_tree 1.0 is not compatible with Rails 2.3 or older&quot;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">included</span><span class="p">(</span><span class="n">base</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">base</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="no">ClassMethods</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># Specify this +acts_as+ extension if you want to model a tree structure</span>
+</span><span class='line'>  <span class="c1"># by providing a parent association and a children association. This</span>
+</span><span class='line'>  <span class="c1"># requires that you have a foreign key column, which by default is called</span>
+</span><span class='line'>  <span class="c1"># +parent_id+.</span>
+</span><span class='line'>  <span class="c1">#</span>
+</span><span class='line'>  <span class="c1">#   class Category &lt; ActiveRecord::Base</span>
+</span><span class='line'>  <span class="c1">#     include ActsAsTree</span>
+</span><span class='line'>  <span class="c1">#</span>
+</span><span class='line'>  <span class="c1">#     acts_as_tree :order =&gt; &quot;name&quot;</span>
+</span><span class='line'>  <span class="c1">#   end</span>
+</span><span class='line'>  <span class="c1">#</span>
+</span><span class='line'>  <span class="c1">#   Example:</span>
+</span><span class='line'>  <span class="c1">#   root</span>
+</span><span class='line'>  <span class="c1">#    \_ child1</span>
+</span><span class='line'>  <span class="c1">#         \_ subchild1</span>
+</span><span class='line'>  <span class="c1">#         \_ subchild2</span>
+</span><span class='line'>  <span class="c1">#</span>
+</span><span class='line'>  <span class="c1">#   root      = Category.create(&quot;name&quot; =&gt; &quot;root&quot;)</span>
+</span><span class='line'>  <span class="c1">#   child1    = root.children.create(&quot;name&quot; =&gt; &quot;child1&quot;)</span>
+</span><span class='line'>  <span class="c1">#   subchild1 = child1.children.create(&quot;name&quot; =&gt; &quot;subchild1&quot;)</span>
+</span><span class='line'>  <span class="c1">#</span>
+</span><span class='line'>  <span class="c1">#   root.parent   # =&gt; nil</span>
+</span><span class='line'>  <span class="c1">#   child1.parent # =&gt; root</span>
+</span><span class='line'>  <span class="c1">#   root.children # =&gt; [child1]</span>
+</span><span class='line'>  <span class="c1">#   root.children.first.children.first # =&gt; subchild1</span>
+</span><span class='line'>  <span class="c1">#</span>
+</span><span class='line'>  <span class="c1"># In addition to the parent and children associations, the following</span>
+</span><span class='line'>  <span class="c1"># instance methods are added to the class after calling</span>
+</span><span class='line'>  <span class="c1"># &lt;tt&gt;acts_as_tree&lt;/tt&gt;:</span>
+</span><span class='line'>  <span class="c1"># * &lt;tt&gt;siblings&lt;/tt&gt; - Returns all the children of the parent, excluding</span>
+</span><span class='line'>  <span class="c1">#                       the current node (&lt;tt&gt;[subchild2]&lt;/tt&gt; when called</span>
+</span><span class='line'>  <span class="c1">#                       on &lt;tt&gt;subchild1&lt;/tt&gt;)</span>
+</span><span class='line'>  <span class="c1"># * &lt;tt&gt;self_and_siblings&lt;/tt&gt; - Returns all the children of the parent,</span>
+</span><span class='line'>  <span class="c1">#                                including the current node (&lt;tt&gt;[subchild1, subchild2]&lt;/tt&gt;</span>
+</span><span class='line'>  <span class="c1">#                                when called on &lt;tt&gt;subchild1&lt;/tt&gt;)</span>
+</span><span class='line'>  <span class="c1"># * &lt;tt&gt;ancestors&lt;/tt&gt; - Returns all the ancestors of the current node</span>
+</span><span class='line'>  <span class="c1">#                        (&lt;tt&gt;[child1, root]&lt;/tt&gt; when called on &lt;tt&gt;subchild2&lt;/tt&gt;)</span>
+</span><span class='line'>  <span class="c1"># * &lt;tt&gt;root&lt;/tt&gt; - Returns the root of the current node (&lt;tt&gt;root&lt;/tt&gt;</span>
+</span><span class='line'>  <span class="c1">#                   when called on &lt;tt&gt;subchild2&lt;/tt&gt;)</span>
+</span><span class='line'>  <span class="k">module</span> <span class="nn">ClassMethods</span>
+</span><span class='line'>    <span class="c1"># Configuration options are:</span>
+</span><span class='line'>    <span class="c1">#</span>
+</span><span class='line'>    <span class="c1"># * &lt;tt&gt;foreign_key&lt;/tt&gt; - specifies the column name to use for tracking</span>
+</span><span class='line'>    <span class="c1">#                          of the tree (default: +parent_id+)</span>
+</span><span class='line'>    <span class="c1"># * &lt;tt&gt;order&lt;/tt&gt; - makes it possible to sort the children according to</span>
+</span><span class='line'>    <span class="c1">#                    this SQL snippet.</span>
+</span><span class='line'>    <span class="c1"># * &lt;tt&gt;counter_cache&lt;/tt&gt; - keeps a count in a +children_count+ column</span>
+</span><span class='line'>    <span class="c1">#                            if set to +true+ (default: +false+).</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># 是通过这个方法来明确rails model association的(has_many belongs_to),而且这个方法会导入InstanceMethods model</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">acts_as_tree</span><span class="p">(</span><span class="n">options</span> <span class="o">=</span> <span class="p">{})</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="c1"># 默认的配置选项, dependent当你删除节点时，连同子节点全部删除</span>
+</span><span class='line'>      <span class="n">configuration</span> <span class="o">=</span> <span class="p">{</span>
+</span><span class='line'>        <span class="n">foreign_key</span><span class="p">:</span>   <span class="s2">&quot;parent_id&quot;</span><span class="p">,</span>
+</span><span class='line'>        <span class="ss">order</span><span class="p">:</span>         <span class="kp">nil</span><span class="p">,</span>
+</span><span class='line'>        <span class="n">counter_cache</span><span class="p">:</span> <span class="kp">nil</span><span class="p">,</span>
+</span><span class='line'>        <span class="ss">dependent</span><span class="p">:</span>     <span class="ss">:destroy</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="c1"># 替换原来的方法或增加新的option</span>
+</span><span class='line'>      <span class="n">configuration</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">options</span><span class="p">)</span> <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">is_a?</span><span class="p">(</span><span class="no">Hash</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="c1"># 定义一个自关联的parent, 如果设count_cache: true那就得在数据表中加入comments_count(comments是你的表名), foreign_key是parent_id，主要是通过它来关联parent和children</span>
+</span><span class='line'>      <span class="n">belongs_to</span> <span class="ss">:parent</span><span class="p">,</span> <span class="n">class_name</span><span class="p">:</span>    <span class="nb">name</span><span class="p">,</span>
+</span><span class='line'>        <span class="n">foreign_key</span><span class="p">:</span>   <span class="n">configuration</span><span class="o">[</span><span class="ss">:foreign_key</span><span class="o">]</span><span class="p">,</span>
+</span><span class='line'>        <span class="n">counter_cache</span><span class="p">:</span> <span class="n">configuration</span><span class="o">[</span><span class="ss">:counter_cache</span><span class="o">]</span><span class="p">,</span>
+</span><span class='line'>        <span class="n">inverse_of</span><span class="p">:</span>    <span class="ss">:children</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="c1"># 跟上述差不多,更多的可以看rails guides associations</span>
+</span><span class='line'>      <span class="k">if</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:VERSION</span><span class="o">::</span><span class="no">MAJOR</span> <span class="o">&gt;=</span> <span class="mi">4</span>
+</span><span class='line'>        <span class="n">has_many</span> <span class="ss">:children</span><span class="p">,</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="n">order</span> <span class="n">configuration</span><span class="o">[</span><span class="ss">:order</span><span class="o">]</span> <span class="p">},</span>
+</span><span class='line'>          <span class="n">class_name</span><span class="p">:</span>  <span class="nb">name</span><span class="p">,</span>
+</span><span class='line'>          <span class="n">foreign_key</span><span class="p">:</span> <span class="n">configuration</span><span class="o">[</span><span class="ss">:foreign_key</span><span class="o">]</span><span class="p">,</span>
+</span><span class='line'>          <span class="ss">dependent</span><span class="p">:</span>   <span class="n">configuration</span><span class="o">[</span><span class="ss">:dependent</span><span class="o">]</span><span class="p">,</span>
+</span><span class='line'>          <span class="n">inverse_of</span><span class="p">:</span>  <span class="ss">:parent</span>
+</span><span class='line'>      <span class="k">else</span>
+</span><span class='line'>        <span class="n">has_many</span> <span class="ss">:children</span><span class="p">,</span> <span class="n">class_name</span><span class="p">:</span>  <span class="nb">name</span><span class="p">,</span>
+</span><span class='line'>          <span class="n">foreign_key</span><span class="p">:</span> <span class="n">configuration</span><span class="o">[</span><span class="ss">:foreign_key</span><span class="o">]</span><span class="p">,</span>
+</span><span class='line'>          <span class="ss">order</span><span class="p">:</span>       <span class="n">configuration</span><span class="o">[</span><span class="ss">:order</span><span class="o">]</span><span class="p">,</span>
+</span><span class='line'>          <span class="ss">dependent</span><span class="p">:</span>   <span class="n">configuration</span><span class="o">[</span><span class="ss">:dependent</span><span class="o">]</span><span class="p">,</span>
+</span><span class='line'>          <span class="n">inverse_of</span><span class="p">:</span>  <span class="ss">:parent</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="c1"># 下面都是类的实例方法,相当于class &lt;&lt; self</span>
+</span><span class='line'>      <span class="nb">class_eval</span> <span class="o">&lt;&lt;-</span><span class="no">EOV</span>
+</span><span class='line'><span class="sh">        # 包含实例方法</span>
+</span><span class='line'><span class="sh">        include ActsAsTree::InstanceMethods</span>
+</span><span class='line'>
+</span><span class='line'><span class="sh">        # update之后更新counter_cache, 关于create之后更新counter_cache是自动进行的</span>
+</span><span class='line'><span class="sh">        after_update :update_parents_counter_cache</span>
+</span><span class='line'>
+</span><span class='line'><span class="sh">        # 以一个数组形式返回所有的根,可通过Comment.roots这样调用</span>
+</span><span class='line'><span class="sh">        def self.roots</span>
+</span><span class='line'><span class="sh">          # %Q的用法参考这里http://simpleror.wordpress.com/2009/03/15/q-q-w-w-x-r-s/</span>
+</span><span class='line'><span class="sh">          # fetch是一个Hash的方法,对传过来的值作为key来取值,没有这个key就用第二个参数来代替</span>
+</span><span class='line'><span class="sh">          # 在老版本的acts_as_tree中用#{configuration[:order].nil? ? &quot;nil&quot; : %Q{&quot;#{configuration[:order]}&quot;}},明显用fetch简洁好多</span>
+</span><span class='line'><span class="sh">          order_option = %Q{#{configuration.fetch :order, &quot;nil&quot;}}</span>
+</span><span class='line'><span class="sh">          # nil查询在老版本的acts_as_tree中用is NULL</span>
+</span><span class='line'><span class="sh">          where(:#{configuration[:foreign_key]} =&gt; nil).order(order_option)</span>
+</span><span class='line'><span class="sh">        end</span>
+</span><span class='line'>
+</span><span class='line'><span class="sh">        # 返回数据中的根</span>
+</span><span class='line'><span class="sh">        def self.root</span>
+</span><span class='line'><span class="sh">          order_option = %Q{#{configuration.fetch :order, &quot;nil&quot;}}</span>
+</span><span class='line'><span class="sh">          self.roots.first</span>
+</span><span class='line'><span class="sh">        end</span>
+</span><span class='line'><span class="no">      EOV</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># extend Presentation,这个module下定义的都是类方法,用Comment.tree_view来调用</span>
+</span><span class='line'>  <span class="k">module</span> <span class="nn">Presentation</span>
+</span><span class='line'>    <span class="c1"># show records in a tree view</span>
+</span><span class='line'>    <span class="c1"># Example:</span>
+</span><span class='line'>    <span class="c1"># root</span>
+</span><span class='line'>    <span class="c1">#  |_ child1</span>
+</span><span class='line'>    <span class="c1">#  |    |_ subchild1</span>
+</span><span class='line'>    <span class="c1">#  |    |_ subchild2</span>
+</span><span class='line'>    <span class="c1">#  |_ child2</span>
+</span><span class='line'>    <span class="c1">#       |_ subchild3</span>
+</span><span class='line'>    <span class="c1">#       |_ subchild4</span>
+</span><span class='line'>    <span class="c1">#</span>
+</span><span class='line'>    <span class="c1"># 看上面的例子，用一种良好阅读的方式返回树的形状</span>
+</span><span class='line'>    <span class="c1"># 树的遍历要用到递归</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">tree_view</span><span class="p">(</span><span class="n">label_method</span> <span class="o">=</span> <span class="ss">:to_s</span><span class="p">,</span>  <span class="n">node</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">,</span> <span class="n">level</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">nil?</span>
+</span><span class='line'>        <span class="nb">puts</span> <span class="s2">&quot;root&quot;</span>
+</span><span class='line'>        <span class="c1"># roots是个类方法,返回所有包含根节点的数组</span>
+</span><span class='line'>        <span class="n">nodes</span> <span class="o">=</span> <span class="n">roots</span>
+</span><span class='line'>      <span class="k">else</span>
+</span><span class='line'>        <span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;|_ </span><span class="si">#{</span><span class="n">node</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">label_method</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'>        <span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="mi">0</span>
+</span><span class='line'>          <span class="nb">puts</span> <span class="s2">&quot; </span><span class="si">#{</span><span class="n">label</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'>        <span class="k">else</span>
+</span><span class='line'>          <span class="nb">puts</span> <span class="s2">&quot; |</span><span class="si">#{</span><span class="s2">&quot;    &quot;</span><span class="o">*</span><span class="n">level</span><span class="si">}#{</span><span class="n">label</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'>        <span class="k">end</span>
+</span><span class='line'>        <span class="n">nodes</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">children</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>      <span class="c1"># 1.首先默认传入node=nil, level=-1,这个时候会执行node.nil?，在第一行输出root,接着返回包含根节点的数组</span>
+</span><span class='line'>      <span class="c1"># 2.遍历由根节点组成的数组,执行tree_view递归函数,而这个时候,node不等于nil,level=0,执行level == 0下面一句输出第一个根节点(类似|_root)</span>
+</span><span class='line'>      <span class="c1"># 3.接着把这个根节点的孩子传给nodes去执行第二步, 这个node是不会等于nil的,level也将大于1,将会执行puts &quot; |#{&quot;    &quot;*level}#{label}&quot;这一行,在第二层树中level等于1,在输出时前面会空出一份空白,假如第二层树中有孩子,还会继续遍历,直到没有孩子</span>
+</span><span class='line'>      <span class="n">nodes</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">child</span><span class="o">|</span>
+</span><span class='line'>        <span class="n">tree_view</span><span class="p">(</span><span class="n">label_method</span><span class="p">,</span> <span class="n">child</span><span class="p">,</span> <span class="n">level</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># 下面定义都是实例方法</span>
+</span><span class='line'>  <span class="k">module</span> <span class="nn">InstanceMethods</span>
+</span><span class='line'>    <span class="c1"># Returns list of ancestors, starting from parent until root.</span>
+</span><span class='line'>    <span class="c1">#</span>
+</span><span class='line'>    <span class="c1">#   subchild1.ancestors # =&gt; [child1, root]</span>
+</span><span class='line'>    <span class="c1"># 返回祖先链</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">ancestors</span>
+</span><span class='line'>      <span class="n">node</span><span class="p">,</span> <span class="n">nodes</span> <span class="o">=</span> <span class="nb">self</span><span class="p">,</span> <span class="o">[]</span>
+</span><span class='line'>      <span class="n">nodes</span> <span class="o">&lt;&lt;</span> <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">parent</span> <span class="k">while</span> <span class="n">node</span><span class="o">.</span><span class="n">parent</span>
+</span><span class='line'>      <span class="n">nodes</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># Returns the root node of the tree.</span>
+</span><span class='line'>    <span class="c1"># 返回根节点</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">root</span>
+</span><span class='line'>      <span class="n">node</span> <span class="o">=</span> <span class="nb">self</span>
+</span><span class='line'>      <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">parent</span> <span class="k">while</span> <span class="n">node</span><span class="o">.</span><span class="n">parent</span>
+</span><span class='line'>      <span class="n">node</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># Returns all siblings of the current node.</span>
+</span><span class='line'>    <span class="c1">#</span>
+</span><span class='line'>    <span class="c1">#   subchild1.siblings # =&gt; [subchild2]</span>
+</span><span class='line'>    <span class="c1"># 返回所有兄弟节点</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">siblings</span>
+</span><span class='line'>      <span class="c1"># 减掉自己就是兄弟节点</span>
+</span><span class='line'>      <span class="n">self_and_siblings</span> <span class="o">-</span> <span class="o">[</span><span class="nb">self</span><span class="o">]</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># Returns all siblings and a reference to the current node.</span>
+</span><span class='line'>    <span class="c1">#</span>
+</span><span class='line'>    <span class="c1">#   subchild1.self_and_siblings # =&gt; [subchild1, subchild2]</span>
+</span><span class='line'>    <span class="c1"># 返回自身加上兄弟节点</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">self_and_siblings</span>
+</span><span class='line'>      <span class="c1"># 如果不是根节点就把根节点的所有孩子都返回</span>
+</span><span class='line'>      <span class="c1"># 否则的话就把所有根节点返回</span>
+</span><span class='line'>      <span class="c1"># class能引用到自身的类</span>
+</span><span class='line'>      <span class="n">parent</span> <span class="p">?</span> <span class="n">parent</span><span class="o">.</span><span class="n">children</span> <span class="p">:</span> <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">roots</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># Returns children (without subchildren) and current node itself.</span>
+</span><span class='line'>    <span class="c1">#</span>
+</span><span class='line'>    <span class="c1">#   root.self_and_children # =&gt; [root, child1]</span>
+</span><span class='line'>    <span class="c1"># 返回自身和孩子</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">self_and_children</span>
+</span><span class='line'>      <span class="o">[</span><span class="nb">self</span><span class="o">]</span> <span class="o">+</span> <span class="nb">self</span><span class="o">.</span><span class="n">children</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># Returns ancestors and current node itself.</span>
+</span><span class='line'>    <span class="c1">#</span>
+</span><span class='line'>    <span class="c1">#   subchild1.self_and_ancestors # =&gt; [subchild1, child1, root]</span>
+</span><span class='line'>    <span class="c1"># 返回自己和祖先</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">self_and_ancestors</span>
+</span><span class='line'>      <span class="o">[</span><span class="nb">self</span><span class="o">]</span> <span class="o">+</span> <span class="nb">self</span><span class="o">.</span><span class="n">ancestors</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># Returns true if node has no parent, false otherwise</span>
+</span><span class='line'>    <span class="c1">#</span>
+</span><span class='line'>    <span class="c1">#   subchild1.root? # =&gt; false</span>
+</span><span class='line'>    <span class="c1">#   root.root?      # =&gt; true</span>
+</span><span class='line'>    <span class="c1"># 判断是否是根节点</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">root?</span>
+</span><span class='line'>      <span class="n">parent</span><span class="o">.</span><span class="n">nil?</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># Returns true if node has no children, false otherwise</span>
+</span><span class='line'>    <span class="c1">#</span>
+</span><span class='line'>    <span class="c1">#   subchild1.leaf? # =&gt; true</span>
+</span><span class='line'>    <span class="c1">#   child1.leaf?    # =&gt; false</span>
+</span><span class='line'>    <span class="c1"># 没有孩子了就是叶子节点</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">leaf?</span>
+</span><span class='line'>      <span class="n">children</span><span class="o">.</span><span class="n">count</span> <span class="o">==</span> <span class="mi">0</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kp">private</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># 为使这个方法生效必须有:counter_cache =&gt; :children_count和children_count这个字段,不然你自己可以重写这个方法, :counter_cache是可以自定义的,默认是children的表名加cache，例如comments_cache</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">update_parents_counter_cache</span>
+</span><span class='line'>      <span class="c1"># 首先用respond_to?判断是否有这个方法(:children_count)</span>
+</span><span class='line'>      <span class="c1"># 通过Active Model Dirty来判断是否改变了parent_id</span>
+</span><span class='line'>      <span class="c1"># 关于Active Model Dirty可以看http://api.rubyonrails.org/classes/ActiveModel/Dirty.html</span>
+</span><span class='line'>      <span class="k">if</span> <span class="nb">self</span><span class="o">.</span><span class="n">respond_to?</span><span class="p">(</span><span class="ss">:children_count</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">parent_id_changed?</span>
+</span><span class='line'>        <span class="c1"># decrement_counter是给:children_count减少1, parent_id_was是旧的值</span>
+</span><span class='line'>        <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">decrement_counter</span><span class="p">(</span><span class="ss">:children_count</span><span class="p">,</span> <span class="n">parent_id_was</span><span class="p">)</span>
+</span><span class='line'>        <span class="c1"># increment_counter是给:children_count增加1, parent_id是新的值</span>
+</span><span class='line'>        <span class="c1"># 具体的decrement_counter和increment_counter可以看http://api.rubyonrails.org/classes/ActiveRecord/CounterCache/ClassMethods.html</span>
+</span><span class='line'>        <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">increment_counter</span><span class="p">(</span><span class="ss">:children_count</span><span class="p">,</span> <span class="n">parent_id</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># Deprecating the following code in the future.</span>
+</span><span class='line'><span class="nb">require</span> <span class="s1">&#39;acts_as_tree/active_record/acts/tree&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>总结</h3>
+
+<p>通过这个gem我们可以学一些查询方法,例如关于根节点，祖先节点的查找啊,还可以学习自关联的写法,一些递归写法等</p>
+
+<hr />
+
+<h3>新版本的变化</h3>
+
+<p><strong>1.5.0相比于1.4.0的changed</strong></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Returns list of descendants, starting from current node, not including cu</span>
+</span><span class='line'><span class="c1">#</span>
+</span><span class='line'><span class="c1">#   root.descendants # =&gt; [child1, child2, subchild1, subchild2, subchild3,</span>
+</span><span class='line'><span class="c1"># 返回后代</span>
+</span><span class='line'><span class="c1"># each_with_object是灵活的用法,具体看http://apidock.com/rails/Enumerable/each_with_object</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">descendants</span>
+</span><span class='line'>  <span class="c1"># child是结果,arr是每个children,children是默认值,也就是说会先执行children.concat child.descendants</span>
+</span><span class='line'>  <span class="c1"># 会遍历执行,直到没有children</span>
+</span><span class='line'>  <span class="n">children</span><span class="o">.</span><span class="n">each_with_object</span><span class="p">(</span><span class="n">children</span><span class="p">)</span> <span class="p">{</span><span class="o">|</span><span class="n">child</span><span class="p">,</span> <span class="n">arr</span><span class="o">|</span>
+</span><span class='line'>    <span class="n">arr</span><span class="o">.</span><span class="n">concat</span> <span class="n">child</span><span class="o">.</span><span class="n">descendants</span>
+</span><span class='line'>  <span class="p">}</span><span class="o">.</span><span class="n">uniq</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># Returns list of descendants, starting from current node, including curren</span>
+</span><span class='line'><span class="c1">#</span>
+</span><span class='line'><span class="c1">#   root.self_and_descendants # =&gt; [root, child1, child2, subchild1, subchi</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">self_and_descendants</span>
+</span><span class='line'>  <span class="o">[</span><span class="nb">self</span><span class="o">]</span> <span class="o">+</span> <span class="n">descendants</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">随风</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-12-09T14:30:00+08:00" pubdate data-updated="true">Dec 9<span>th</span>, 2013</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/on/'>on</a>, <a class='category' href='/blog/categories/rails/'>rails</a>, <a class='category' href='/blog/categories/ruby/'>ruby</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://yinsigan.github.io/blog/2013/12/09/acts-as-treeyuan-ma-fen-xi/" data-via="" data-counturl="http://yinsigan.github.io/blog/2013/12/09/acts-as-treeyuan-ma-fen-xi/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2013/12/03/acts-as-followeryuan-ma-fen-xi/" title="Previous Post: acts_as_follower源码分析">&laquo; acts_as_follower源码分析</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2013/12/10/rails-association/" title="Next Post: rails association">rails association &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/09/10/zhong-zhuang-xi-tong-hou-ru-he-zhong-xie-ni-de-octopressbo-ke/">重装系统后如何重写你的Octopress博客</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/19/qian-ru-shi-biao-dan-yu-duo-tu-pian-shang-chuan/">嵌入式表单与多图片上传</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/12/carrierwavetu-pian-shang-chuan-de-jian-dan-shi-yong/">CarrierWave图片上传的简单使用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/12/jquery-treede-jie-shao-he-jian-dan-shi-yong/">Jquery Tree的介绍和简单使用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/11/jbuilder-and-rabl-and-gonjian-dan-shi-yong/">Jbuilder &amp; Rabl &amp; Gon简单使用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/10/jquery-tags-input-and-jquery-tag-it/">Jquery Tags-input &amp; Jquery Tag-it</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/08/rails-settingsyuan-ma-fen-xi/">Rails-settings源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/18/settingslogicyuan-ma-fen-xi/">Settingslogic源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/18/tabs-on-railsyuan-ma-fen-xi/">Tabs_on_rails源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/17/breadcrumbs-on-railsyuan-ma-fen-xi/">Breadcrumbs_on_rails源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/14/acts-as-messageableyuan-ma-fen-xi-1/">Acts-as-messageable源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/08/acts-as-taggable-onyuan-ma-fen-xi-9/">Acts-as-taggable-on源码分析(九)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/08/acts-as-taggable-onyuan-ma-fen-xi-8/">Acts-as-taggable-on源码分析(八)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/08/acts-as-taggable-onyuan-ma-fen-xi-7/">Acts-as-taggable-on源码分析(七)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/08/acts-as-taggable-onyuan-ma-fen-xi-6/">Acts-as-taggable-on源码分析(六)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/07/acts-as-taggable-onyuan-ma-fen-xi-5/">Acts-as-taggable-on源码分析(五)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/07/acts-as-taggable-onyuan-ma-fen-xi-4/">Acts-as-taggable-on源码分析(四)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/06/acts-as-taggable-onyuan-ma-fen-xi-3/">Acts-as-taggable-on源码分析(三)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/05/ubuntuxia-an-zhuang-linux-apache-mysql-php-dbninja/">ubuntu下安装Linux Apache MySQL PHP Dbninja</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/04/acts-as-taggable-onyuan-ma-fen-xi-2/">Acts-as-taggable-on源码分析(二)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/04/acts-as-taggable-onyuan-ma-fen-xi-1/">Acts-as-taggable-on源码分析(一)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/03/ubuntu-ruan-jian-tui-jian-yu-an-zhuang/">Ubuntu 软件推荐与安装</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/30/ubuntuxia-sublime-text-3shu-ru-zhong-wen/">Ubuntu下sublime Text 3输入中文</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/26/rubyyuan-bian-cheng-zhi-block/">Ruby元编程之block</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/20/acts-as-paranoidyuan-ma-fen-xi/">Acts_as_paranoid源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/14/ancestryyuan-ma-fen-xi/">Ancestry源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/11/rails-association-reference/">Rails Association Reference</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/10/rails-association/">Rails Association</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/09/acts-as-treeyuan-ma-fen-xi/">Acts_as_tree源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/03/acts-as-followeryuan-ma-fen-xi/">Acts_as_follower源码分析</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+Copyright &copy; 2017 - 随风 - <a href="https:/www.rails365.net">rails365</a>
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'xiaozi';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://yinsigan.github.io/blog/2013/12/09/acts-as-treeyuan-ma-fen-xi/';
+        var disqus_url = 'http://yinsigan.github.io/blog/2013/12/09/acts-as-treeyuan-ma-fen-xi/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = "/javascripts/widgets.js";
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,948 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>settingslogic源码分析 - 随风的博客</title>
+  <meta name="author" content="随风">
+
+  
+  <meta name="description" content="settingslogic
+Ruby/Rails 中的YAML
+How do I use YAML in ruby/rails? 这个gem是用来做配置文件的 使用 1.定义你的class 在app/models下创建settings.rb文件,内容为: 1
+2
+3
+4
+class &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://yinsigan.github.io/blog/2014/01/18/settingslogicyuan-ma-fen-xi">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="随风的博客" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/libs/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-46093029-1', 'yinsigan.github.io');
+  ga('send', 'pageview');
+
+</script>
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">随风的博客</a></h1>
+  
+    <h2>人生若如初见</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:yinsigan.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Settingslogic源码分析</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-01-18T21:57:00+08:00" pubdate data-updated="true">Jan 18<span>th</span>, 2014</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><ul>
+<li><a href="https://github.com/binarylogic/settingslogic">settingslogic</a></li>
+<li><a href="http://blog.csdn.net/smilewater/article/details/1679835">Ruby/Rails 中的YAML</a></li>
+<li><a href="http://stackoverflow.com/questions/4002092/how-do-i-use-yaml-in-ruby-rails">How do I use YAML in ruby/rails?</a></li>
+</ul>
+
+
+<p>这个gem是用来做配置文件的</p>
+
+<h3>使用</h3>
+
+<h4>1.定义你的class</h4>
+
+<p>在app/models下创建settings.rb文件,内容为:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Settings</span> <span class="o">&lt;</span> <span class="no">Settingslogic</span>
+</span><span class='line'>  <span class="n">source</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="no">Rails</span><span class="o">.</span><span class="n">root</span><span class="si">}</span><span class="s2">/config/application.yml&quot;</span>
+</span><span class='line'>  <span class="n">namespace</span> <span class="no">Rails</span><span class="o">.</span><span class="n">env</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<!-- more -->
+
+
+<h4>2.创建你的配置</h4>
+
+<p>在config下创建application.yml文件</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># config/application.yml</span>
+</span><span class='line'><span class="ss">defaults</span><span class="p">:</span> <span class="o">&amp;</span><span class="n">defaults</span>
+</span><span class='line'>  <span class="ss">cool</span><span class="p">:</span>
+</span><span class='line'>    <span class="ss">saweet</span><span class="p">:</span> <span class="n">nested</span> <span class="n">settings</span>
+</span><span class='line'>  <span class="n">neat_setting</span><span class="p">:</span> <span class="mi">24</span>
+</span><span class='line'>  <span class="n">awesome_setting</span><span class="p">:</span> <span class="o">&lt;</span><span class="sx">%= &quot;Did you know 5 + 5 =</span> <span class="c1">#{5 + 5}?&quot; %&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="ss">development</span><span class="p">:</span>
+</span><span class='line'>  <span class="o">&lt;&lt;</span><span class="p">:</span> <span class="o">*</span><span class="n">defaults</span>
+</span><span class='line'>  <span class="n">neat_setting</span><span class="p">:</span> <span class="mi">800</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">test</span><span class="p">:</span>
+</span><span class='line'>  <span class="o">&lt;&lt;</span><span class="p">:</span> <span class="o">*</span><span class="n">defaults</span>
+</span><span class='line'>
+</span><span class='line'><span class="ss">production</span><span class="p">:</span>
+</span><span class='line'>  <span class="o">&lt;&lt;</span><span class="p">:</span> <span class="o">*</span><span class="n">defaults</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>3.访问你的配置</h4>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="o">&gt;&gt;</span> <span class="no">Rails</span><span class="o">.</span><span class="n">env</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="s2">&quot;development&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&gt;&gt;</span> <span class="no">Settings</span><span class="o">.</span><span class="n">cool</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="s2">&quot;#&lt;Settingslogic::Settings ... &gt;&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&gt;&gt;</span> <span class="no">Settings</span><span class="o">.</span><span class="n">cool</span><span class="o">.</span><span class="n">saweet</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="s2">&quot;nested settings&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&gt;&gt;</span> <span class="no">Settings</span><span class="o">.</span><span class="n">neat_setting</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="mi">800</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&gt;&gt;</span> <span class="no">Settings</span><span class="o">.</span><span class="n">awesome_setting</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="s2">&quot;Did you know 5 + 5 = 10?&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>分析</h3>
+
+<p>源码中只有一个文件叫settingslogic.rb</p>
+
+<p>我们从app/models/settings.rb文件入手</p>
+
+<figure class='code'><figcaption><span>app/models/settings.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Settings</span> <span class="o">&lt;</span> <span class="no">Settingslogic</span>
+</span><span class='line'>  <span class="n">source</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="no">Rails</span><span class="o">.</span><span class="n">root</span><span class="si">}</span><span class="s2">/config/application.yml&quot;</span>
+</span><span class='line'>  <span class="n">namespace</span> <span class="no">Rails</span><span class="o">.</span><span class="n">env</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>首先Settings继承自Settingslogic,而且用了两个方法source和namespace</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Settingslogic</span> <span class="o">&lt;</span> <span class="no">Hash</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Settingslogic是个hash</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">source</span><span class="p">(</span><span class="n">value</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">)</span>
+</span><span class='line'>  <span class="vi">@source</span> <span class="o">||=</span> <span class="n">value</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">namespace</span><span class="p">(</span><span class="n">value</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">)</span>
+</span><span class='line'>  <span class="vi">@namespace</span> <span class="o">||=</span> <span class="n">value</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>source和namespace不过是把值存到变量中去</p>
+
+<p>先来了解Settingslogic类的结构</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Settingslogic</span> <span class="o">&lt;</span> <span class="no">Hash</span>
+</span><span class='line'>  <span class="c1"># 定义了一个标准错误类</span>
+</span><span class='line'>  <span class="k">class</span> <span class="nc">MissingSetting</span> <span class="o">&lt;</span> <span class="no">StandardError</span><span class="p">;</span> <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># 下面都是类方法</span>
+</span><span class='line'>  <span class="k">class</span> <span class="o">&lt;&lt;</span> <span class="nb">self</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">name</span> <span class="c1"># :nodoc:</span>
+</span><span class='line'>      <span class="nb">self</span><span class="o">.</span><span class="n">superclass</span> <span class="o">!=</span> <span class="no">Hash</span> <span class="o">&amp;&amp;</span> <span class="n">instance</span><span class="o">.</span><span class="n">key?</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span> <span class="p">?</span> <span class="n">instance</span><span class="o">.</span><span class="n">name</span> <span class="p">:</span> <span class="k">super</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>    <span class="o">.</span><span class="n">.</span><span class="o">.</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># 除了用send,不能直接调用private里的私有类方法</span>
+</span><span class='line'>    <span class="c1"># 当调用上面的类方法时会调用私有类方法</span>
+</span><span class='line'>    <span class="c1"># 例如可以这样Settings.send(:instance)</span>
+</span><span class='line'>    <span class="kp">private</span>
+</span><span class='line'>      <span class="k">def</span> <span class="nf">instance</span>
+</span><span class='line'>        <span class="k">return</span> <span class="vi">@instance</span> <span class="k">if</span> <span class="vi">@instance</span>
+</span><span class='line'>        <span class="vi">@instance</span> <span class="o">=</span> <span class="kp">new</span>
+</span><span class='line'>        <span class="n">create_accessors!</span>
+</span><span class='line'>        <span class="vi">@instance</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="k">def</span> <span class="nf">method_missing</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+</span><span class='line'>        <span class="n">instance</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># 这之后定义的都是实例方法,也就是说Settingslogic.new之后调用的</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">hash_or_file</span> <span class="o">=</span> <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="n">section</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">)</span>
+</span><span class='line'>    <span class="o">.</span><span class="n">.</span><span class="o">.</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>我们先来了解initialize方法,initialize方法会利用source和namespace的值</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># 第一个参数是yml配置文件的路径</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">hash_or_file</span> <span class="o">=</span> <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="n">section</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1">#puts &quot;new! #{hash_or_file}&quot;</span>
+</span><span class='line'>  <span class="k">case</span> <span class="n">hash_or_file</span>
+</span><span class='line'>  <span class="c1"># 没有指定就报错</span>
+</span><span class='line'>  <span class="k">when</span> <span class="kp">nil</span>
+</span><span class='line'>    <span class="k">raise</span> <span class="ss">Errno</span><span class="p">:</span><span class="ss">:ENOENT</span><span class="p">,</span> <span class="s2">&quot;No file specified as Settingslogic source&quot;</span>
+</span><span class='line'>  <span class="c1"># 如果是一个Hash的话就被代替</span>
+</span><span class='line'>  <span class="k">when</span> <span class="no">Hash</span>
+</span><span class='line'>    <span class="nb">self</span><span class="o">.</span><span class="n">replace</span> <span class="n">hash_or_file</span>
+</span><span class='line'>  <span class="k">else</span>
+</span><span class='line'>    <span class="c1"># 读这个文件的内容</span>
+</span><span class='line'>    <span class="n">file_contents</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">hash_or_file</span><span class="p">)</span><span class="o">.</span><span class="n">read</span>
+</span><span class='line'>    <span class="c1"># 如果内容为空就是一个空的hash,否则的话用YAML把它的结果转成hash</span>
+</span><span class='line'>    <span class="nb">hash</span> <span class="o">=</span> <span class="n">file_contents</span><span class="o">.</span><span class="n">empty?</span> <span class="p">?</span> <span class="p">{}</span> <span class="p">:</span> <span class="no">YAML</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="no">ERB</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">file_contents</span><span class="p">)</span><span class="o">.</span><span class="n">result</span><span class="p">)</span><span class="o">.</span><span class="n">to_hash</span>
+</span><span class='line'>    <span class="k">if</span> <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">namespace</span>
+</span><span class='line'>      <span class="c1"># 只取出相应namespace</span>
+</span><span class='line'>      <span class="nb">hash</span> <span class="o">=</span> <span class="nb">hash</span><span class="o">[</span><span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">namespace</span><span class="o">]</span> <span class="ow">or</span> <span class="k">return</span> <span class="n">missing_key</span><span class="p">(</span><span class="s2">&quot;Missing setting &#39;</span><span class="si">#{</span><span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">namespace</span><span class="si">}</span><span class="s2">&#39; in </span><span class="si">#{</span><span class="n">hash_or_file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>    <span class="nb">self</span><span class="o">.</span><span class="n">replace</span> <span class="nb">hash</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>  <span class="c1"># section是看value是不是hash</span>
+</span><span class='line'>  <span class="vi">@section</span> <span class="o">=</span> <span class="n">section</span> <span class="o">||</span> <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">source</span>  <span class="c1"># so end of error says &quot;in application.yml&quot;</span>
+</span><span class='line'>  <span class="n">create_accessors!</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 创建实例方法</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">create_accessors!</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">key</span><span class="p">,</span><span class="n">val</span><span class="o">|</span>
+</span><span class='line'>    <span class="n">create_accessor_for</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 以key定义实例方法</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">create_accessor_for</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="kp">nil</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1"># 如果不是以字母开头就退出</span>
+</span><span class='line'>  <span class="k">return</span> <span class="k">unless</span> <span class="n">key</span><span class="o">.</span><span class="n">to_s</span> <span class="o">=~</span> <span class="sr">/^\w+$/</span>  <span class="c1"># could have &quot;some-setting:&quot; which blows up eval</span>
+</span><span class='line'>  <span class="c1"># 设置实例变量的值,默认为nil</span>
+</span><span class='line'>  <span class="nb">instance_variable_set</span><span class="p">(</span><span class="s2">&quot;@</span><span class="si">#{</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">class_eval</span> <span class="o">&lt;&lt;-</span><span class="no">EndEval</span>
+</span><span class='line'><span class="sh">    def #{key}</span>
+</span><span class='line'><span class="sh">      # 如果已经存在就返回</span>
+</span><span class='line'><span class="sh">      return @#{key} if @#{key}</span>
+</span><span class='line'><span class="sh">      # 没有key就报错</span>
+</span><span class='line'><span class="sh">      return missing_key(&quot;Missing setting &#39;#{key}&#39; in #{@section}&quot;) unless has_key? &#39;#{key}&#39;</span>
+</span><span class='line'><span class="sh">      value = fetch(&#39;#{key}&#39;)</span>
+</span><span class='line'><span class="sh">      # 如果是一个hash,那就去初始化</span>
+</span><span class='line'><span class="sh">      @#{key} = if value.is_a?(Hash)</span>
+</span><span class='line'><span class="sh">        self.class.new(value, &quot;&#39;#{key}&#39; section in #{@section}&quot;)</span>
+</span><span class='line'><span class="sh">      # 遍历</span>
+</span><span class='line'><span class="sh">      elsif value.is_a?(Array) &amp;&amp; value.all?{|v| v.is_a? Hash}</span>
+</span><span class='line'><span class="sh">        value.map{|v| self.class.new(v)}</span>
+</span><span class='line'><span class="sh">      # 直接返回</span>
+</span><span class='line'><span class="sh">      else</span>
+</span><span class='line'><span class="sh">        value</span>
+</span><span class='line'><span class="sh">      end</span>
+</span><span class='line'><span class="sh">    end</span>
+</span><span class='line'><span class="no">  EndEval</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>在这一步，从yml文件中读取内容转化成hash,然后定义了类似cool,neat_setting这样的实例方法</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">Settings</span><span class="o">.</span><span class="n">new</span><span class="o">.</span><span class="n">cool</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="p">{</span><span class="s2">&quot;saweet&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;nested settings&quot;</span><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="no">Settings</span><span class="o">.</span><span class="n">new</span><span class="o">.</span><span class="n">instance_variables</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="o">[</span><span class="ss">:@section</span><span class="p">,</span> <span class="ss">:@cool</span><span class="p">,</span> <span class="ss">:@neat_setting</span><span class="p">,</span> <span class="ss">:@awesome_setting</span><span class="o">]</span>
+</span><span class='line'>
+</span><span class='line'><span class="no">Settings</span><span class="o">.</span><span class="n">new</span><span class="o">.</span><span class="n">cool</span><span class="o">.</span><span class="n">instance_variables</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="o">[</span><span class="ss">:@section</span><span class="p">,</span> <span class="ss">:@saweet</span><span class="o">]</span>
+</span><span class='line'>
+</span><span class='line'><span class="no">Settings</span><span class="o">.</span><span class="n">new</span><span class="o">.</span><span class="n">cool</span><span class="o">.</span><span class="n">instance_variable_get</span><span class="p">(</span><span class="ss">:@section</span><span class="p">)</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="s2">&quot;&#39;cool&#39; section in /home/yinsigan/g/config/application.yml&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>继承来看其他的实例方法</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">[]</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">fetch</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">to_s</span><span class="p">,</span> <span class="kp">nil</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">[]=</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="n">val</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1"># Setting[:key][:key2] = &#39;value&#39; for dynamic settings</span>
+</span><span class='line'>  <span class="n">val</span> <span class="o">=</span> <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="vi">@section</span><span class="p">)</span> <span class="k">if</span> <span class="n">val</span><span class="o">.</span><span class="n">is_a?</span> <span class="no">Hash</span>
+</span><span class='line'>  <span class="c1"># 设置它的值</span>
+</span><span class='line'>  <span class="n">store</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">to_s</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1"># 创建实例方法</span>
+</span><span class='line'>  <span class="n">create_accessor_for</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># 没有设置值之前</span>
+</span><span class='line'><span class="n">s</span><span class="o">[</span><span class="s1">&#39;name&#39;</span><span class="o">]</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="kp">nil</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">s</span><span class="o">[</span><span class="s1">&#39;name&#39;</span><span class="o">]</span> <span class="o">=</span> <span class="s1">&#39;xiaozi&#39;</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="s2">&quot;xiaozi&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">name</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="s2">&quot;xiaozi&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">s</span><span class="o">.</span><span class="n">instance_variables</span><span class="p">()</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="o">[</span><span class="ss">:@section</span><span class="p">,</span> <span class="ss">:@cool</span><span class="p">,</span> <span class="ss">:@neat_setting</span><span class="p">,</span> <span class="ss">:@awesome_setting</span><span class="p">,</span> <span class="ss">:@name</span><span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>如果执行Settings.cool,会先去执行类方法中的method_missing</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="kp">private</span>
+</span><span class='line'>  <span class="c1"># 这个方法执行之前会执行instance</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">method_missing</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+</span><span class='line'>    <span class="c1"># 因为instance是new出来的,所以这个时候会去执行实例方法中的method_missing</span>
+</span><span class='line'>    <span class="n">instance</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">instance</span>
+</span><span class='line'>    <span class="c1"># 如果有@instance这个变量返回就可以</span>
+</span><span class='line'>    <span class="k">return</span> <span class="vi">@instance</span> <span class="k">if</span> <span class="vi">@instance</span>
+</span><span class='line'>    <span class="c1"># 生成一个新hash</span>
+</span><span class='line'>    <span class="vi">@instance</span> <span class="o">=</span> <span class="kp">new</span>
+</span><span class='line'>    <span class="c1"># 创建类方法</span>
+</span><span class='line'>    <span class="n">create_accessors!</span>
+</span><span class='line'>    <span class="vi">@instance</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># 通过遍历定义新的类方法</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">create_accessors!</span>
+</span><span class='line'>    <span class="n">instance</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">key</span><span class="p">,</span><span class="n">val</span><span class="o">|</span>
+</span><span class='line'>      <span class="n">create_accessor_for</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">create_accessor_for</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+</span><span class='line'>    <span class="c1"># 如果不是以字母开头就退出</span>
+</span><span class='line'>    <span class="k">return</span> <span class="k">unless</span> <span class="n">key</span><span class="o">.</span><span class="n">to_s</span> <span class="o">=~</span> <span class="sr">/^\w+$/</span>  <span class="c1"># could have &quot;some-setting:&quot; which blows up eval</span>
+</span><span class='line'>    <span class="c1"># 定义一个类方法</span>
+</span><span class='line'>    <span class="nb">instance_eval</span> <span class="s2">&quot;def </span><span class="si">#{</span><span class="n">key</span><span class="si">}</span><span class="s2">; instance.send(:</span><span class="si">#{</span><span class="n">key</span><span class="si">}</span><span class="s2">); end&quot;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>当你首次执行Settings.cool,就会去创建Settings类的实例,也就是@instance,会执行Settings中的方法,也就是@instance中有很多实例方法,以后执行Settings.neat_setting等方法就会去读取@instance</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">Settings</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="ss">:instance</span><span class="p">)</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="p">{</span><span class="s2">&quot;cool&quot;</span><span class="o">=&gt;</span><span class="p">{</span><span class="s2">&quot;saweet&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;nested settings&quot;</span><span class="p">},</span>
+</span><span class='line'> <span class="s2">&quot;neat_setting&quot;</span><span class="o">=&gt;</span><span class="mi">800</span><span class="p">,</span>
+</span><span class='line'> <span class="s2">&quot;awesome_setting&quot;</span><span class="o">=&gt;</span><span class="s2">&quot;Did you know 5 + 5 = 10?&quot;</span><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="no">Settings</span><span class="o">.</span><span class="n">instance_variable_get</span><span class="p">(</span><span class="ss">:@instance</span><span class="p">)</span><span class="o">.</span><span class="n">instance_variables</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="o">[</span><span class="ss">:@section</span><span class="p">,</span> <span class="ss">:@cool</span><span class="p">,</span> <span class="ss">:@neat_setting</span><span class="p">,</span> <span class="ss">:@awesome_setting</span><span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>suppress_errors Rails.env.production?这个方法可以控制不报错</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">suppress_errors</span><span class="p">(</span><span class="n">value</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">)</span>
+</span><span class='line'>  <span class="vi">@suppress_errors</span> <span class="o">||=</span> <span class="n">value</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">missing_key</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">return</span> <span class="kp">nil</span> <span class="k">if</span> <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">suppress_errors</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">raise</span> <span class="no">MissingSetting</span><span class="p">,</span> <span class="n">msg</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>其他的方法可以自己分析</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">name</span> <span class="c1"># :nodoc:</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">superclass</span> <span class="o">!=</span> <span class="no">Hash</span> <span class="o">&amp;&amp;</span> <span class="n">instance</span><span class="o">.</span><span class="n">key?</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span> <span class="p">?</span> <span class="n">instance</span><span class="o">.</span><span class="n">name</span> <span class="p">:</span> <span class="k">super</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># Enables Settings.get(&#39;nested.key.name&#39;) for dynamic access</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">parts</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">curs</span> <span class="o">=</span> <span class="nb">self</span>
+</span><span class='line'>  <span class="k">while</span> <span class="nb">p</span> <span class="o">=</span> <span class="n">parts</span><span class="o">.</span><span class="n">shift</span>
+</span><span class='line'>    <span class="n">curs</span> <span class="o">=</span> <span class="n">curs</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="nb">p</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>  <span class="n">curs</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">symbolize_keys</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">inject</span><span class="p">({})</span> <span class="k">do</span> <span class="o">|</span><span class="n">memo</span><span class="p">,</span> <span class="n">tuple</span><span class="o">|</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">k</span> <span class="o">=</span> <span class="p">(</span><span class="n">tuple</span><span class="o">.</span><span class="n">first</span><span class="o">.</span><span class="n">to_sym</span> <span class="k">rescue</span> <span class="n">tuple</span><span class="o">.</span><span class="n">first</span><span class="p">)</span> <span class="o">||</span> <span class="n">tuple</span><span class="o">.</span><span class="n">first</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">v</span> <span class="o">=</span> <span class="n">k</span><span class="o">.</span><span class="n">is_a?</span><span class="p">(</span><span class="no">Symbol</span><span class="p">)</span> <span class="p">?</span> <span class="nb">send</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="p">:</span> <span class="n">tuple</span><span class="o">.</span><span class="n">last</span> <span class="c1"># make sure the value is accessed the same way Settings.foo.bar works</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">memo</span><span class="o">[</span><span class="n">k</span><span class="o">]</span> <span class="o">=</span> <span class="n">v</span> <span class="o">&amp;&amp;</span> <span class="n">v</span><span class="o">.</span><span class="n">respond_to?</span><span class="p">(</span><span class="ss">:symbolize_keys</span><span class="p">)</span> <span class="p">?</span> <span class="n">v</span><span class="o">.</span><span class="n">symbolize_keys</span> <span class="p">:</span> <span class="n">v</span> <span class="c1">#recurse for nested hashes</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">memo</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">随风</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-01-18T21:57:00+08:00" pubdate data-updated="true">Jan 18<span>th</span>, 2014</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/on/'>on</a>, <a class='category' href='/blog/categories/rails/'>rails</a>, <a class='category' href='/blog/categories/ruby/'>ruby</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://yinsigan.github.io/blog/2014/01/18/settingslogicyuan-ma-fen-xi/" data-via="" data-counturl="http://yinsigan.github.io/blog/2014/01/18/settingslogicyuan-ma-fen-xi/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/01/18/tabs-on-railsyuan-ma-fen-xi/" title="Previous Post: tabs_on_rails源码分析">&laquo; tabs_on_rails源码分析</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/02/08/rails-settingsyuan-ma-fen-xi/" title="Next Post: rails-settings源码分析">rails-settings源码分析 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/09/10/zhong-zhuang-xi-tong-hou-ru-he-zhong-xie-ni-de-octopressbo-ke/">重装系统后如何重写你的Octopress博客</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/19/qian-ru-shi-biao-dan-yu-duo-tu-pian-shang-chuan/">嵌入式表单与多图片上传</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/12/carrierwavetu-pian-shang-chuan-de-jian-dan-shi-yong/">CarrierWave图片上传的简单使用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/12/jquery-treede-jie-shao-he-jian-dan-shi-yong/">Jquery Tree的介绍和简单使用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/11/jbuilder-and-rabl-and-gonjian-dan-shi-yong/">Jbuilder &amp; Rabl &amp; Gon简单使用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/10/jquery-tags-input-and-jquery-tag-it/">Jquery Tags-input &amp; Jquery Tag-it</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/08/rails-settingsyuan-ma-fen-xi/">Rails-settings源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/18/settingslogicyuan-ma-fen-xi/">Settingslogic源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/18/tabs-on-railsyuan-ma-fen-xi/">Tabs_on_rails源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/17/breadcrumbs-on-railsyuan-ma-fen-xi/">Breadcrumbs_on_rails源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/14/acts-as-messageableyuan-ma-fen-xi-1/">Acts-as-messageable源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/08/acts-as-taggable-onyuan-ma-fen-xi-9/">Acts-as-taggable-on源码分析(九)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/08/acts-as-taggable-onyuan-ma-fen-xi-8/">Acts-as-taggable-on源码分析(八)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/08/acts-as-taggable-onyuan-ma-fen-xi-7/">Acts-as-taggable-on源码分析(七)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/08/acts-as-taggable-onyuan-ma-fen-xi-6/">Acts-as-taggable-on源码分析(六)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/07/acts-as-taggable-onyuan-ma-fen-xi-5/">Acts-as-taggable-on源码分析(五)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/07/acts-as-taggable-onyuan-ma-fen-xi-4/">Acts-as-taggable-on源码分析(四)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/06/acts-as-taggable-onyuan-ma-fen-xi-3/">Acts-as-taggable-on源码分析(三)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/05/ubuntuxia-an-zhuang-linux-apache-mysql-php-dbninja/">ubuntu下安装Linux Apache MySQL PHP Dbninja</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/04/acts-as-taggable-onyuan-ma-fen-xi-2/">Acts-as-taggable-on源码分析(二)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/04/acts-as-taggable-onyuan-ma-fen-xi-1/">Acts-as-taggable-on源码分析(一)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/03/ubuntu-ruan-jian-tui-jian-yu-an-zhuang/">Ubuntu 软件推荐与安装</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/30/ubuntuxia-sublime-text-3shu-ru-zhong-wen/">Ubuntu下sublime Text 3输入中文</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/26/rubyyuan-bian-cheng-zhi-block/">Ruby元编程之block</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/20/acts-as-paranoidyuan-ma-fen-xi/">Acts_as_paranoid源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/14/ancestryyuan-ma-fen-xi/">Ancestry源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/11/rails-association-reference/">Rails Association Reference</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/10/rails-association/">Rails Association</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/09/acts-as-treeyuan-ma-fen-xi/">Acts_as_tree源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/03/acts-as-followeryuan-ma-fen-xi/">Acts_as_follower源码分析</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+Copyright &copy; 2017 - 随风 - <a href="https:/www.rails365.net">rails365</a>
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'xiaozi';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://yinsigan.github.io/blog/2014/01/18/settingslogicyuan-ma-fen-xi/';
+        var disqus_url = 'http://yinsigan.github.io/blog/2014/01/18/settingslogicyuan-ma-fen-xi/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = "/javascripts/widgets.js";
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>
