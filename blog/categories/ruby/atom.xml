@@ -4,7 +4,7 @@
   <title><![CDATA[Category: ruby | 随风的博客]]></title>
   <link href="http://yinsigan.github.io/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://yinsigan.github.io/"/>
-  <updated>2017-09-05T18:11:22+08:00</updated>
+  <updated>2017-09-05T18:13:44+08:00</updated>
   <id>http://yinsigan.github.io/</id>
   <author>
     <name><![CDATA[随风]]></name>
@@ -45,7 +45,7 @@ bundle
 <p>首先需要生成ssh的public key</p>
 
 <p>``` ruby
-ssh-keygen -t rsa -C &ldquo;<a href="&#109;&#97;&#x69;&#108;&#x74;&#x6f;&#x3a;&#x79;&#x6f;&#117;&#x72;&#95;&#101;&#x6d;&#x61;&#x69;&#108;&#64;&#x65;&#120;&#x61;&#x6d;&#112;&#108;&#101;&#46;&#x63;&#x6f;&#109;">&#121;&#111;&#117;&#114;&#x5f;&#x65;&#x6d;&#97;&#105;&#x6c;&#x40;&#101;&#120;&#97;&#109;&#x70;&#x6c;&#x65;&#x2e;&#x63;&#111;&#x6d;</a>&rdquo;</p>
+ssh-keygen -t rsa -C &ldquo;<a href="&#109;&#97;&#x69;&#108;&#x74;&#x6f;&#x3a;&#x79;&#111;&#117;&#x72;&#x5f;&#x65;&#x6d;&#x61;&#x69;&#108;&#64;&#x65;&#120;&#97;&#109;&#x70;&#x6c;&#101;&#46;&#x63;&#111;&#x6d;">&#121;&#x6f;&#x75;&#114;&#95;&#x65;&#x6d;&#x61;&#105;&#108;&#x40;&#x65;&#x78;&#97;&#109;&#x70;&#108;&#x65;&#x2e;&#99;&#111;&#x6d;</a>&rdquo;</p>
 
 <h1>把输出的内容添加到github settings中SSH keys</h1>
 
